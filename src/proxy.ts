@@ -3,8 +3,11 @@ import type { NextRequest } from 'next/server'
 
 import { verifyToken } from './lib/auth'
 
-export async function middleware(request: NextRequest) {
-  const response = NextResponse.next()
+export async function proxy(request: NextRequest) {
+  const response = NextResponse.next();
+
+  const path = request.nextUrl.pathname;
+  const method = request.method;
 
   // Cache headers para assets estáticos
   if (request.nextUrl.pathname.match(/\.(jpg|jpeg|gif|png|svg|ico|webp|css|js)$/)) {
@@ -16,20 +19,24 @@ export async function middleware(request: NextRequest) {
     response.headers.set('Cache-Control', 'public, max-age=3600, stale-while-revalidate=60')
   }
 
-  const publicRoutes = ['/api/auth/login', '/api/users', '/']
-  
-  const isPublic = publicRoutes.some(route => request.nextUrl.pathname.startsWith(route));
+  const isPublicEndpoint = 
+    (path === '/api/auth/login' && method === 'POST') || // Login
+    (path === '/api/users' && method === 'POST');        // Cadastro
 
-  if (!isPublic && request.nextUrl.pathname.startsWith('/api')) {
+  if (path.startsWith('/api') && !isPublicEndpoint) {
     
     // Extract Header Authorization: Bearer <token>
     const token = request.headers.get('Authorization')?.split(' ')[1];
+
+    console.log("Middleware - Token recebido:", token ? "SIM (tamanho " + token.length + ")" : "NÃO");
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const payload = await verifyToken(token);
+
+    console.log("Middleware - Payload:", payload);
 
     if (!payload) {
       return NextResponse.json({ error: 'Invalid Token' }, { status: 401 });
@@ -50,6 +57,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 } 

@@ -21,12 +21,13 @@ model User {
 }
 
 model Workspace {
-  id         String   @id @default(uuid())
-  name       String
-  currency   String   @default("BRL")
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  user_id    String
+  id            String   @id @default(uuid())
+  name          String
+  total_balance Decimal  @default(0) @db.Decimal(10, 2)
+  currency      String   @default("BRL")
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  user_id       String
 
   // Relacionamentos
   buckets      Bucket[]

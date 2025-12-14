@@ -1,22 +1,17 @@
 import { NextResponse } from "next/server";
-import { getUserById, updateUser, deleteUser } from "@/services/user";
-import { handleError } from "@/errors/api-handler";
 import { getCurrentUserId } from "@/lib/session";
-import { AppError } from "@/lib/errors";
+import { handleError } from "@/errors/api-handler";
+import { getWorkspaceById, updateWorkspace, deleteWorkspace } from "@/services/workspace";
 
 type Props = { params: Promise<{ id: string }> };
 
 export async function GET(request: Request, props: Props) {
   try {
     const params = await props.params;
+    const userId = await getCurrentUserId();
     
-    // users/[id] protegida:
-    await getCurrentUserId(); 
-    
-    const user = await getUserById(params.id);
-    if (!user) throw new AppError("User not found", 404);
-
-    return NextResponse.json(user);
+    const workspace = await getWorkspaceById(params.id, userId);
+    return NextResponse.json(workspace);
   } catch (error) {
     return handleError(error);
   }
@@ -25,19 +20,17 @@ export async function GET(request: Request, props: Props) {
 export async function PATCH(request: Request, props: Props) {
   try {
     const params = await props.params;
-    const requesterId = await getCurrentUserId();
+    const userId = await getCurrentUserId();
     const body = await request.json();
 
-    const updatedUser = await updateUser({
+    const updated = await updateWorkspace({
       id: params.id,
-      requesterId, 
+      userId,
       name: body.name,
-      email: body.email,
-      password: body.password
+      currency: body.currency
     });
 
-    return NextResponse.json(updatedUser);
-
+    return NextResponse.json(updated);
   } catch (error) {
     return handleError(error);
   }
@@ -46,12 +39,11 @@ export async function PATCH(request: Request, props: Props) {
 export async function DELETE(request: Request, props: Props) {
   try {
     const params = await props.params;
-    const requesterId = await getCurrentUserId();
+    const userId = await getCurrentUserId();
 
-    await deleteUser(params.id, requesterId);
+    await deleteWorkspace(params.id, userId);
 
-    return NextResponse.json({ success: true });
-
+    return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
     return handleError(error);
   }
