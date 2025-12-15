@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getTransactionById, deleteTransaction } from "@/services/transaction";
-import { handleError } from "@/errors/api-handler";
+import { handleError } from "@/handlers/api-error";
 import { getCurrentUserId } from "@/lib/session";
 
 type Props = { params: Promise<{ id: string }> };

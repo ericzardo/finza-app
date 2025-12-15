@@ -10,9 +10,9 @@ export async function deleteBucket(bucketId: string) {
     throw new AppError("Bucket not found", 404);
   }
 
-  await prisma.bucket.delete({
+  const deletedBucket = await prisma.bucket.delete({
     where: { id: bucketId }
   });
 
-  return { success: true };
+  return deletedBucket;
 }

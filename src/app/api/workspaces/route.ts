@@ -1,16 +1,17 @@
-import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { AppError } from "@/lib/errors";
 import { getCurrentUserId } from "@/lib/session";
-import { handleError } from "@/errors/api-handler";
+import { handleError } from "@/handlers/api-error";
+import { handleResponse } from "@/handlers/api-response";
 import { listUserWorkspaces, createWorkspace } from "@/services/workspace";
+import { createWorkspaceSchema } from "@/schemas/workspace";
 
 export async function GET() {
   try {
     const userId = await getCurrentUserId(); 
     
     const workspaces = await listUserWorkspaces(userId);
-    return NextResponse.json(workspaces);
+
+    return handleResponse(workspaces);
+
   } catch (error) {
     return handleError(error);
   }
@@ -21,17 +22,19 @@ export async function POST(request: Request) {
     const userId = await getCurrentUserId();
     const body = await request.json();
 
-    if (!body.name) {
-      throw new AppError("Name is required", 400);
-    }
+    const { name, currency } = createWorkspaceSchema.parse(body);
 
     const newWorkspace = await createWorkspace({
       userId,
-      name: body.name,
-      currency: body.currency
+      name,
+      currency
     });
 
-    return NextResponse.json(newWorkspace, { status: 201 });
+    return handleResponse(newWorkspace, { 
+      status: 201, 
+      message: "Workspace criado com sucesso!" 
+    });
+
   } catch (error) {
     return handleError(error);
   }

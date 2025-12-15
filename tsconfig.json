@@ -29,8 +29,8 @@
       "@/lib/*": [
         "./src/lib/*"
       ],
-      "@/errors/*": [
-        "./src/errors/*"
+      "@/handlers/*": [
+        "./src/handlers/*"
       ],
       "@/hooks/*": [
         "./src/hooks/*"

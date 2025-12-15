@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
-import { getBucketById, updateBucket, deleteBucket } from "@/services/bucket";
-import { handleError } from "@/errors/api-handler";
 import { getCurrentUserId } from "@/lib/session";
 import { AppError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
+import { handleError } from "@/handlers/api-error";
+import { handleResponse } from "@/handlers/api-response";
+import { getBucketById, updateBucket, deleteBucket } from "@/services/bucket";
+import { updateBucketSchema } from "@/schemas/bucket";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -31,7 +32,8 @@ export async function GET(request: Request, props: Props) {
     await ensureBucketOwnership(params.id, userId);
 
     const bucket = await getBucketById(params.id);
-    return NextResponse.json(bucket);
+
+    return handleResponse(bucket);
 
   } catch (error) {
     return handleError(error);
@@ -46,14 +48,16 @@ export async function PATCH(request: Request, props: Props) {
 
     await ensureBucketOwnership(params.id, userId);
 
+    const data = updateBucketSchema.parse(body);
+
     const updated = await updateBucket({
       bucketId: params.id,
-      name: body.name,
-      percentage: body.percentage,
-      isDefault: body.isDefault
+      ...data
     });
 
-    return NextResponse.json(updated);
+    return handleResponse(updated, {
+      message: "Bucket atualizado com sucesso"
+    });
 
   } catch (error) {
     return handleError(error);
@@ -67,9 +71,11 @@ export async function DELETE(request: Request, props: Props) {
 
     await ensureBucketOwnership(params.id, userId);
 
-    await deleteBucket(params.id);
+    const deletedBucket = await deleteBucket(params.id);
 
-    return NextResponse.json({ success: true });
+    return handleResponse(deletedBucket, {
+      message: `Bucket ${deletedBucket.name} deletado com sucesso.`
+    });
 
   } catch (error) {
     return handleError(error);

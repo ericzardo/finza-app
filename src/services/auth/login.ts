@@ -2,20 +2,12 @@ import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/lib/errors";
 import { signToken } from "@/lib/auth";
+import { LoginData } from "@/schemas/auth";
 
-interface LoginDTO {
-  email: string;
-  password?: string;
-}
-
-export async function loginService(data: LoginDTO) {
-  if (!data.email || !data.password) {
-    throw new AppError("Email and password are required", 400);
-  }
-
+export async function loginService(data: LoginData) {
   const user = await prisma.user.findUnique({
     where: { email: data.email },
-  });
+  }); 
 
   if (!user) {
     throw new AppError("Invalid credentials", 401);

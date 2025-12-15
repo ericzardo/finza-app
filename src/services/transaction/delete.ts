@@ -8,9 +8,10 @@ export async function deleteTransaction(transactionId: string, userId: string) {
   });
 
   if (!transaction) throw new AppError("Transaction not found", 404);
+
   if (transaction.workspace.user_id !== userId) throw new AppError("Unauthorized", 403);
 
-  await prisma.$transaction(async (tx) => {
+  const deletedTransaction = await prisma.$transaction(async (tx) => {
     const amount = Number(transaction.amount);
 
     if (transaction.type === 'INCOME') {
@@ -39,8 +40,8 @@ export async function deleteTransaction(transactionId: string, userId: string) {
       }
     }
 
-    await tx.transaction.delete({ where: { id: transactionId } });
+    return tx.transaction.delete({ where: { id: transactionId } });
   });
 
-  return { success: true };
+  return deletedTransaction;
 }

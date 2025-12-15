@@ -1,13 +1,7 @@
 import { prisma } from "@/lib/prisma";
+import { CreateBucketData } from "@/schemas/bucket";
 
-interface CreateBucketDTO {
-  workspaceId: string;
-  name: string;
-  percentage: number;
-  isDefault?: boolean;
-}
-
-export async function createBucket(data: CreateBucketDTO) {
+export async function createBucket(data: CreateBucketData) {
   return prisma.bucket.create({
     data: {
       workspace_id: data.workspaceId,

@@ -4,7 +4,10 @@ import { AppError } from "@/lib/errors";
 export async function getTransactionById(id: string, userId: string) {
   const transaction = await prisma.transaction.findUnique({
     where: { id },
-    include: { workspace: true }
+    include: {
+      workspace: { select: { id: true, name: true, user_id: true } },
+      bucket: { select: { id: true, name: true } }
+    }
   });
 
   if (!transaction) throw new AppError("Transaction not found", 404);

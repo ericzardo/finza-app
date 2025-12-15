@@ -1,54 +1,50 @@
-import { NextResponse } from "next/server";
+import { z } from "zod";
 import { getCurrentUserId } from "@/lib/session";
-import { AppError } from "@/lib/errors";
+import { handleError } from "@/handlers/api-error";
+import { handleResponse } from "@/handlers/api-response";
 import { createTransaction, listTransactions } from "@/services/transaction";
-import { handleError } from "@/errors/api-handler";
+import { createTransactionSchema } from "@/schemas/transactions";
 
 export async function POST(request: Request) {
   try {
     const userId = await getCurrentUserId();
     const body = await request.json();
 
-    if (!body.workspaceId || !body.amount || !body.type) {
-      throw new AppError("Missing required fields: workspaceId, amount, type", 400);
-    }
+    const data = createTransactionSchema.parse(body);
 
     const transaction = await createTransaction({
       userId,
-      workspaceId: body.workspaceId,
-      bucketId: body.bucketId,
-      amount: Number(body.amount),
-      type: body.type,
-      description: body.description,
-      date: body.date
+      workspaceId: data.workspaceId,
+      bucketId: data.bucketId,
+      amount: data.amount,
+      type: data.type,
+      description: data.description,
+      date: data.date ? String(data.date) : undefined 
     });
 
-    return NextResponse.json(transaction, { status: 201 });
+    return handleResponse(transaction, { 
+      status: 201, 
+      message: "Transação registrada com sucesso!" 
+    });
 
   } catch (error) {
     return handleError(error);
   }
 }
 
-// GET: Listar Transações
 export async function GET(request: Request) {
   try {
-    await getCurrentUserId(); // Garante que está logado
+    // Auth Check
+    await getCurrentUserId();
+
     const { searchParams } = new URL(request.url);
     const workspaceId = searchParams.get('workspaceId');
 
-    if (!workspaceId) {
-      throw new AppError("Workspace ID is required", 400);
-    }
-
-    // Nota: O service listTransactions não valida se o user é dono do workspace
-    // porque ele apenas filtra. Se o user passar um ID de outro workspace, 
-    // vai retornar array vazio (o que é seguro).
-    // Se quiser ser estrito, poderia validar o workspace aqui também.
+    const validWorkspaceId = z.string().uuid("Workspace ID inválido").parse(workspaceId);
     
-    const transactions = await listTransactions(workspaceId);
+    const transactions = await listTransactions(validWorkspaceId);
 
-    return NextResponse.json(transactions);
+    return handleResponse(transactions);
 
   } catch (error) {
     return handleError(error);

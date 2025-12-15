@@ -1,30 +1,24 @@
 import { hash } from "bcryptjs";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/lib/errors";
+import { UpdateUserData } from "@/schemas/user";
 
-interface UpdateUserDTO {
+interface UpdateUserServiceProps extends UpdateUserData {
   id: string;
   requesterId: string;
-  name?: string;
-  email?: string;
-  password?: string;
 }
 
-interface User {
-  name?: string;
-  email?: string;
-  password?: string;
-}
-
-export async function updateUser(data: UpdateUserDTO) {
-  if (data.id !== data.requesterId) {
+export async function updateUser({ id, requesterId, ...data }: UpdateUserServiceProps) {
+  if (id !== requesterId) {
     throw new AppError("You can only update your own profile", 403);
   }
 
-  const user = await prisma.user.findUnique({ where: { id: data.id } });
+  const user = await prisma.user.findUnique({ where: { id } });
+  
   if (!user) throw new AppError("User not found", 404);
 
-  const updateData: User = {};
+  const updateData: Prisma.UserUpdateInput = {};
 
   if (data.name) updateData.name = data.name;
 
@@ -41,7 +35,7 @@ export async function updateUser(data: UpdateUserDTO) {
   }
 
   return prisma.user.update({
-    where: { id: data.id },
+    where: { id },
     data: updateData,
     select: {
       id: true,

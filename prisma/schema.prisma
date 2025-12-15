@@ -32,7 +32,7 @@ model Workspace {
   // Relacionamentos
   buckets      Bucket[]
   transactions Transaction[]
-  user         User          @relation(fields: [user_id], references: [id])
+  user         User          @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("workspaces")
 }
@@ -48,7 +48,7 @@ model Bucket {
   created_at            DateTime @default(now())
   updated_at            DateTime @updatedAt
 
-  workspace    Workspace     @relation(fields: [workspace_id], references: [id])
+  workspace    Workspace     @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
   transactions Transaction[]
 
   @@index([workspace_id])

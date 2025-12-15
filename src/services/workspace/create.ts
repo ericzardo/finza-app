@@ -1,17 +1,15 @@
 import { prisma } from "@/lib/prisma";
+import { CreateWorkspaceData } from "@/schemas/workspace";
 
-interface CreateWorkspaceDTO {
+interface CreateServiceProps extends CreateWorkspaceData {
   userId: string;
-  name: string;
-  currency?: string;
 }
 
-export async function createWorkspace(data: CreateWorkspaceDTO) {
+export async function createWorkspace({userId, ...data}: CreateServiceProps) {
   return prisma.workspace.create({
     data: {
-      user_id: data.userId,
-      name: data.name,
-      currency: data.currency,
+      user_id: userId,
+      ...data,
     }
   });
 }

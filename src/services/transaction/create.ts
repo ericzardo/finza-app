@@ -1,23 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/lib/errors";
 import { Prisma } from "@prisma/client";
+import { CreateTransactionData } from "@/schemas/transactions";
 
-interface CreateTransactionDTO {
-  workspaceId: string;
+interface CreateServiceProps extends CreateTransactionData {
   userId: string;
-  bucketId?: string | null;
-  amount: number;
-  type: "INCOME" | "EXPENSE";
-  description?: string;
-  date?: string;
 }
 
-export async function createTransaction(data: CreateTransactionDTO) {
+export async function createTransaction({ userId, ...data }: CreateServiceProps) {
   const workspace = await prisma.workspace.findUnique({
     where: { id: data.workspaceId }
   });
 
-  if (!workspace || workspace.user_id !== data.userId) {
+  if (!workspace || workspace.user_id !== userId) {
     throw new AppError("Workspace not found", 404);
   }
 
@@ -31,19 +26,19 @@ export async function createTransaction(data: CreateTransactionDTO) {
   }
 
   return prisma.$transaction(async (tx) => {
+
+    const amount = new Prisma.Decimal(data.amount);
     
     const transaction = await tx.transaction.create({
       data: {
         workspace_id: data.workspaceId,
         bucket_id: data.bucketId,
-        amount: new Prisma.Decimal(data.amount),
+        amount,
         type: data.type,
         description: data.description,
         date: data.date ? new Date(data.date) : new Date(),
       }
     });
-
-    const amount = new Prisma.Decimal(data.amount);
 
     if (data.type === 'INCOME') {
       await tx.workspace.update({

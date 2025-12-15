@@ -1,41 +1,43 @@
-import { NextResponse } from "next/server";
-import { createBucket, listBuckets } from "@/services/bucket";
-import { handleError } from "@/errors/api-handler";
 import { getCurrentUserId } from "@/lib/session";
 import { AppError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
+import { handleError } from "@/handlers/api-error";
+import { handleResponse } from "@/handlers/api-response";
+import { createBucket, listBuckets } from "@/services/bucket";
+import { createBucketSchema } from "@/schemas/bucket";
 
 export async function POST(request: Request) {
   try {
     const userId = await getCurrentUserId();
     const body = await request.json();
 
-    if (!body.workspaceId || !body.name) {
-      throw new AppError("Workspace ID and Name are required", 400);
-    }
+    const data = createBucketSchema.parse(body);
+
     const workspace = await prisma.workspace.findUnique({
-      where: { id: body.workspaceId }
+      where: { id: data.workspaceId }
     });
 
     if (!workspace || workspace.user_id !== userId) {
-      throw new AppError("Unauthorized", 404);
+      throw new AppError("Workspace not found or unauthorized", 404);
     }
 
     const bucket = await createBucket({
-      workspaceId: body.workspaceId,
-      name: body.name,
-      percentage: Number(body.percentage) || 0,
-      isDefault: body.isDefault
+      workspaceId: data.workspaceId,
+      name: data.name,
+      percentage: data.percentage,
+      isDefault: data.isDefault
     });
 
-    return NextResponse.json(bucket, { status: 201 });
+    return handleResponse(bucket, { 
+      status: 201, 
+      message: "Bucket criado com sucesso!" 
+    });
 
   } catch (error) {
     return handleError(error);
   }
 }
 
-// GET: Listar Buckets (exige ?workspaceId=...)
 export async function GET(request: Request) {
   try {
     const userId = await getCurrentUserId();
@@ -57,7 +59,7 @@ export async function GET(request: Request) {
 
     const buckets = await listBuckets(workspaceId);
 
-    return NextResponse.json(buckets);
+    return handleResponse(buckets);
 
   } catch (error) {
     return handleError(error);

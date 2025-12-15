@@ -1,14 +1,9 @@
 import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/lib/errors";
+import { CreateUserData } from "@/schemas/user";
 
-export interface CreateUserDTO {
-  name: string;
-  email: string;
-  password: string;
-}
-
-export async function createUser(data: CreateUserDTO) {
+export async function createUser(data: CreateUserData) {
   const userExists = await prisma.user.findUnique({
     where: { email: data.email },
   });
@@ -28,7 +23,6 @@ export async function createUser(data: CreateUserDTO) {
         create: {
           name: "Meu Workspace",
           currency: "BRL",
-          // Futuramente aqui entra a criação dos buckets padrão também
         }
       }
     },
