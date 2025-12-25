@@ -14,9 +14,19 @@ export async function deleteWorkspace(id: string, userId: string) {
     throw new AppError("Unauthorized", 403);
   }
 
-  const deletedWorkspace = await prisma.workspace.delete({
-    where: { id }
-  });
+  await prisma.$transaction([
+    prisma.transaction.deleteMany({
+      where: { workspace_id: id },
+    }),
 
-  return deletedWorkspace;
+    prisma.bucket.deleteMany({
+      where: { workspace_id: id },
+    }),
+
+    prisma.workspace.delete({
+      where: { id },
+    }),
+  ]);
+
+  return workspace;
 }

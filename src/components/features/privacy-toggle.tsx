@@ -25,7 +25,7 @@ export function PrivacyToggle({ showTooltip = true, className }: PrivacyTogglePr
       variant="ghost"
       size="icon"
       onClick={togglePrivacy}
-      className={cn("hover:bg-secondary", className)}
+      className={cn("hover:bg-secondary cursor-pointer", className)}
       title={isValuesHidden ? "Mostrar valores" : "Ocultar valores"}
     >
       {isValuesHidden ? (

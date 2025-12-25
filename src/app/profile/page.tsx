@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Key, Shield, ChevronDown, LogOut, User as UserIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SensitiveValue } from "@/components/ui/sensitive-value";
@@ -18,16 +19,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { cn, formatCurrency } from "@/lib/utils";
-import { mockUser, mockWorkspaces } from "@/mock/data"
-
-import { 
-  UpdateUserData, 
-} from "@/schemas/user";
-
+import { UpdateUserData } from "@/schemas/user";
 import { Logo } from "@/components/ui/logo"; 
 import { PrivacyToggle } from "@/components/features/privacy-toggle"; 
 import { ChangePasswordDialog } from "@/components/features/profile/change-password-dialog";
 import { EditProfileDialog } from "@/components/features/profile/edit-profile-dialog";
+import { useAuth } from "@/contexts/auth-context"; 
+import { getWorkspacesRequest } from "@/http/workspaces";
+import { Workspace } from "@/types";
 
 const PRESET_AVATARS = [
   { id: "avatar-1", emoji: "👤", bg: "bg-primary/10" },
@@ -36,27 +35,62 @@ const PRESET_AVATARS = [
 ];
 
 export default function UserProfile() {
-const router = useRouter();
+  const router = useRouter();
+  const { user, logout, isLoading: isAuthLoading } = useAuth(); 
 
-  const [name, setName] = useState(mockUser.name);
-  const [selectedAvatar, setSelectedAvatar] = useState(PRESET_AVATARS[0].id);
+  const [name, setName] = useState("");
+  const [selectedAvatar, setSelectedAvatar] = useState("avatar-1");
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+  const [isLoadingWorkspaces, setIsLoadingWorkspaces] = useState(true);
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
 
-const totalNetWorth = mockWorkspaces.reduce((acc, workspace) => {
-  return acc + (workspace.total_balance || 0); 
-}, 0);
+  useEffect(() => {
+    if (user) {
+      setName(user.name);
+      if (user.avatar_url) setSelectedAvatar(user.avatar_url);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    async function fetchWorkspaces() {
+      try {
+        const data = await getWorkspacesRequest();
+        setWorkspaces(data);
+      } catch (error) {
+        console.error("Erro ao carregar workspaces", error);
+      } finally {
+        setIsLoadingWorkspaces(false);
+      }
+    }
+    fetchWorkspaces();
+  }, []);
+
+  const totalNetWorth = workspaces.reduce((acc, workspace) => {
+    return acc + (Number(workspace.total_balance) || 0); 
+  }, 0);
+  
   const currentAvatar = PRESET_AVATARS.find((a) => a.id === selectedAvatar) || PRESET_AVATARS[0];
 
   const handleProfileUpdate = (data: UpdateUserData) => {
     if (data.name) setName(data.name);
     if (data.avatarUrl) setSelectedAvatar(data.avatarUrl);
+
   };
 
   const handleGoBack = () => {
     router.back();
   };
+
+  const getInitials = (val: string) =>
+    val
+      ? val.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+      : "U";
+
+  if (isAuthLoading) {
+    return <div className="flex h-screen items-center justify-center"><Skeleton className="h-12 w-12 rounded-full" /></div>;
+  }
 
   return (
     <div className="min-h-screen bg-background animate-fade-up">
@@ -72,13 +106,13 @@ const totalNetWorth = mockWorkspaces.reduce((acc, workspace) => {
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="gap-3 px-3 hover:bg-secondary cursor-pointer">
+                <Button variant="ghost" className="gap-3 px-3 cursor-pointer hover:bg-secondary">
                   <Avatar className="h-8 w-8 border-2 border-secondary">
-                    <AvatarFallback className={cn("text-lg", currentAvatar.bg)}>
-                      {currentAvatar.emoji}
+                    <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
+                      {getInitials(name)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="hidden text-sm font-medium text-foreground sm:block">
+                  <span className="hidden text-sm font-medium text-foreground md:block">
                     {name}
                   </span>
                   <ChevronDown className="h-4 w-4 text-muted-foreground" />
@@ -90,7 +124,10 @@ const totalNetWorth = mockWorkspaces.reduce((acc, workspace) => {
                   Perfil
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive cursor-pointer">
+                <DropdownMenuItem 
+                  onClick={logout}
+                  className="text-destructive cursor-pointer focus:bg-destructive/10 focus:text-destructive"
+                >
                   <LogOut className="mr-2 h-4 w-4" />
                   Sair
                 </DropdownMenuItem>
@@ -99,7 +136,8 @@ const totalNetWorth = mockWorkspaces.reduce((acc, workspace) => {
           </div>
         </div>
       </header>
-       <main className="mx-auto max-w-3xl px-6 py-8">
+
+      <main className="mx-auto max-w-3xl px-6 py-8">
         <div>
           <div className="mb-8">
             <button
@@ -137,17 +175,21 @@ const totalNetWorth = mockWorkspaces.reduce((acc, workspace) => {
                   
                   <div className="mt-4 text-center">
                     <h2 className="text-2xl font-bold text-foreground">{name}</h2>
-                    <p className="text-muted-foreground">{mockUser.email}</p>
+                    <p className="text-muted-foreground">{user?.email}</p>
                   </div>
                   
-                  <div className="mt-4 rounded-xl bg-secondary/50 px-6 py-3 text-center">
+                  <div className="mt-4 rounded-xl bg-secondary/50 px-6 py-3 text-center min-w-50">
                     <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">
                       Patrimônio Total
                     </p>
                     <p className="text-2xl font-bold text-primary">
-                      <SensitiveValue>
-                        {formatCurrency(totalNetWorth, "BRL")}
-                      </SensitiveValue>
+                      {isLoadingWorkspaces ? (
+                        <Skeleton className="h-8 w-24 mx-auto" />
+                      ) : (
+                        <SensitiveValue>
+                          {formatCurrency(totalNetWorth, "BRL")}
+                        </SensitiveValue>
+                      )}
                     </p>
                   </div>
                   
@@ -192,7 +234,6 @@ const totalNetWorth = mockWorkspaces.reduce((acc, workspace) => {
         </div>
       </main>
 
-      {/* Dialog: Editar Perfil */}
       <EditProfileDialog
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
@@ -200,7 +241,6 @@ const totalNetWorth = mockWorkspaces.reduce((acc, workspace) => {
         onSuccess={handleProfileUpdate}
       />
 
-      {/* Dialog: Alterar senha */}
       <ChangePasswordDialog 
          open={isPasswordDialogOpen} 
          onOpenChange={setIsPasswordDialogOpen} 

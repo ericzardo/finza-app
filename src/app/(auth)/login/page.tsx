@@ -2,13 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link"; 
-import { useRouter } from "next/navigation"; 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { AuthLayout } from "@/components/layout/auth";
+import { AuthLayout } from "@/components/layout/auth"; 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -20,14 +19,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { loginSchema, LoginFormData } from "@/schemas/auth";
+import { loginSchema, LoginData } from "@/schemas/auth";
+import { useAuth } from "@/contexts/auth-context"; 
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  
+  const { login } = useAuth(); 
 
-  const form = useForm<LoginFormData>({
+  const form = useForm<LoginData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
@@ -35,19 +36,27 @@ export default function LoginPage() {
     },
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: LoginData) => {
     setIsLoading(true);
     
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    console.log("Login Payload:", data);
-    
-    toast.success("Login realizado com sucesso!", {
-      description: "Redirecionando para seus workspaces...",
-    });
-    
-    setIsLoading(false);
-    router.push("/dashboard");
+    try {
+      await login(data);
+      
+      toast.success("Login realizado com sucesso!", {
+        description: "Redirecionando para seus workspaces...",
+      });
+      
+      
+    } catch (error) {
+      console.error(error);
+
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Erro desconhecido ao criar conta.";
+
+      toast.error(errorMessage);
+      setIsLoading(false);
+    }
   };
 
   return (

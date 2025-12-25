@@ -1,46 +1,34 @@
-import { hash } from "bcryptjs";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/lib/errors";
 import { UpdateUserData } from "@/schemas/user";
+import { Prisma } from "@prisma/client";
 
-interface UpdateUserServiceProps extends UpdateUserData {
-  id: string;
-  requesterId: string;
-}
-
-export async function updateUser({ id, requesterId, ...data }: UpdateUserServiceProps) {
-  if (id !== requesterId) {
-    throw new AppError("You can only update your own profile", 403);
-  }
-
-  const user = await prisma.user.findUnique({ where: { id } });
+export async function updateUser(userId: string, data: UpdateUserData) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
   
-  if (!user) throw new AppError("User not found", 404);
+  if (!user) throw new AppError("Usuário não encontrado", 404);
 
   const updateData: Prisma.UserUpdateInput = {};
 
   if (data.name) updateData.name = data.name;
+  if (data.avatarUrl !== undefined) updateData.avatar_url = data.avatarUrl;
+  if (data.isPrivacyEnabled !== undefined) updateData.is_privacy_enabled = data.isPrivacyEnabled;
 
-  if (data.email && data.email !== user.email) {
-    const emailExists = await prisma.user.findUnique({
-      where: { email: data.email }
-    });
-    if (emailExists) throw new AppError("Email already in use", 409);
-    updateData.email = data.email;
-  }
-
-  if (data.password) {
-    updateData.password = await hash(data.password, 6);
-  }
-
-  return prisma.user.update({
-    where: { id },
+  const updatedUser = await prisma.user.update({
+    where: { id: userId },
     data: updateData,
     select: {
       id: true,
       name: true, 
-      email: true
+      email: true,
+      avatar_url: true, 
+      is_privacy_enabled: true,
     }
   });
+
+  return {
+    ...updatedUser,
+    avatarUrl: updatedUser.avatar_url,
+    isPrivacyEnabled: updatedUser.is_privacy_enabled,
+  };
 }

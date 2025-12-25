@@ -1,6 +1,5 @@
+import { z } from "zod";
 import { getCurrentUserId } from "@/lib/session";
-import { AppError } from "@/lib/errors";
-import { prisma } from "@/lib/prisma";
 import { handleError } from "@/handlers/api-error";
 import { handleResponse } from "@/handlers/api-response";
 import { createBucket, listBuckets } from "@/services/bucket";
@@ -13,18 +12,11 @@ export async function POST(request: Request) {
 
     const data = createBucketSchema.parse(body);
 
-    const workspace = await prisma.workspace.findUnique({
-      where: { id: data.workspaceId }
-    });
-
-    if (!workspace || workspace.user_id !== userId) {
-      throw new AppError("Workspace not found or unauthorized", 404);
-    }
-
     const bucket = await createBucket({
+      userId,
       workspaceId: data.workspaceId,
       name: data.name,
-      percentage: data.percentage,
+      allocationPercentage: data.allocationPercentage,
       isDefault: data.isDefault
     });
 
@@ -44,20 +36,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const workspaceId = searchParams.get('workspaceId');
 
-    if (!workspaceId) {
-      throw new AppError("Workspace ID is required", 400);
-    }
+    const validWorkspaceId = z.string().uuid("Workspace ID obrigatório").parse(workspaceId);
 
-    // Segurança: Verifica dono do workspace
-    const workspace = await prisma.workspace.findUnique({
-      where: { id: workspaceId }
-    });
-
-    if (!workspace || workspace.user_id !== userId) {
-      throw new AppError("Workspace not found or unauthorized", 404);
-    }
-
-    const buckets = await listBuckets(workspaceId);
+    const buckets = await listBuckets(validWorkspaceId, userId);
 
     return handleResponse(buckets);
 

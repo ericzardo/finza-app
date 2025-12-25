@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Plus, Target, PiggyBank } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,9 +15,9 @@ import { EditBucketDialog } from "@/components/features/buckets/edit-bucket-dial
 import { BucketCard } from "@/components/bucket-card";
 import { BucketCardSkeleton } from "@/components/skeletons/bucket-card";
 
-import { mockWorkspaces, mockBuckets } from "@/mock/data";
-
-import { Bucket } from "@/types";
+import { getBucketsRequest } from "@/http/buckets";
+import { getWorkspaceByIdRequest } from "@/http/workspaces";
+import { Bucket, Workspace } from "@/types";
 import { cn } from "@/lib/utils";
 
 export default function BucketsPage() {
@@ -24,21 +25,47 @@ export default function BucketsPage() {
   const router = useRouter();
   const workspaceId = params.workspaceId as string;
 
-  const workspace = mockWorkspaces.find((w) => w.id === workspaceId);
+  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const [buckets, setBuckets] = useState<Bucket[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedBucket, setSelectedBucket] = useState<Bucket | null>(null);
-  
-  const [isLoading] = useState(false);
 
-  const buckets = useMemo(() => 
-    mockBuckets.filter((b) => b.workspace_id === workspaceId),
-    [workspaceId]
-  ); 
+  const fetchData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const [wsData, bucketsData] = await Promise.all([
+        getWorkspaceByIdRequest(workspaceId),
+        getBucketsRequest(workspaceId)
+      ]);
+      
+      setWorkspace(wsData);
+      setBuckets(bucketsData);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao carregar dados do workspace.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [workspaceId]);
+
+  const refreshBuckets = useCallback(async () => {
+    try {
+      const data = await getBucketsRequest(workspaceId);
+      setBuckets(data);
+    } catch (error) {
+      console.error("Erro ao atualizar lista de buckets", error);
+    }
+  }, [workspaceId]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const totalAllocated = useMemo(
-    () => buckets.reduce((sum, b) => sum + b.allocation_percentage, 0),
+    () => buckets.reduce((sum, b) => sum + Number(b.allocation_percentage), 0),
     [buckets]
   );
 
@@ -50,20 +77,36 @@ export default function BucketsPage() {
     [totalAllocated]
   );
 
-  const handleCreateClick = () => {
-    setIsCreateOpen(true);
-  };
-
   const handleEditClick = (bucket: Bucket) => {
     setSelectedBucket(bucket);
     setIsEditOpen(true);
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="flex justify-between items-center">
+            <div className="space-y-2">
+                <div className="h-8 w-48 bg-muted rounded" />
+                <div className="h-4 w-64 bg-muted rounded" />
+            </div>
+            <div className="h-10 w-32 bg-muted rounded" />
+        </div>
+        <div className="h-32 bg-muted rounded-xl" />
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <BucketCardSkeleton key={index} index={index} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   if (!workspace) {
     return (
-      <div className="flex flex-col items-center justify-center h-[50vh] text-muted-foreground">
-        <p>Workspace não encontrado.</p>
-        <Button variant="link" onClick={() => router.push("/dashboard")}>
+      <div className="flex flex-col items-center justify-center h-[50vh] text-muted-foreground space-y-4">
+        <p className="text-lg">Workspace não encontrado.</p>
+        <Button variant="outline" onClick={() => router.push("/dashboard")}>
           Voltar ao início
         </Button>
       </div>
@@ -79,10 +122,10 @@ export default function BucketsPage() {
             Caixas de Propósito
           </h1>
           <p className="mt-1 text-muted-foreground">
-            Organize seu dinheiro por objetivos
+            Organize seu dinheiro por objetivos no workspace <strong>{workspace.name}</strong>
           </p>
         </div>
-        <Button className="gap-2 cursor-pointer" onClick={handleCreateClick}>
+        <Button className="gap-2 cursor-pointer" onClick={() => setIsCreateOpen(true)}>
           <Plus className="h-4 w-4" />
           Novo Caixa
         </Button>
@@ -118,11 +161,7 @@ export default function BucketsPage() {
 
       {/* Buckets Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {isLoading ? (
-          Array.from({ length: 4 }).map((_, index) => (
-            <BucketCardSkeleton key={index} index={index} />
-          ))
-        ) : buckets.length === 0 ? (
+        {buckets.length === 0 ? (
           <Card className="col-span-full border-border/60 p-12 text-center border-dashed">
             <PiggyBank className="mx-auto h-12 w-12 text-muted-foreground/30" />
             <h3 className="mt-4 font-semibold text-foreground">
@@ -131,7 +170,7 @@ export default function BucketsPage() {
             <p className="mt-2 text-muted-foreground">
               Crie seu primeiro caixa para começar a organizar seu dinheiro
             </p>
-            <Button className="mt-4 gap-2 cursor-pointer" onClick={handleCreateClick}>
+            <Button className="mt-4 gap-2 cursor-pointer" onClick={() => setIsCreateOpen(true)}>
               <Plus className="h-4 w-4" />
               Criar Caixa
             </Button>
@@ -153,14 +192,17 @@ export default function BucketsPage() {
         open={isCreateOpen} 
         onOpenChange={setIsCreateOpen} 
         workspaceId={workspace.id} 
+        onSuccess={refreshBuckets} 
       />
 
-      <EditBucketDialog 
-        open={isEditOpen} 
-        onOpenChange={setIsEditOpen} 
-        bucket={selectedBucket} 
-        workspaceId={workspace.id} 
-      />
+      {selectedBucket && (
+        <EditBucketDialog 
+          open={isEditOpen} 
+          onOpenChange={setIsEditOpen} 
+          bucket={selectedBucket}
+          onSuccess={refreshBuckets} 
+        />
+      )}
     </div>
   );
 }

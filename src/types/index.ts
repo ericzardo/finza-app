@@ -2,7 +2,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  avatar: string;
+  avatar_url: string;
+  is_privacy_enabled: boolean;
 }
 
 export interface Bucket {
@@ -18,7 +19,7 @@ export interface Workspace {
   id: string;
   name: string;
   currency: string;
-  total_balance?: number;
+  total_balance: number;
 }
 
 export interface Transaction {
@@ -29,4 +30,16 @@ export interface Transaction {
   description?: string;
   bucket_id?: string;
   workspace_id: string;
+}
+
+export interface WorkspaceWithBuckets {
+  id: string;
+  name: string;
+  currency: string;
+  user_id: string;
+  created_at: Date;
+  updated_at: Date;
+  buckets: {
+    current_balance: unknown; 
+  }[];
 }

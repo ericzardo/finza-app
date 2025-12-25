@@ -15,8 +15,10 @@ export async function verifyToken(token: string) {
     const { payload } = await jwtVerify(token, key, {
       algorithms: ["HS256"],
     });
+    console.log(payload)
     return payload;
-  } catch {
+  } catch (error) {
+    console.log(error);
     return null;
   }
 }

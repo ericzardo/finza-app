@@ -42,35 +42,39 @@ import {
 } from "@/components/ui/form";
 
 import { cn, getCurrencySymbol } from "@/lib/utils";
-import { mockBuckets } from "@/mock/data"; 
-import { transactionFormSchema, TransactionFormData, CreateTransactionData } from "@/schemas/transaction";
+import { transactionFormSchema, TransactionData } from "@/schemas/transaction";
+import { createTransactionRequest } from "@/http/transactions"; 
+import { Bucket } from "@/types";
 
 interface AddTransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
   currency?: string;
+  buckets?: Bucket[];
+  onSuccess?: () => void;
 }
 
 export function AddTransactionDialog({ 
   open, 
   onOpenChange, 
   workspaceId, 
-  currency = "BRL" 
+  currency = "BRL",
+  buckets = [],
+  onSuccess
 }: AddTransactionDialogProps) {
-  const [isLoading, setIsLoading] = useState(false);
   
-  const workspaceBuckets = mockBuckets.filter((b) => b.workspace_id === workspaceId);
+  const [isLoading, setIsLoading] = useState(false);
   const currencySymbol = getCurrencySymbol(currency);
 
-  const form = useForm<TransactionFormData>({
+  const form = useForm<TransactionData>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
       type: "EXPENSE",
       amount: 0,
       description: "",
       date: new Date(),
-      bucketId: undefined,
+      workspaceId: workspaceId,
     },
   });
 
@@ -78,33 +82,41 @@ export function AddTransactionDialog({
     if (open) {
       form.reset({
         type: "EXPENSE",
-        amount: undefined,
+        amount: 0,
         description: "",
         date: new Date(),
+        workspaceId: workspaceId,
         bucketId: undefined,
       });
     }
-  }, [open, form]);
+  }, [open, form, workspaceId]);
 
-  const onSubmit = async (data: TransactionFormData) => {
-    setIsLoading(true);
-  
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  const onSubmit = async (data: TransactionData) => {
+    try {
+      setIsLoading(true);
 
-    const payload: CreateTransactionData = {
-      ...data,
-      workspaceId: workspaceId,
-      bucketId: data.bucketId === "none" ? null : data.bucketId,
-    };
+      const payload = {
+        ...data,
+        workspaceId, 
+        bucketId: data.bucketId === "none" ? undefined : data.bucketId,
+      };
 
-    console.log("Payload Enviado:", payload);
-    
-    toast.success("Transação adicionada!", {
-      description: `${data.type === "INCOME" ? "Receita" : "Despesa"} de ${currencySymbol} ${Number(data.amount).toFixed(2)} registrada.`,
-    });
-    
-    setIsLoading(false);
-    onOpenChange(false);
+      await createTransactionRequest(payload);
+      
+      toast.success("Transação adicionada!");
+      
+      if (onSuccess) {
+        onSuccess();
+      }
+
+      onOpenChange(false);
+
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao registrar transação.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -116,7 +128,7 @@ export function AddTransactionDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-120 border-none shadow-xl [&>button]:cursor-pointer">
+      <DialogContent className="sm:max-w-106.25 border-none shadow-xl [&>button]:cursor-pointer">
         <DialogHeader>
           <DialogTitle>Nova Transação</DialogTitle>
           <DialogDescription>
@@ -126,8 +138,7 @@ export function AddTransactionDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4" noValidate>
-            
-            {/* Seletor de Tipo */}
+
             <FormField
               control={form.control}
               name="type"
@@ -166,7 +177,6 @@ export function AddTransactionDialog({
               )}
             />
 
-            {/* Input de Valor */}
             <FormField
               control={form.control}
               name="amount"
@@ -185,10 +195,10 @@ export function AddTransactionDialog({
                         placeholder="0,00"
                         className="pl-10"
                         {...field}
-                        value={field.value ?? ""} 
+                        value={field.value || ""} 
                         onChange={(e) => {
                           const value = e.target.value;
-                          field.onChange(value === "" ? undefined : Number(value));
+                          field.onChange(value === "" ? 0 : Number(value));
                         }}
                       />
                     </div>
@@ -198,7 +208,6 @@ export function AddTransactionDialog({
               )}
             />
 
-            {/* Input de Descrição */}
             <FormField
               control={form.control}
               name="description"
@@ -209,6 +218,7 @@ export function AddTransactionDialog({
                     <Input
                       placeholder="Ex: Almoço, Salário, Netflix..."
                       {...field}
+                      value={field.value || ""}
                     />
                   </FormControl>
                   <FormMessage />
@@ -216,7 +226,6 @@ export function AddTransactionDialog({
               )}
             />
 
-            {/* Seletor de Data */}
             <FormField
               control={form.control}
               name="date"
@@ -249,6 +258,7 @@ export function AddTransactionDialog({
                         onSelect={field.onChange}
                         initialFocus
                         locale={ptBR}
+                        disabled={(date) => date > new Date() || date < new Date("1900-01-01")}
                         className="p-3 pointer-events-auto"
                       />
                     </PopoverContent>
@@ -258,7 +268,6 @@ export function AddTransactionDialog({
               )}
             />
 
-            {/* Seletor de Bucket */}
             <FormField
               control={form.control}
               name="bucketId"
@@ -278,7 +287,7 @@ export function AddTransactionDialog({
                       <SelectItem value="none" className="cursor-pointer text-muted-foreground">
                         Sem categoria
                       </SelectItem>
-                      {workspaceBuckets.map((bucket) => (
+                      {buckets.map((bucket) => (
                         <SelectItem key={bucket.id} value={bucket.id} className="cursor-pointer">
                           {bucket.name}
                         </SelectItem>
@@ -296,10 +305,11 @@ export function AddTransactionDialog({
                 variant="ghost" 
                 onClick={() => handleOpenChange(false)}
                 className="cursor-pointer"
+                disabled={isLoading}
               >
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isLoading} className="cursor-pointer">
+              <Button type="submit" disabled={isLoading} className="cursor-pointer min-w-35">
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />

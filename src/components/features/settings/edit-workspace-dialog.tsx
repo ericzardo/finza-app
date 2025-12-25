@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation"; // Opcional, para refresh server
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,14 +20,16 @@ import {
 } from "@/components/ui/form";
 import {
   Select,
-  SelectContent, // O ALVO DA MUDANÇA
+  SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 
 import { updateWorkspaceSchema, UpdateWorkspaceData } from "@/schemas/workspace";
+import { updateWorkspaceRequest } from "@/http/workspaces";
 import { Workspace } from "@/types";
+import { useWorkspace } from "@/contexts/workspace-context";
 
 interface EditWorkspaceDialogProps {
   workspace: Workspace;
@@ -34,6 +37,8 @@ interface EditWorkspaceDialogProps {
 
 export function EditWorkspaceDialog({ workspace }: EditWorkspaceDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const { refreshWorkspace } = useWorkspace();
+  const router = useRouter();
 
   const form = useForm<UpdateWorkspaceData>({
     resolver: zodResolver(updateWorkspaceSchema),
@@ -44,14 +49,25 @@ export function EditWorkspaceDialog({ workspace }: EditWorkspaceDialogProps) {
   });
 
   const onSubmit = async (data: UpdateWorkspaceData) => {
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log("Update Payload:", data);
-    
-    toast.success("Configurações salvas!", {
-      description: "As informações do workspace foram atualizadas.",
-    });
-    setIsLoading(false);
+    try {
+      setIsLoading(true);
+      
+      await updateWorkspaceRequest(workspace.id, data);
+      
+      toast.success("Configurações salvas!", {
+        description: "As informações do workspace foram atualizadas.",
+      });
+
+      await refreshWorkspace();
+      
+      router.refresh();
+
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao atualizar workspace.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -99,7 +115,6 @@ export function EditWorkspaceDialog({ workspace }: EditWorkspaceDialogProps) {
                         </SelectTrigger>
                       </FormControl>
                       
-                      {/* CORREÇÃO AQUI: border-none e shadow-xl para remover a borda grossa */}
                       <SelectContent className="border-none shadow-xl">
                         <SelectItem value="BRL" className="cursor-pointer">Real Brasileiro (BRL)</SelectItem>
                         <SelectItem value="USD" className="cursor-pointer">Dólar Americano (USD)</SelectItem>

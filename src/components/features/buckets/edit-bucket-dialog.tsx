@@ -26,24 +26,25 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { bucketFormSchema, BucketFormData, UpdateBucketData } from "@/schemas/bucket";
+import { bucketFormSchema, BucketData } from "@/schemas/bucket";
+import { updateBucketRequest } from "@/http/buckets"; 
 import { Bucket } from "@/types";
 
 interface EditBucketDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bucket: Bucket | null;
-  workspaceId: string;
+  onSuccess?: () => void; 
 }
 
-export function EditBucketDialog({ open, onOpenChange, bucket, workspaceId }: EditBucketDialogProps) {
+export function EditBucketDialog({ open, onOpenChange, bucket, onSuccess }: EditBucketDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm({
+  const form = useForm<BucketData>({
     resolver: zodResolver(bucketFormSchema),
     defaultValues: {
       name: "",
-      percentage: 0,
+      allocationPercentage: 0,
       isDefault: false,
     },
   });
@@ -52,7 +53,8 @@ export function EditBucketDialog({ open, onOpenChange, bucket, workspaceId }: Ed
     if (bucket && open) {
       form.reset({
         name: bucket.name,
-        percentage: bucket.allocation_percentage,
+      
+        allocationPercentage: Number(bucket.allocation_percentage), 
         isDefault: bucket.is_default || false, 
       });
     }
@@ -62,27 +64,30 @@ export function EditBucketDialog({ open, onOpenChange, bucket, workspaceId }: Ed
     onOpenChange(isOpen);
   };
 
-  const onSubmit = async (data: BucketFormData) => {
+  const onSubmit = async (data: BucketData) => {
     if (!bucket) return;
 
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Chamada real à API
+      await updateBucketRequest(bucket.id, {
+        ...data,
+      });
 
-    const payload: UpdateBucketData = {
-      ...data,
-      id: bucket.id,
-      workspaceId,
-    };
+      toast.success("Caixa atualizado!", {
+        description: `O caixa "${data.name}" foi atualizado com sucesso.`,
+      });
 
-    console.log("Payload Edição:", payload);
+      if (onSuccess) onSuccess();
+      handleOpenChange(false);
 
-    toast.success("Caixa atualizado!", {
-      description: `O caixa "${data.name}" foi atualizado com sucesso.`,
-    });
-
-    setIsLoading(false);
-    handleOpenChange(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao atualizar caixa");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -116,7 +121,7 @@ export function EditBucketDialog({ open, onOpenChange, bucket, workspaceId }: Ed
             {/* Porcentagem */}
             <FormField
               control={form.control}
-              name="percentage" 
+              name="allocationPercentage" 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Alocação Automática</FormLabel>
@@ -131,10 +136,7 @@ export function EditBucketDialog({ open, onOpenChange, bucket, workspaceId }: Ed
                         max={100}
                         placeholder="0"
                         className="pr-8"
-                        name={field.name}
-                        onBlur={field.onBlur}
-                        ref={field.ref}
-                        disabled={field.disabled}
+                        {...field}
                         value={field.value ?? ""}
                         onChange={(e) => {
                            const val = e.target.value;
@@ -180,6 +182,7 @@ export function EditBucketDialog({ open, onOpenChange, bucket, workspaceId }: Ed
                 variant="ghost" 
                 onClick={() => handleOpenChange(false)}
                 className="cursor-pointer"
+                disabled={isLoading}
               >
                 Cancelar
               </Button>

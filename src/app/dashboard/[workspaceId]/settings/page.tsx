@@ -1,27 +1,31 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import { EditWorkspaceDialog } from "@/components/features/settings/edit-workspace-dialog";
 import { WorkspaceDeleteZone } from "@/components/features/settings/danger-zone-workspace";
 
-import { mockWorkspaces } from "@/mock/data";
+import { useWorkspace } from "@/contexts/workspace-context";
+import { Button } from "@/components/ui/button";
 
 export default function WorkspaceSettingsPage() {
-  const params = useParams();
   const router = useRouter();
-  const workspaceId = params.workspaceId as string;
+  
+  const { workspace, isLoading } = useWorkspace();
 
-  const workspace = mockWorkspaces.find((w) => w.id === workspaceId);
+  if (isLoading) {
+    return <SettingsSkeleton />;
+  }
 
   if (!workspace) {
     return (
-      <div className="flex flex-col items-center justify-center h-[50vh] text-muted-foreground">
-        <p>Workspace não encontrado.</p>
-        <Button variant="link" onClick={() => router.push("/dashboard")}>
+      <div className="flex flex-col items-center justify-center h-[50vh] gap-4">
+        <p className="text-muted-foreground">Workspace não encontrado.</p>
+        <Button variant="outline" onClick={() => router.push("/dashboard")}>
           Voltar ao início
         </Button>
       </div>
@@ -30,7 +34,6 @@ export default function WorkspaceSettingsPage() {
 
   return (
     <div className="space-y-6 animate-fade-up">
-      {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
         <p className="mt-1 text-muted-foreground">
@@ -38,10 +41,8 @@ export default function WorkspaceSettingsPage() {
         </p>
       </div>
 
-      {/* 1. Formulário Geral */}
       <EditWorkspaceDialog workspace={workspace} />
 
-      {/* 2. Preferências (Placeholder) */}
       <Card className="border-border/60">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg font-semibold">
@@ -59,8 +60,23 @@ export default function WorkspaceSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* 3. Zona de Perigo */}
-      <WorkspaceDeleteZone workspaceName={workspace.name} />
+      <WorkspaceDeleteZone 
+        workspaceId={workspace.id} 
+        workspaceName={workspace.name} 
+      />
+    </div>
+  );
+}
+
+function SettingsSkeleton() {
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-4 w-96" />
+      </div>
+      <Skeleton className="h-64 w-full rounded-xl" />
+      <Skeleton className="h-48 w-full rounded-xl" />
     </div>
   );
 }

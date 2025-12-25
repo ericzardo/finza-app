@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -20,14 +19,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { registerSchema, RegisterFormData } from "@/schemas/auth";
+import { registerSchema, RegisterData } from "@/schemas/auth";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  
+  const { register } = useAuth();
 
-  const form = useForm<RegisterFormData>({
+  const form = useForm<RegisterData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
@@ -36,19 +37,26 @@ export default function RegisterPage() {
     },
   });
 
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async (data: RegisterData) => {
     setIsLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    console.log("Register Payload:", data);
-    
-    toast.success("Conta criada com sucesso!", {
-      description: "Seja bem-vindo ao Finza! Faça login para continuar.",
-    });
-    
-    setIsLoading(false);
-    router.push("/login"); 
+    try {
+      await register(data);
+      
+      toast.success("Conta criada com sucesso!", {
+        description: "Seja bem-vindo ao Finza! Preparando seu ambiente...",
+      });
+      
+    } catch (error) {
+      console.error(error);
+
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : "Erro desconhecido ao fazer login.";
+
+      toast.error(errorMessage);
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -11,6 +11,7 @@ export async function GET(request: Request, props: Props) {
     const userId = await getCurrentUserId();
 
     const transaction = await getTransactionById(params.id, userId);
+    
     return NextResponse.json(transaction);
 
   } catch (error) {

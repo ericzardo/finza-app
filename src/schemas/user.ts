@@ -14,8 +14,9 @@ export const createUserSchema = z.object({
   password: passwordSchema,
 });
 
-export const updateUserSchema = createUserSchema.partial().extend({
-  avatarUrl: z.string().optional(),
+export const updateUserSchema = z.object({
+  name: z.string().trim().min(2, "O nome deve ter pelo menos 2 caracteres").optional(),
+  avatarUrl: z.string().optional(), 
   isPrivacyEnabled: z.boolean().optional(),
 });
 

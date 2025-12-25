@@ -27,22 +27,24 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { bucketFormSchema, BucketFormData, CreateBucketData } from "@/schemas/bucket";
+import { bucketFormSchema, BucketData } from "@/schemas/bucket";
+import { createBucketRequest } from "@/http/buckets"; 
 
 interface AddBucketDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
+  onSuccess?: () => void;
 }
 
-export function AddBucketDialog({ open, onOpenChange, workspaceId }: AddBucketDialogProps) {
+export function AddBucketDialog({ open, onOpenChange, workspaceId, onSuccess }: AddBucketDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm({
+  const form = useForm<BucketData>({
     resolver: zodResolver(bucketFormSchema),
     defaultValues: {
       name: "",
-      percentage: 0,
+      allocationPercentage: 0, 
       isDefault: false,
     },
   });
@@ -52,24 +54,30 @@ export function AddBucketDialog({ open, onOpenChange, workspaceId }: AddBucketDi
     onOpenChange(isOpen);
   };
 
-  const onSubmit = async (data: BucketFormData) => {
-    setIsLoading(true);
+  const onSubmit = async (data: BucketData) => {
+    try {
+      setIsLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+      await createBucketRequest({
+        ...data,
+        workspaceId,
+      });
 
-    const payload: CreateBucketData = {
-      ...data,
-      workspaceId,
-    };
+      toast.success("Caixa criado!", {
+        description: `O caixa "${data.name}" foi criado com sucesso.`,
+      });
 
-    console.log("Payload Criação:", payload);
+      if (onSuccess) onSuccess();
+      handleOpenChange(false);
 
-    toast.success("Caixa criado!", {
-      description: `O caixa "${data.name}" foi criado com sucesso.`,
-    });
-
-    setIsLoading(false);
-    handleOpenChange(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao criar caixa", {
+        description: "Verifique os dados e tente novamente."
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -101,7 +109,7 @@ export function AddBucketDialog({ open, onOpenChange, workspaceId }: AddBucketDi
 
             <FormField
               control={form.control}
-              name="percentage"
+              name="allocationPercentage"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Alocação Automática</FormLabel>
@@ -116,11 +124,7 @@ export function AddBucketDialog({ open, onOpenChange, workspaceId }: AddBucketDi
                         max={100}
                         placeholder="0"
                         className="pr-8"
-                        name={field.name}
-                        onBlur={field.onBlur}
-                        ref={field.ref}
-                        disabled={field.disabled}
-                        
+                        {...field}
                         value={field.value ?? ""}
                         onChange={(e) => {
                            const val = e.target.value;
@@ -152,6 +156,7 @@ export function AddBucketDialog({ open, onOpenChange, workspaceId }: AddBucketDi
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
+                      className="cursor-pointer"
                     />
                   </FormControl>
                 </FormItem>
@@ -164,6 +169,7 @@ export function AddBucketDialog({ open, onOpenChange, workspaceId }: AddBucketDi
                 variant="ghost" 
                 onClick={() => handleOpenChange(false)}
                 className="cursor-pointer"
+                disabled={isLoading}
               >
                 Cancelar
               </Button>

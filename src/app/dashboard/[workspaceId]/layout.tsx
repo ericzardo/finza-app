@@ -2,7 +2,10 @@ import { ReactNode } from "react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Sidebar } from "@/components/layout/sidebar"; 
 import { Header } from "@/components/layout/header";
-import { mockWorkspaces } from "@/mock/data";
+import { getCurrentUserId } from "@/lib/session"; 
+import { getWorkspaceById } from "@/services/workspace";
+import { redirect } from "next/navigation";
+import Link from "next/link";
 
 interface WorkspaceLayoutProps {
   children: ReactNode;
@@ -14,8 +17,21 @@ export default async function WorkspaceLayout({
   params,
 }: WorkspaceLayoutProps) {
   const { workspaceId } = await params;
+  
+  let userId: string;
 
-  const workspace = mockWorkspaces.find((w) => w.id === workspaceId);
+  try {
+    userId = await getCurrentUserId();
+  } catch {
+    redirect("/login");
+  }
+
+  let workspace;
+  try {
+    workspace = await getWorkspaceById(workspaceId, userId);
+  } catch {
+    workspace = null
+  }
 
   if (!workspace) {
     return (
@@ -26,6 +42,10 @@ export default async function WorkspaceLayout({
           </h1>
           <p className="mt-2 text-muted-foreground">
             O workspace solicitado não existe ou você não tem acesso.
+            <br/>
+            <Link href="/dashboard" className="text-primary hover:underline mt-4 block">
+              Voltar ao Dashboard
+            </Link>
           </p>
         </div>
       </div>

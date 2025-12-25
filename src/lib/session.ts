@@ -1,14 +1,31 @@
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
 import { AppError } from "@/lib/errors";
+import { verify } from "jsonwebtoken";
 
 export async function getCurrentUserId() {
-  const headersList = await headers();
+  const cookieStore = await cookies();
   
-  const userId = headersList.get("x-user-id");
+  const token = cookieStore.get("finza.token")?.value;
 
-  if (!userId) {
-    throw new AppError("Unauthorized", 401);
+  if (!token) {
+    throw new AppError("Unauthorized: No token found", 401);
   }
 
-  return userId;
+  try {
+    console.log("Unauthorized")
+    const secret = process.env.JWT_SECRET || ""; 
+    
+    const decoded = verify(token, secret) as { sub: string; id?: string };
+    const userId = decoded.sub || decoded.id;
+
+    if (!userId) {
+        throw new AppError("Unauthorized: Invalid token payload", 401);
+    }
+
+    return userId;
+
+  } catch {
+    console.log("Unauthorized")
+    throw new AppError("Unauthorized: Invalid token signature", 401);
+  }
 }

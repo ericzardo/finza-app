@@ -20,6 +20,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import { updateUserSchema, UpdateUserData } from "@/schemas/user";
+import { updateUserRequest } from "@/http/users"; 
+import { useAuth } from "@/contexts/auth-context";
 
 export const PRESET_AVATARS = [
   { id: "avatar-1", emoji: "👤", bg: "bg-primary/10" },
@@ -44,6 +46,7 @@ export function EditProfileDialog({
   onSuccess 
 }: EditProfileDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
 
   const {
     register,
@@ -69,26 +72,36 @@ export function EditProfileDialog({
     }
   }, [open, initialData, reset]);
 
-  // Monitora o avatar selecionado para aplicar estilos visuais
   const selectedAvatarUrl = watch("avatarUrl");
 
   const onSubmit = async (data: UpdateUserData) => {
-    setIsSubmitting(true);
-    
-    // Simulação de API
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    console.log("Perfil Atualizado:", data);
-    
-    // Notifica o componente pai para atualizar o estado local
-    onSuccess(data);
-    
-    toast.success("Perfil atualizado!", {
-      description: "Suas informações foram salvas com sucesso.",
-    });
+    if (!user) return;
 
-    setIsSubmitting(false);
-    onOpenChange(false);
+    try {
+      setIsSubmitting(true);
+      
+      await updateUserRequest(user.id, data);
+      
+      onSuccess(data);
+      
+      toast.success("Perfil atualizado!", {
+        description: "Suas informações foram salvas com sucesso.",
+      });
+
+      onOpenChange(false);
+
+    } catch (error) {
+      console.error(error);
+
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error("Erro desconhecido ao atualizar perfil.");
+      }
+
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -104,7 +117,6 @@ export function EditProfileDialog({
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-6 py-4">
             
-            {/* Seleção de Avatar */}
             <div className="space-y-3">
               <Label>Escolha seu avatar</Label>
               <div className="grid grid-cols-3 gap-4">

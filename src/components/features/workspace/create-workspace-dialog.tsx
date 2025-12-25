@@ -30,12 +30,15 @@ import {
   CreateWorkspaceData,
 } from "@/schemas/workspace";
 
+import { createWorkspaceRequest } from "@/http/workspaces";
+
 interface CreateWorkspaceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
 }
 
-export function CreateWorkspaceDialog({ open, onOpenChange }: CreateWorkspaceDialogProps) {
+export function CreateWorkspaceDialog({ open, onOpenChange, onSuccess }: CreateWorkspaceDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
@@ -55,17 +58,28 @@ export function CreateWorkspaceDialog({ open, onOpenChange }: CreateWorkspaceDia
   const onSubmit = async (data: CreateWorkspaceData) => {
     setIsSubmitting(true);
     
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    console.log("Novo Workspace:", data);
-    
-    toast.success("Workspace criado!", {
-      description: `${data.name} foi configurado com sucesso.`,
-    });
+    try {
+      await createWorkspaceRequest(data);
+      
+      toast.success("Workspace criado!", {
+        description: `${data.name} foi configurado com sucesso.`,
+      });
 
-    setIsSubmitting(false);
-    onOpenChange(false);
-    reset();
+      if (onSuccess) {
+        onSuccess();
+      }
+
+      onOpenChange(false);
+      reset();
+
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao criar workspace", {
+        description: "Tente novamente mais tarde."
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

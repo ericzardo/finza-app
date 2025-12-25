@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/dialog";
 
 import { changePasswordSchema, ChangePasswordData } from "@/schemas/user";
+import { changePasswordRequest } from "@/http/users"; 
+import { useAuth } from "@/contexts/auth-context";
 
 interface ChangePasswordDialogProps {
   open: boolean;
@@ -27,11 +29,13 @@ interface ChangePasswordDialogProps {
 
 export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth(); 
 
   const {
     register,
     handleSubmit,
     reset,
+    setError, 
     formState: { errors },
   } = useForm<ChangePasswordData>({
     resolver: zodResolver(changePasswordSchema),
@@ -43,19 +47,35 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
   });
 
   const onSubmit = async (data: ChangePasswordData) => {
-    setIsSubmitting(true);
+    if (!user) return;
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    console.log("FORM SUBMETIDO COM SUCESSO:", data);
+    try {
+      setIsSubmitting(true);
 
-    toast.success("Senha alterada com sucesso!", {
-      description: "Utilize sua nova senha no próximo acesso.",
-    });
+      await changePasswordRequest(user.id, data);
 
-    setIsSubmitting(false);
-    onOpenChange(false);
-    reset();
+      toast.success("Senha alterada com sucesso!", {
+        description: "Utilize sua nova senha no próximo acesso.",
+      });
+
+      onOpenChange(false);
+      reset();
+
+    } catch (error) {
+      console.error(error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes("Senha atual") || error.message.includes("incorreta")) {
+          setError("currentPassword", { message: "Senha atual incorreta" });
+        } else {
+          toast.error(error.message);
+        }
+      } else {
+        toast.error("Erro desconhecido ao alterar senha.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleOpenChange = (isOpen: boolean) => {
