@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/ui/logo";
 import {
   DropdownMenu,
@@ -86,6 +86,13 @@ export default function WorkspaceSelectorPage() {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-3 px-3 hover:bg-secondary cursor-pointer">
                   <Avatar className="h-8 w-8 border-2 border-secondary">
+                    {user.avatar_url && (
+                      <AvatarImage 
+                        src={user.avatar_url} 
+                        alt={userName} 
+                        className="object-cover" 
+                      />
+                    )}
                     <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                       {getInitials(userName)}
                     </AvatarFallback>

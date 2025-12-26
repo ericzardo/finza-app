@@ -25,12 +25,14 @@ export function TransactionRow({ transaction, currency }: TransactionRowProps) {
   );
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-border/60 p-4 transition-colors hover:bg-secondary/30">
+    <div className="flex items-center justify-between rounded-lg border border-border/60 p-4 transition-colors hover:bg-secondary/30 group">
       <div className="flex items-center gap-4">
         <div
           className={cn(
-            "flex h-12 w-12 items-center justify-center rounded-xl",
-            isIncome ? "bg-finza-success/10" : "bg-destructive/10"
+            "flex h-12 w-12 items-center justify-center rounded-xl transition-colors",
+            isIncome 
+              ? "bg-finza-success/10 group-hover:bg-finza-success/20" 
+              : "bg-destructive/10 group-hover:bg-destructive/20"
           )}
         >
           {isIncome ? (
@@ -46,6 +48,7 @@ export function TransactionRow({ transaction, currency }: TransactionRowProps) {
           <p className="text-sm text-muted-foreground">{formattedDate}</p>
         </div>
       </div>
+
       <div className="text-right">
         <p
           className={cn(
@@ -57,9 +60,20 @@ export function TransactionRow({ transaction, currency }: TransactionRowProps) {
             {isIncome ? "+" : "-"} {formattedAmount}
           </SensitiveValue>
         </p>
-        <p className="text-sm text-muted-foreground">
-          {isIncome ? "Receita" : "Despesa"}
-        </p>
+        
+        {/* Lógica do Bucket / Categoria */}
+        <div className="flex items-center justify-end gap-1.5 text-sm text-muted-foreground mt-0.5">
+          {transaction.bucket ? (
+            <>
+              <span className="flex items-center gap-1">
+                {transaction.bucket.name}
+              </span>
+              <span className="text-muted-foreground/30">•</span>
+            </>
+          ) : null}
+          
+          <span>{isIncome ? "Receita" : "Despesa"}</span>
+        </div>
       </div>
     </div>
   );

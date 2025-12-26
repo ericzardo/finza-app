@@ -1,22 +1,32 @@
 "use client";
 
-import { PiggyBank, Settings2 } from "lucide-react";
+import { PiggyBank, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Bucket } from "@/types";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";  
+import { SensitiveValue } from "./ui/sensitive-value";
 
 interface BucketCardProps {
   bucket: Bucket;
   currency: string;
   index: number;
   onEdit: (bucket: Bucket) => void;
+  onDelete: (bucket: Bucket) => void;
 }
 
-export function BucketCard({ bucket, currency, index, onEdit }: BucketCardProps) {
+export function BucketCard({ bucket, currency, index, onEdit, onDelete }: BucketCardProps) {
   const colors = [
     "bg-purple-100 text-purple-600",
     "bg-blue-100 text-blue-600",
@@ -49,14 +59,40 @@ export function BucketCard({ bucket, currency, index, onEdit }: BucketCardProps)
               </Badge>
             )}
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-              onClick={() => onEdit(bucket)}
-            >
-              <Settings2 className="h-4 w-4 text-muted-foreground" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer data-[state=open]:opacity-100"
+                >
+                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                  <span className="sr-only">Abrir menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                
+                <DropdownMenuItem onClick={() => onEdit(bucket)} className="cursor-pointer">
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Editar
+                </DropdownMenuItem>
+
+                {!bucket.is_default && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem 
+                      onClick={() => onDelete(bucket)} 
+                      className="text-destructive focus:text-destructive cursor-pointer"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Excluir
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
           </div>
         </div>
       </CardHeader>
@@ -79,7 +115,7 @@ export function BucketCard({ bucket, currency, index, onEdit }: BucketCardProps)
           
           <div className="flex justify-between items-end">
             <span className="text-2xl font-bold text-foreground">
-              {formatCurrency(Number(bucket.current_balance), currency)}
+              <SensitiveValue>{formatCurrency(Number(bucket.current_balance), currency)}</SensitiveValue>
             </span>
           </div>
         </div>

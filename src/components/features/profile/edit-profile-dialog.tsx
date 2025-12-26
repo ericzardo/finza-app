@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2 } from "lucide-react";
@@ -23,18 +24,14 @@ import { updateUserSchema, UpdateUserData } from "@/schemas/user";
 import { updateUserRequest } from "@/http/users"; 
 import { useAuth } from "@/contexts/auth-context";
 
-export const PRESET_AVATARS = [
-  { id: "avatar-1", emoji: "👤", bg: "bg-primary/10" },
-  { id: "avatar-2", emoji: "🧑‍💼", bg: "bg-accent/10" },
-  { id: "avatar-3", emoji: "🦊", bg: "bg-finza-success/10" },
-];
+export const AVATAR_OPTIONS = Array.from({ length: 8 }, (_, i) => `/avatars/${i + 1}.webp`);
 
 interface EditProfileDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialData: {
     name: string;
-    avatarUrl: string;
+    avatarUrl?: string | null;
   };
   onSuccess: (data: UpdateUserData) => void;
 }
@@ -59,7 +56,7 @@ export function EditProfileDialog({
     resolver: zodResolver(updateUserSchema),
     defaultValues: {
       name: initialData.name,
-      avatarUrl: initialData.avatarUrl,
+      avatarUrl: initialData.avatarUrl || AVATAR_OPTIONS[0], 
     },
   });
 
@@ -67,7 +64,7 @@ export function EditProfileDialog({
     if (open) {
       reset({
         name: initialData.name,
-        avatarUrl: initialData.avatarUrl,
+        avatarUrl: initialData.avatarUrl || AVATAR_OPTIONS[0],
       });
     }
   }, [open, initialData, reset]);
@@ -92,13 +89,11 @@ export function EditProfileDialog({
 
     } catch (error) {
       console.error(error);
-
       if (error instanceof Error) {
         toast.error(error.message);
       } else {
         toast.error("Erro desconhecido ao atualizar perfil.");
       }
-
     } finally {
       setIsSubmitting(false);
     }
@@ -106,7 +101,7 @@ export function EditProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-106.25 border-none shadow-xl [&>button]:cursor-pointer">
+      <DialogContent className="sm:max-w-lg border-none shadow-xl [&>button]:cursor-pointer">
         <DialogHeader>
           <DialogTitle>Editar Perfil</DialogTitle>
           <DialogDescription>
@@ -119,22 +114,26 @@ export function EditProfileDialog({
             
             <div className="space-y-3">
               <Label>Escolha seu avatar</Label>
-              <div className="grid grid-cols-3 gap-4">
-                {PRESET_AVATARS.map((avatar) => (
-                  <button
-                    key={avatar.id}
-                    type="button"
-                    onClick={() => setValue("avatarUrl", avatar.id)}
+              <div className="grid grid-cols-4 gap-4">
+                {AVATAR_OPTIONS.map((avatarPath) => (
+                  <div
+                    key={avatarPath}
+                    onClick={() => setValue("avatarUrl", avatarPath)}
                     className={cn(
-                      "flex h-20 w-full items-center justify-center rounded-xl text-4xl transition-all cursor-pointer border-2",
-                      avatar.bg,
-                      selectedAvatarUrl === avatar.id
-                        ? "border-primary scale-105 shadow-md"
-                        : "border-transparent hover:border-border hover:scale-105"
+                      "cursor-pointer relative aspect-square rounded-full border-4 overflow-hidden transition-all",
+                      selectedAvatarUrl === avatarPath
+                        ? "border-primary ring-2 ring-primary/20 scale-105"
+                        : "border-transparent hover:scale-105 opacity-70 hover:opacity-100"
                     )}
                   >
-                    {avatar.emoji}
-                  </button>
+                    <Image 
+                      src={avatarPath} 
+                      alt="Avatar Option" 
+                      className="h-full w-full object-cover bg-muted"
+                      width={120}
+                      height={120}
+                    />
+                  </div>
                 ))}
               </div>
               {errors.avatarUrl && (

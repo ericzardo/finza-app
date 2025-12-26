@@ -8,6 +8,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumericFormat } from "react-number-format";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
@@ -118,20 +119,22 @@ export function AddBucketDialog({ open, onOpenChange, workspaceId, onSuccess }: 
                   </FormDescription>
                   <FormControl>
                     <div className="relative">
-                      <Input
-                        type="number"
-                        min={0}
-                        max={100}
-                        placeholder="0"
-                        className="pr-8"
-                        {...field}
-                        value={field.value ?? ""}
-                        onChange={(e) => {
-                           const val = e.target.value;
-                           field.onChange(val === "" ? 0 : Number(val));
+                      <NumericFormat
+                        value={field.value === 0 ? "" : field.value} 
+                        onValueChange={(values) => {
+                          field.onChange(values.floatValue || 0);
                         }}
+                        decimalScale={0} 
+                        allowNegative={false}
+                        isAllowed={(values) => {
+                          const { floatValue } = values;
+                          return floatValue === undefined || (floatValue >= 0 && floatValue <= 100);
+                        }}
+                        customInput={Input}
+                        placeholder="0" 
+                        className="text-left pr-8" 
                       />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
                         %
                       </span>
                     </div>

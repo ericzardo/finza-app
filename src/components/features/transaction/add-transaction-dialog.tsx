@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -43,7 +44,8 @@ import {
 
 import { cn, getCurrencySymbol } from "@/lib/utils";
 import { transactionFormSchema, TransactionData } from "@/schemas/transaction";
-import { createTransactionRequest } from "@/http/transactions"; 
+import { createTransactionRequest } from "@/http/transactions";
+import { getBucketsRequest } from "@/http/buckets"; 
 import { Bucket } from "@/types";
 
 interface AddTransactionDialogProps {
@@ -51,7 +53,7 @@ interface AddTransactionDialogProps {
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
   currency?: string;
-  buckets?: Bucket[];
+  buckets?: Bucket[]; 
   onSuccess?: () => void;
 }
 
@@ -60,11 +62,15 @@ export function AddTransactionDialog({
   onOpenChange, 
   workspaceId, 
   currency = "BRL",
-  buckets = [],
+  buckets: initialBuckets = [],
   onSuccess
 }: AddTransactionDialogProps) {
   
   const [isLoading, setIsLoading] = useState(false);
+  
+  const [bucketsList, setBucketsList] = useState<Bucket[]>(initialBuckets);
+  const [isLoadingBuckets, setIsLoadingBuckets] = useState(false);
+
   const currencySymbol = getCurrencySymbol(currency);
 
   const form = useForm<TransactionData>({
@@ -77,6 +83,24 @@ export function AddTransactionDialog({
       workspaceId: workspaceId,
     },
   });
+
+  useEffect(() => {
+    async function fetchBuckets() {
+      if (open && workspaceId) {
+        try {
+          setIsLoadingBuckets(true);
+          const data = await getBucketsRequest(workspaceId);
+          setBucketsList(data);
+        } catch (error) {
+          console.error("Erro ao buscar buckets", error);
+        } finally {
+          setIsLoadingBuckets(false);
+        }
+      }
+    }
+
+    fetchBuckets();
+  }, [open, workspaceId]);
 
   useEffect(() => {
     if (open) {
@@ -184,24 +208,13 @@ export function AddTransactionDialog({
                 <FormItem>
                   <FormLabel>Valor</FormLabel>
                   <FormControl>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium text-sm">
-                        {currencySymbol}
-                      </span>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0,00"
-                        className="pl-10"
-                        {...field}
-                        value={field.value || ""} 
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          field.onChange(value === "" ? 0 : Number(value));
-                        }}
-                      />
-                    </div>
+                    <MoneyInput
+                      placeholder="0,00"
+                      currencySymbol={currencySymbol}
+                      value={field.value} 
+                      onValueChange={field.onChange}
+                      disabled={isLoading}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -277,17 +290,19 @@ export function AddTransactionDialog({
                   <Select 
                     onValueChange={field.onChange} 
                     value={field.value || "none"}
+                    disabled={isLoadingBuckets} 
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Selecione um bucket (opcional)" />
+                        <SelectValue placeholder={isLoadingBuckets ? "Carregando..." : "Selecione um bucket (opcional)"} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent className="border-none shadow-xl">
                       <SelectItem value="none" className="cursor-pointer text-muted-foreground">
                         Sem categoria
                       </SelectItem>
-                      {buckets.map((bucket) => (
+                      {/* Usamos a bucketsList do estado interno */}
+                      {bucketsList.map((bucket) => (
                         <SelectItem key={bucket.id} value={bucket.id} className="cursor-pointer">
                           {bucket.name}
                         </SelectItem>

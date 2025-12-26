@@ -9,9 +9,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 
+// Features Components
 import { AddBucketDialog } from "@/components/features/buckets/add-bucket-dialog";
 import { EditBucketDialog } from "@/components/features/buckets/edit-bucket-dialog";
+import { DeleteBucketDialog } from "@/components/features/buckets/delete-bucket-dialog";
 
+// Shared Components
 import { BucketCard } from "@/components/bucket-card";
 import { BucketCardSkeleton } from "@/components/skeletons/bucket-card";
 
@@ -31,7 +34,9 @@ export default function BucketsPage() {
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  
   const [selectedBucket, setSelectedBucket] = useState<Bucket | null>(null);
+  const [bucketToDelete, setBucketToDelete] = useState<Bucket | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -80,6 +85,10 @@ export default function BucketsPage() {
   const handleEditClick = (bucket: Bucket) => {
     setSelectedBucket(bucket);
     setIsEditOpen(true);
+  };
+
+  const handleDeleteClick = (bucket: Bucket) => {
+    setBucketToDelete(bucket);
   };
 
   if (isLoading) {
@@ -183,11 +192,13 @@ export default function BucketsPage() {
               currency={workspace.currency}
               index={index}
               onEdit={handleEditClick}
+              onDelete={handleDeleteClick} 
             />
           ))
         )}
       </div>
 
+      {/* Dialogs */}
       <AddBucketDialog 
         open={isCreateOpen} 
         onOpenChange={setIsCreateOpen} 
@@ -203,6 +214,14 @@ export default function BucketsPage() {
           onSuccess={refreshBuckets} 
         />
       )}
+
+      <DeleteBucketDialog
+        open={!!bucketToDelete}
+        onOpenChange={(open: boolean) => !open && setBucketToDelete(null)}
+        bucket={bucketToDelete}
+        currency={workspace.currency}
+        onSuccess={refreshBuckets}
+      />
     </div>
   );
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react"; // <--- Importando Hooks
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useState, useEffect } from "react"; 
+// 1. Adicionei AvatarImage no import
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -18,7 +19,6 @@ import { useRouter } from "next/navigation";
 import { PrivacyToggle } from "@/components/features/privacy-toggle";
 import { useAuth } from "@/contexts/auth-context";
 
-// Importando a requisição real e o tipo
 import { getWorkspacesRequest } from "@/http/workspaces";
 import { Workspace } from "@/types";
 
@@ -127,6 +127,14 @@ export function Header({ workspace }: HeaderProps) {
               ) : (
                 <>
                   <Avatar className="h-8 w-8 border-2 border-secondary">
+                    {user?.avatar_url && (
+                      <AvatarImage 
+                        src={user.avatar_url} 
+                        alt={user.name} 
+                        className="object-cover" 
+                      />
+                    )}
+                    {/* O Fallback continua aqui para garantir */}
                     <AvatarFallback className="bg-primary text-primary-foreground text-xs font-medium">
                       {getInitials(user?.name || "U")}
                     </AvatarFallback>

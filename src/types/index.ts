@@ -30,6 +30,12 @@ export interface Transaction {
   description?: string;
   bucket_id?: string;
   workspace_id: string;
+  created_at?: string | Date;
+
+  bucket?: {
+    id?: string;
+    name: string;
+  } | null;
 }
 
 export interface WorkspaceWithBuckets {
