@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { WorkspaceWithBuckets } from "@/types";
 
 export async function listUserWorkspaces(userId: string) {
   const workspaces = await prisma.workspace.findMany({
@@ -18,7 +17,7 @@ export async function listUserWorkspaces(userId: string) {
     },
   });
 
-  return workspaces.map((ws: WorkspaceWithBuckets) => {
+  return workspaces.map((ws) => {
     
     const totalBalance = ws.buckets.reduce((acc, bucket) => {
       const balance = bucket.current_balance ? Number(bucket.current_balance) : 0;
