@@ -1,13 +1,14 @@
+"use client";
+
 import { redirect } from "next/navigation";
-import { getCurrentUserId } from "@/lib/session";
+import { useAuth } from "@/contexts/auth-context";
 
-export default async function RootPage() {
+export default function RootPage() {
+  const { user } = useAuth();
 
-  const id = await getCurrentUserId();
-
-  if (id) {
+  if (user) {
     redirect("/dashboard"); 
   }
 
-  redirect("/auth/login");
+  redirect("/login");
 }
