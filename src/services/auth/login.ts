@@ -20,12 +20,13 @@ export async function loginService(data: LoginData) {
   }
 
   const token = await signToken({ sub: user.id, email: user.email });
-
+  
   return {
     user: {
       id: user.id,
       name: user.name,
       email: user.email,
+      avatar_url: user.avatar_url
     },
     token,
   };
