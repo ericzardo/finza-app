@@ -6,6 +6,7 @@ export async function listUsers() {
       id: true, 
       name: true, 
       email: true,
+      avatar_url: true,
       _count: {
         select: { workspaces: true }
       }

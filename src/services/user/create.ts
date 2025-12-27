@@ -31,7 +31,8 @@ export async function createUser(data: CreateUserData) {
       name: true,
       email: true,
       created_at: true,
-      workspaces: true
+      workspaces: true,
+      avatar_url: true,
     }
   });
 

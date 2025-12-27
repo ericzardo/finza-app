@@ -6,7 +6,8 @@ export async function getUserById(id: string) {
     select: { 
       id: true, 
       name: true, 
-      email: true, 
+      email: true,
+      avatar_url: true,
       workspaces: {
         select: { id: true, name: true }
       }
@@ -17,6 +18,6 @@ export async function getUserById(id: string) {
 export async function getUserByEmail(email: string) {
   return prisma.user.findUnique({
     where: { email },
-    select: { id: true, name: true, email: true, password: true }
+    select: { id: true, name: true, email: true, password: true, avatar_url: true }
   });
 }
