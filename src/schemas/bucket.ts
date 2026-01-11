@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const bucketTypeEnum = z.enum(["SPENDING", "INVESTMENT"]);
+export const bucketTypeEnum = z.enum(["SPENDING", "INVESTMENT", "INBOX"]);
 
 const baseBucketSchema = z.object({
   name: z.string().trim().min(1, "O nome do bucket é obrigatório"),
@@ -15,12 +15,19 @@ const baseBucketSchema = z.object({
 export const bucketFormSchema = baseBucketSchema;
 
 export const createBucketSchema = baseBucketSchema.extend({
-  workspaceId: z.string().uuid("ID do workspace inválido"),
+  workspaceId: z.string().uuid("Área de trabalho não identificada."),
 });
 
 export const updateBucketSchema = baseBucketSchema.partial().extend({});
 
+export const transferBucketSchema = z.object({
+  sourceBucketId: z.string().uuid("Erro na origem. Tente recarregar a página."),
+  destinationBucketId: z.string().uuid("Selecione um caixa válido para o destino."),
+  amount: z.number().positive("O valor deve ser positivo").min(0.01, "O valor deve ser maior que zero"),
+});
+
 export type BucketData = z.infer<typeof bucketFormSchema>;
 export type CreateBucketData = z.infer<typeof createBucketSchema>;
 export type UpdateBucketData = z.infer<typeof updateBucketSchema>;
+export type TransferBucketData = z.infer<typeof transferBucketSchema>;
 export type BucketType = z.infer<typeof bucketTypeEnum>;

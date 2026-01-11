@@ -17,12 +17,7 @@ export async function createTransaction({ userId, ...data }: CreateServiceProps)
     throw new AppError("Workspace not found", 404);
   }
 
-  // Regra: Despesa SEMPRE precisa de bucket explícito
-  if (data.type === 'EXPENSE' && !data.bucketId) {
-    throw new AppError("Toda despesa precisa sair de uma caixa específica.", 400);
-  }
-
-  // Valida bucket se for passado
+  // Valida bucket se for passado (Se não for, cairá no Inbox)
   if (data.bucketId) {
     const bucket = await prisma.bucket.findUnique({
       where: { id: data.bucketId }
@@ -32,14 +27,30 @@ export async function createTransaction({ userId, ...data }: CreateServiceProps)
     }
   }
 
+  // Busca o Inbox (Necessário para fallback)
+  const inboxBucket = await prisma.bucket.findFirst({
+    where: {
+      workspace_id: workspace.id,
+      is_default: true,
+    }
+  });
+
+  if (!inboxBucket) {
+    throw new AppError("Erro Crítico: Caixa de Entrada não encontrada.", 500);
+  }
+
   return prisma.$transaction(async (tx) => {
-    const amount = new Prisma.Decimal(data.amount);
+    const amount = new Prisma.Decimal(Math.abs(data.amount));
+    
+    // O PULO DO GATO: Definimos o alvo aqui.
+    // Se tem bucketId, usa ele. Se não, vai pro Inbox.
+    const targetBucketId = data.bucketId || inboxBucket.id;
 
     // 2. Cria a Transação
     const transaction = await tx.transaction.create({
       data: {
         workspace_id: data.workspaceId,
-        bucket_id: data.bucketId,
+        bucket_id: targetBucketId, // Usa o alvo definido acima
         amount,
         type: data.type,
         description: data.description,
@@ -61,10 +72,11 @@ export async function createTransaction({ userId, ...data }: CreateServiceProps)
       });
     }
 
-    // 4. Lógica de DESPESA (Simples: Tira da caixa selecionada)
-    if (data.type === 'EXPENSE' && data.bucketId) {
+    // 4. Lógica de DESPESA (Unificada)
+    if (data.type === 'EXPENSE') {
+      // Agora atualizamos o targetBucketId (seja ele Inbox ou um bucket específico)
       await tx.bucket.update({
-        where: { id: data.bucketId },
+        where: { id: targetBucketId },
         data: { 
           total_spent: { increment: amount }, 
           current_balance: { decrement: amount } 
@@ -72,24 +84,20 @@ export async function createTransaction({ userId, ...data }: CreateServiceProps)
       });
     }
 
-    // 5. Lógica de RECEITA (Complexa: Distribuição + Sobras)
+    // 5. Lógica de RECEITA
     if (data.type === 'INCOME') {
       
-      // CENÁRIO A: Distribuição Automática Ligada
+      // CENÁRIO A: Distribuição Automática (Allocated = true)
       if (data.isAllocated) {
         const buckets = await tx.bucket.findMany({
           where: { workspace_id: data.workspaceId }
         });
 
-        let totalDistributed = new Prisma.Decimal(0); // Acumulador
-        let defaultBucketId: string | null = null;
+        let totalDistributed = new Prisma.Decimal(0);
 
-        // Passo 1: Distribuir baseado nas porcentagens
         for (const bucket of buckets) {
-          // Já aproveita o loop para achar quem é o default
-          if (bucket.is_default) {
-            defaultBucketId = bucket.id;
-          }
+          // Pula o Inbox na distribuição de porcentagem
+          if (bucket.is_default) continue;
 
           const percentage = Number(bucket.allocation_percentage) / 100;
           
@@ -97,7 +105,6 @@ export async function createTransaction({ userId, ...data }: CreateServiceProps)
             const shareAmount = Number(amount) * percentage;
             const shareDecimal = new Prisma.Decimal(shareAmount);
             
-            // Soma ao acumulador para sabermos quanto sobrou depois
             totalDistributed = totalDistributed.add(shareDecimal);
 
             await tx.bucket.update({
@@ -110,63 +117,29 @@ export async function createTransaction({ userId, ...data }: CreateServiceProps)
           }
         }
 
-        // Passo 2: Calcular a sobra (Remainder)
-        // Sobra = Valor Total - Valor que foi distribuído nas porcentagens
+        // A sobra (Remainder) vai para o Inbox (inboxBucket já buscado lá em cima)
         const remainder = amount.minus(totalDistributed);
 
-        // Passo 3: Jogar a sobra no Default (se houver sobra > 0)
-        // Usamos uma pequena margem de erro para decimais (0.01), mas > 0 serve
         if (remainder.gt(0)) {
-          if (defaultBucketId) {
-            await tx.bucket.update({
-              where: { id: defaultBucketId },
-              data: {
-                total_allocated: { increment: remainder },
-                current_balance: { increment: remainder }
-              }
-            });
-          } else {
-            // Opcional: Se não tiver bucket default, o dinheiro fica "solto" no workspace.
-            // Mas para metodologia Zero-Based estrita, poderíamos lançar erro.
-            // Por enquanto, vamos apenas logar ou ignorar, mantendo no saldo geral.
-            console.warn("Sobra de dinheiro detectada mas nenhum Bucket Padrão (Default) foi encontrado para alocação.");
-          }
+           await tx.bucket.update({
+             where: { id: inboxBucket.id },
+             data: {
+               total_allocated: { increment: remainder },
+               current_balance: { increment: remainder }
+             }
+           });
         }
       } 
-
-      // CENÁRIO B: Receita Direta (Sem distribuição, vai para uma caixa específica)
-      else if (!data.isAllocated && data.bucketId) {
+      
+      // CENÁRIO B: Receita Direta (Sem distribuição)
+      else {
         await tx.bucket.update({
-          where: { id: data.bucketId },
+          where: { id: targetBucketId },
           data: {
             total_allocated: { increment: amount },
             current_balance: { increment: amount }
           }
         });
-      }
-      
-      // CENÁRIO C: Receita Direta mas usuário não selecionou caixa (Dinheiro Solto)
-      // Se você quiser forçar que TUDO vá para o default caso não selecione nada:
-      else if (!data.isAllocated && !data.bucketId) {
-         const defaultBucket = await tx.bucket.findFirst({
-            where: { workspace_id: data.workspaceId, is_default: true }
-         });
-         
-         if (defaultBucket) {
-            // Atualiza a transação para ficar vinculada ao default
-             await tx.transaction.update({
-               where: { id: transaction.id },
-               data: { bucket_id: defaultBucket.id }
-             });
-
-             await tx.bucket.update({
-               where: { id: defaultBucket.id },
-               data: {
-                 total_allocated: { increment: amount },
-                 current_balance: { increment: amount }
-               }
-             });
-         }
       }
     }
 

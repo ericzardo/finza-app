@@ -4,6 +4,8 @@ CREATE TABLE `users` (
     `name` VARCHAR(191) NOT NULL,
     `email` VARCHAR(191) NOT NULL,
     `password` VARCHAR(191) NOT NULL,
+    `avatar_url` VARCHAR(191) NULL DEFAULT '/avatars/1.webp',
+    `is_privacy_enabled` BOOLEAN NOT NULL DEFAULT false,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
@@ -15,6 +17,7 @@ CREATE TABLE `users` (
 CREATE TABLE `workspaces` (
     `id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
+    `total_balance` DECIMAL(10, 2) NOT NULL DEFAULT 0,
     `currency` VARCHAR(191) NOT NULL DEFAULT 'BRL',
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
@@ -28,8 +31,10 @@ CREATE TABLE `buckets` (
     `id` VARCHAR(191) NOT NULL,
     `workspace_id` VARCHAR(191) NOT NULL,
     `name` VARCHAR(191) NOT NULL,
+    `type` ENUM('SPENDING', 'INVESTMENT', 'INBOX') NOT NULL DEFAULT 'SPENDING',
     `allocation_percentage` DECIMAL(5, 2) NOT NULL,
     `current_balance` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    `total_allocated` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     `total_spent` DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
     `is_default` BOOLEAN NOT NULL DEFAULT false,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -49,6 +54,7 @@ CREATE TABLE `transactions` (
     `description` VARCHAR(191) NULL,
     `date` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `is_allocated` BOOLEAN NOT NULL DEFAULT false,
 
     INDEX `transactions_workspace_id_idx`(`workspace_id`),
     INDEX `transactions_bucket_id_idx`(`bucket_id`),
@@ -57,10 +63,10 @@ CREATE TABLE `transactions` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- AddForeignKey
-ALTER TABLE `workspaces` ADD CONSTRAINT `workspaces_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `workspaces` ADD CONSTRAINT `workspaces_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `buckets` ADD CONSTRAINT `buckets_workspace_id_fkey` FOREIGN KEY (`workspace_id`) REFERENCES `workspaces`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `buckets` ADD CONSTRAINT `buckets_workspace_id_fkey` FOREIGN KEY (`workspace_id`) REFERENCES `workspaces`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `transactions` ADD CONSTRAINT `transactions_workspace_id_fkey` FOREIGN KEY (`workspace_id`) REFERENCES `workspaces`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -89,4 +89,5 @@ enum TransactionType {
 enum BucketType {
   SPENDING
   INVESTMENT
+  INBOX
 }

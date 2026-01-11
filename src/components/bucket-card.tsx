@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Pencil, Trash2, AlertCircle, TrendingUp, Wallet } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, AlertCircle, TrendingUp, Wallet, Inbox, ArrowRightLeft } from "lucide-react";
 import { Bucket } from "@/types";
 import { formatCurrency, cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -23,6 +23,7 @@ interface BucketCardProps {
   index: number;
   onEdit: (bucket: Bucket) => void;
   onDelete: (bucket: Bucket) => void;
+  onTransfer?: (bucket: Bucket) => void;
 }
 
 const COLORS = [
@@ -36,7 +37,7 @@ const COLORS = [
   "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400",
 ];
 
-export function BucketCard({ bucket, currency, index, onEdit, onDelete }: BucketCardProps) {
+export function BucketCard({ bucket, currency, index, onEdit, onDelete, onTransfer }: BucketCardProps) {
   
   const colorClass = COLORS[index % COLORS.length];
 
@@ -45,11 +46,13 @@ export function BucketCard({ bucket, currency, index, onEdit, onDelete }: Bucket
   const currentBalance = Number(bucket.current_balance || 0);
   
   const isInvestment = bucket.type === "INVESTMENT";
+  const isInbox = bucket.type === "INBOX";
   
   let progressValue = 0;
   let isNegative = false;
   let statusMessage = "";
   let progressColorClass = "[&>*]:bg-primary";
+  let iconContainerClass = colorClass;
   
   let statusIcon = isInvestment ? <TrendingUp className="h-6 w-6" /> : <Wallet className="h-6 w-6" />;
   
@@ -57,7 +60,26 @@ export function BucketCard({ bucket, currency, index, onEdit, onDelete }: Bucket
   let displayValueLeft = currentBalance;
   let displayLabelRight = "Gasto / Limite";
 
-  if (isInvestment) {
+  if (isInbox) {
+    // Inbox: área de transição, não é um bucket de planejamento
+    // Não mostra barra de progresso e foca apenas no saldo pendente
+    statusIcon = <Inbox className="h-6 w-6" />;
+    displayLabelLeft = currentBalance > 0 ? "Saldo Pendente" : "Não Alocado";
+    displayValueLeft = currentBalance;
+    displayLabelRight = ""; // Não mostrar "Gasto / Limite"
+    statusMessage = currentBalance > 0 
+      ? "Dinheiro aguardando distribuição" 
+      : "Nenhum valor pendente";
+    // Para Inbox, não usamos a barra de progresso
+    progressValue = 0;
+    
+    // Cor especial para Inbox (âmbar/amarelo se tiver saldo positivo)
+    if (currentBalance > 0) {
+      progressColorClass = "[&>*]:bg-amber-500";
+      iconContainerClass = "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400";
+    }
+    
+  } else if (isInvestment) {
     progressValue = allocated > 0 ? (spent / allocated) * 100 : 0;
     
     if (progressValue >= 100) {
@@ -76,7 +98,7 @@ export function BucketCard({ bucket, currency, index, onEdit, onDelete }: Bucket
     displayLabelRight = "Aportado / Meta";
 
   } else {
-
+    // Caso padrão: SPENDING
     progressValue = allocated > 0 ? (spent / allocated) * 100 : 0;
     isNegative = currentBalance < 0; 
 
@@ -84,6 +106,7 @@ export function BucketCard({ bucket, currency, index, onEdit, onDelete }: Bucket
       progressColorClass = "[&>*]:bg-destructive"; 
       statusIcon = <AlertCircle className="h-6 w-6" />; 
       statusMessage = "Orçamento estourado!";
+      iconContainerClass = "bg-destructive/10 text-destructive";
     } else if (progressValue > 85) {
       progressColorClass = "[&>*]:bg-amber-500"; 
       statusMessage = "Cuidado, perto do limite";
@@ -96,10 +119,6 @@ export function BucketCard({ bucket, currency, index, onEdit, onDelete }: Bucket
   const containerClass = (isNegative && !isInvestment) 
     ? "border-destructive/50 bg-destructive/5" 
     : "";
-
-  const iconContainerClass = (isNegative && !isInvestment)
-    ? "bg-destructive/10 text-destructive"
-    : colorClass; 
 
   return (
     <Card
@@ -126,9 +145,13 @@ export function BucketCard({ bucket, currency, index, onEdit, onDelete }: Bucket
               </Badge>
             )}
 
-            <Badge variant="outline" className="text-xs font-normal text-muted-foreground border-border/50">
-              {Number(bucket.allocation_percentage)}%
-            </Badge>
+            {!isInbox && (
+              <Badge variant="outline" className="text-xs font-normal text-muted-foreground border-border/50">
+                {Number(bucket.allocation_percentage)}%
+              </Badge>
+            )}
+
+            
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -148,6 +171,13 @@ export function BucketCard({ bucket, currency, index, onEdit, onDelete }: Bucket
                   <Pencil className="mr-2 h-4 w-4" />
                   Editar
                 </DropdownMenuItem>
+
+                {onTransfer && (
+                  <DropdownMenuItem onClick={() => onTransfer(bucket)} className="cursor-pointer">
+                    <ArrowRightLeft className="mr-2 h-4 w-4" />
+                    Mover Saldo
+                  </DropdownMenuItem>
+                )}
 
                 {!bucket.is_default && (
                   <>
@@ -179,34 +209,39 @@ export function BucketCard({ bucket, currency, index, onEdit, onDelete }: Bucket
         </div>
 
         <div className="space-y-2">
-          <Progress 
-            value={progressValue} 
-            className={cn("h-2 w-full", progressColorClass)} 
-          />
+          {!isInbox && (
+            <Progress 
+              value={progressValue} 
+              className={cn("h-2 w-full", progressColorClass)} 
+            />
+          )}
           
-          <div className="flex justify-between items-end">
+          <div className={cn("flex", isInbox ? "flex-col items-start" : "flex-col sm:flex-row justify-between items-start sm:items-end gap-2")}>
             <div className="flex flex-col">
                <span className="text-[10px] uppercase text-muted-foreground font-semibold">
                  {displayLabelLeft}
                </span>
                <span className={cn(
                  "text-2xl font-bold",
-                 (isNegative && !isInvestment) ? "text-destructive" : "text-foreground"
+                 (isNegative && !isInvestment) ? "text-destructive" : "text-foreground",
+                 isInbox && currentBalance > 0 && "text-amber-600 dark:text-amber-400"
                )}>
                 <SensitiveValue>{formatCurrency(displayValueLeft, currency)}</SensitiveValue>
               </span>
             </div>
 
-            <div className="text-right hidden sm:block">
-               <span className="text-[10px] uppercase text-muted-foreground font-semibold">
-                 {displayLabelRight}
-               </span>
-               <div className="text-xs font-medium text-muted-foreground">
-                 <SensitiveValue>
-                   {formatCurrency(spent, currency)} / {formatCurrency(allocated, currency)}
-                 </SensitiveValue>
-               </div>
-            </div>
+            {displayLabelRight && (
+              <div className="text-left sm:text-right">
+                 <span className="text-[10px] uppercase text-muted-foreground font-semibold">
+                   {displayLabelRight}
+                 </span>
+                 <div className="text-xs font-medium text-muted-foreground">
+                   <SensitiveValue>
+                     {formatCurrency(spent, currency)} / {formatCurrency(allocated, currency)}
+                   </SensitiveValue>
+                 </div>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

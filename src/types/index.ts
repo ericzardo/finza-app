@@ -1,4 +1,4 @@
-export type BucketType = "SPENDING" | "INVESTMENT";
+export type BucketType = "SPENDING" | "INVESTMENT" | "INBOX";
 
 export interface User {
   id: string;

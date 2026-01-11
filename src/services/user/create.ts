@@ -1,4 +1,5 @@
 import { hash } from "bcryptjs";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AppError } from "@/lib/errors";
 import { CreateUserData } from "@/schemas/user";
@@ -23,6 +24,17 @@ export async function createUser(data: CreateUserData) {
         create: {
           name: "Meu Workspace",
           currency: "BRL",
+          buckets: {
+            create: {
+              name: "Caixa de Entrada",
+              type: "INBOX",
+              allocation_percentage: new Prisma.Decimal(0),
+              current_balance: new Prisma.Decimal(0),
+              total_allocated: new Prisma.Decimal(0),
+              total_spent: new Prisma.Decimal(0),
+              is_default: true,
+            }
+          }
         }
       }
     },
@@ -31,7 +43,11 @@ export async function createUser(data: CreateUserData) {
       name: true,
       email: true,
       created_at: true,
-      workspaces: true,
+      workspaces: {
+        include: {
+          buckets: true
+        }
+      },
       avatar_url: true,
     }
   });

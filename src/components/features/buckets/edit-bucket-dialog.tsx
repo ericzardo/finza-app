@@ -8,7 +8,6 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -136,6 +135,7 @@ export function EditBucketDialog({ open, onOpenChange, bucket, onSuccess }: Edit
                         max={100}
                         placeholder="0"
                         className="pr-8"
+                        disabled={bucket?.type === "INBOX" || bucket?.is_default === true}
                         {...field}
                         value={field.value ?? ""}
                         onChange={(e) => {
@@ -149,29 +149,6 @@ export function EditBucketDialog({ open, onOpenChange, bucket, onSuccess }: Edit
                     </div>
                   </FormControl>
                   <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Switch Padrão */}
-            <FormField
-              control={form.control}
-              name="isDefault" 
-              render={({ field }) => (
-                <FormItem className="flex items-center justify-between rounded-lg border border-border p-4">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-sm font-medium">Caixa Padrão</FormLabel>
-                    <FormDescription>
-                      Recebe o saldo não alocado.
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      className="cursor-pointer"
-                    />
-                  </FormControl>
                 </FormItem>
               )}
             />

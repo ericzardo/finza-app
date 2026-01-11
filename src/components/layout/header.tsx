@@ -149,7 +149,7 @@ export function Header({ workspace }: HeaderProps) {
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem 
               onClick={() => router.push("/profile")}
-              className="cursor-pointer"
+              className="cursor-pointer hover:text-accent"
             >
               <User className="mr-2 h-4 w-4" />
               Perfil

@@ -1,4 +1,4 @@
-import { CreateBucketData, UpdateBucketData } from "@/schemas/bucket";
+import { CreateBucketData, UpdateBucketData, TransferBucketData } from "@/schemas/bucket";
 
 import { Bucket } from "@/types"; 
 
@@ -70,4 +70,19 @@ export async function deleteBucketRequest(bucketId: string): Promise<void> {
   if (!response.ok) {
     throw await handleHttpError(response, "Falha ao deletar bucket");
   }
+}
+
+export async function transferBalanceRequest(data: TransferBucketData): Promise<{ source: Bucket; destination: Bucket }> {
+  const response = await fetch("/api/buckets/transfer", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw await handleHttpError(response, "Falha ao transferir saldo entre buckets");
+  }
+
+  const result = await response.json();
+  return result.data || result;
 }

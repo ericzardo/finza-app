@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NumericFormat } from "react-number-format";
-import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Dialog,
@@ -202,28 +201,6 @@ export function AddBucketDialog({ open, onOpenChange, workspaceId, onSuccess }: 
                     </div>
                   </FormControl>
                   <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="isDefault"
-              render={({ field }) => (
-                <FormItem className="flex items-center justify-between rounded-lg border border-border p-4 bg-muted/20">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-sm font-medium">Caixa Padrão</FormLabel>
-                    <FormDescription className="text-xs">
-                      Qualquer receita não alocada cairá automaticamente aqui.
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                      className="cursor-pointer"
-                    />
-                  </FormControl>
                 </FormItem>
               )}
             />

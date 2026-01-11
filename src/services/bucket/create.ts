@@ -13,13 +13,21 @@ export async function createBucket({ workspaceId, userId, name, allocationPercen
 
   if (!workspace) throw new AppError("Acesso negado ao workspace", 403);
 
+  // Bloqueio de criação de bucket com is_default: true
+  if (isDefault) {
+    throw new AppError("Não é permitido criar um bucket como padrão. Apenas o Inbox do sistema pode ser padrão.", 400);
+  }
+
+  // Para buckets do tipo INBOX, forçar allocation_percentage = 0
+  const finalAllocationPercentage = type === "INBOX" ? 0 : allocationPercentage;
+
   const bucket = await prisma.bucket.create({
     data: {
       workspace_id: workspaceId,
       name,
-      allocation_percentage: allocationPercentage,
+      allocation_percentage: finalAllocationPercentage,
       current_balance: 0,
-      is_default: isDefault || false,
+      is_default: false, // Forçar false, nunca permitir criação de bucket default pelo usuário
       type,
     }
   });

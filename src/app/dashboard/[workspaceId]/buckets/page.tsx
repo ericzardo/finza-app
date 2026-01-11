@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { AddBucketDialog } from "@/components/features/buckets/add-bucket-dialog";
 import { EditBucketDialog } from "@/components/features/buckets/edit-bucket-dialog";
 import { DeleteBucketDialog } from "@/components/features/buckets/delete-bucket-dialog";
+import { TransferBalanceDialog } from "@/components/features/buckets/transfer-balance-dialog";
 
 // Shared Components
 import { BucketCard } from "@/components/bucket-card";
@@ -37,6 +38,7 @@ export default function BucketsPage() {
   
   const [selectedBucket, setSelectedBucket] = useState<Bucket | null>(null);
   const [bucketToDelete, setBucketToDelete] = useState<Bucket | null>(null);
+  const [bucketToTransfer, setBucketToTransfer] = useState<Bucket | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -89,6 +91,10 @@ export default function BucketsPage() {
 
   const handleDeleteClick = (bucket: Bucket) => {
     setBucketToDelete(bucket);
+  };
+
+  const handleTransferClick = (bucket: Bucket) => {
+    setBucketToTransfer(bucket);
   };
 
   if (isLoading) {
@@ -185,7 +191,15 @@ export default function BucketsPage() {
             </Button>
           </Card>
         ) : (
-          buckets.map((bucket, index) => (
+          buckets
+            .filter(bucket => {
+              // Esconder Inbox zerado (Inbox Zero)
+              if (bucket.type === 'INBOX' && Math.abs(bucket.current_balance) < 0.01) {
+                return false;
+              }
+              return true;
+            })
+            .map((bucket, index) => (
             <BucketCard
               key={bucket.id}
               bucket={bucket}
@@ -193,6 +207,7 @@ export default function BucketsPage() {
               index={index}
               onEdit={handleEditClick}
               onDelete={handleDeleteClick} 
+              onTransfer={handleTransferClick}
             />
           ))
         )}
@@ -212,6 +227,18 @@ export default function BucketsPage() {
           onOpenChange={setIsEditOpen} 
           bucket={selectedBucket}
           onSuccess={refreshBuckets} 
+        />
+      )}
+
+      {bucketToTransfer && (
+        <TransferBalanceDialog
+          open={!!bucketToTransfer}
+          onOpenChange={(open: boolean) => !open && setBucketToTransfer(null)}
+          sourceBucket={bucketToTransfer}
+          workspaceId={workspace.id}
+          buckets={buckets}
+          currency={workspace.currency}
+          onSuccess={refreshBuckets}
         />
       )}
 
