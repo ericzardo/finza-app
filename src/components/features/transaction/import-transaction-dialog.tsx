@@ -58,6 +58,8 @@ export function ImportTransactionDialog({
   const [parsedData, setParsedData] = useState<ParsedTransaction[]>([]);
   const [fileName, setFileName] = useState<string>("");
 
+  const [calculatedOpeningBalance, setCalculatedOpeningBalance] = useState<number | null>(null);
+
   const currencySymbol = getCurrencySymbol(currency);
 
   // Função para validar se uma string é uma data no formato dd/mm/aaaa
@@ -97,13 +99,14 @@ export function ImportTransactionDialog({
     cleaned = cleaned.replace(",", ".");
 
     const number = parseFloat(cleaned);
-    return isNaN(number) ? 0 : number;
+    return isNaN(number) ? 0 : Math.round(number * 100) / 100;
   };
 
   // Função para processar o arquivo CSV
   const processCSV = useCallback((file: File) => {
     setIsLoading(true);
     setFileName(file.name);
+    setCalculatedOpeningBalance(null);
 
     Papa.parse(file, {
       encoding: "ISO-8859-1",
@@ -111,56 +114,56 @@ export function ImportTransactionDialog({
         try {
           const rows = results.data as string[][];
 
-          // Encontrar o índice da primeira linha com data válida na coluna 0
+          // 1. DETECÇÃO DO SALDO FINAL (CABEÇALHO - Padrão Inter e similares)
+          // Procura nas primeiras 10 linhas por uma célula que contenha "Saldo"
+          let headerBalance = null;
+          for(let i = 0; i < 10 && i < rows.length; i++) {
+             const colA = rows[i][0]?.trim();
+             // Verifica se a coluna A é "Saldo" e se existe valor na coluna B
+             if (colA && (colA === "Saldo" || colA.includes("Saldo"))) {
+                const valB = rows[i][1]; 
+                if (valB) {
+                  headerBalance = parseBrazilianCurrency(valB);
+                  break; 
+                }
+             }
+          }
+
+          // 2. ENCONTRAR E SOMAR TRANSAÇÕES
           const startIndex = rows.findIndex(
             (row) => row[0] && isValidDate(row[0].trim())
           );
 
           if (startIndex === -1) {
-            toast.error(
-              "Nenhuma data válida encontrada no arquivo. Verifique o formato (dd/mm/aaaa)."
-            );
+            toast.error("Nenhuma data válida encontrada no arquivo. Verifique o formato (dd/mm/aaaa).");
             setIsLoading(false);
             return;
           }
 
-          // Processar as linhas a partir do índice encontrado
           const transactions: ParsedTransaction[] = [];
+          let totalTransactionsSum = 0;
 
           for (let i = startIndex; i < rows.length; i++) {
             const row = rows[i];
-
-            // Verificar se a linha tem dados suficientes
             if (!row || row.length < 2) continue;
 
             const dateStr = row[0]?.trim();
             if (!dateStr || !isValidDate(dateStr)) continue;
 
-            // Encontrar índice da coluna "Valor" (ignorar "Saldo")
-            // Em CSV do Inter: Data, Histórico, Categoria, Valor, Saldo
             const date = parseDate(dateStr);
-
-            // Encontrar coluna "Valor" (pode estar em posições diferentes)
-            let valorIndex = -1;
             
+            // Busca dinâmica da coluna valor
+            let valorIndex = -1;
             for (let j = 0; j < row.length; j++) {
               const cell = row[j]?.trim().toLowerCase();
-              if (cell === "valor") {
-                valorIndex = j;
-              }
+              if (cell === "valor") valorIndex = j;
             }
+            if (valorIndex === -1) valorIndex = row.length - 2; // Fallback para penúltima coluna
 
-            // Se não encontrou cabeçalho "Valor", tenta identificar pela posição (geralmente penúltima coluna)
-            if (valorIndex === -1) {
-              valorIndex = row.length - 2; // Penúltima coluna
-            }
-
-            // Pegar descrição (colunas entre Data e Valor)
+            // Busca da descrição
             const descriptionParts: string[] = [];
             for (let j = 1; j < valorIndex; j++) {
-              if (row[j] && row[j].trim()) {
-                descriptionParts.push(row[j].trim());
-              }
+              if (row[j] && row[j].trim()) descriptionParts.push(row[j].trim());
             }
             const description = descriptionParts.join(" - ") || "Sem descrição";
 
@@ -168,6 +171,10 @@ export function ImportTransactionDialog({
             if (!valueStr) continue;
 
             const amount = parseBrazilianCurrency(valueStr);
+            
+            // Acumula o valor para o cálculo de saldo
+            totalTransactionsSum += amount;
+
             const type: "INCOME" | "EXPENSE" = amount < 0 ? "EXPENSE" : "INCOME";
 
             transactions.push({
@@ -182,6 +189,22 @@ export function ImportTransactionDialog({
             toast.error("Nenhuma transação válida encontrada no arquivo.");
             setIsLoading(false);
             return;
+          }
+
+          // 3. CÁLCULO OBRIGATÓRIO DO SALDO INICIAL
+          // Se encontramos um saldo no cabeçalho, calculamos a diferença necessária
+          if (headerBalance !== null) {
+             // Matemática: SaldoFinal = SaldoInicial + Movimentações
+             // Logo: SaldoInicial = SaldoFinal - Movimentações
+             const diff = headerBalance - totalTransactionsSum;
+             
+             // Arredonda para 2 casas para evitar bug de float
+             const roundedDiff = Math.round(diff * 100) / 100;
+             
+             // Se houver diferença (saldo inicial pré-existente), salvamos para injetar no save
+             if (Math.abs(roundedDiff) > 0.001) {
+               setCalculatedOpeningBalance(roundedDiff);
+             }
           }
 
           setParsedData(transactions);
@@ -221,51 +244,59 @@ export function ImportTransactionDialog({
   });
 
   const handleConfirmImport = async () => {
-    if (parsedData.length === 0) return;
+  if (parsedData.length === 0) return;
 
-    setIsImporting(true);
-    try {
-      // Preparar dados para envio - garantir amount positivo e tipo correto
-      const transactionsToSend = parsedData.map(transaction => ({
-        date: transaction.date,
-        description: transaction.description,
-        amount: Math.abs(transaction.amount), // Enviar valor absoluto (positivo)
-        type: transaction.type,
-      }));
+  setIsImporting(true);
+  try {
+    const transactionsToSend = parsedData.map(transaction => ({
+      date: transaction.date,
+      description: transaction.description,
+      amount: Math.abs(transaction.amount),
+      type: transaction.type,
+    }));
 
-      const response = await fetch('/api/transactions/import', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          workspaceId,
-          transactions: transactionsToSend,
-        }),
-      });
+    // LÓGICA DE INJEÇÃO AUTOMÁTICA
+    if (calculatedOpeningBalance) {
+       const type = calculatedOpeningBalance >= 0 ? "INCOME" : "EXPENSE";
+       
+       // Pega a data mais antiga do CSV para criar o saldo inicial antes dela
+       // (Assumindo que a última linha é a mais antiga, padrão bancário)
+       const oldestDate = parsedData[parsedData.length - 1]?.date || new Date();
+       
+       // Retira 1 minuto para garantir cronologia
+       const openingDate = new Date(oldestDate);
+       openingDate.setMinutes(openingDate.getMinutes() - 1);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Erro ao importar transações');
-      }
-
-      toast.success(`${data.data.count} transações importadas com sucesso!`);
-      
-      handleOpenChange(false);
-      handleReset();
-      
-      router.refresh();
-      
-      if (onSuccess) onSuccess();
-      
-    } catch (error) {
-      console.error('Erro ao importar transações:', error);
-      toast.error(error instanceof Error ? error.message : 'Erro ao importar transações');
-    } finally {
-      setIsImporting(false);
+       // Adiciona no INÍCIO do array
+       transactionsToSend.push({
+         date: openingDate,
+         description: "Saldo Inicial (Ajuste de Importação)",
+         amount: Math.abs(calculatedOpeningBalance),
+         type: type as "INCOME" | "EXPENSE"
+       });
     }
-  };
+
+    const response = await fetch('/api/transactions/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ workspaceId, transactions: transactionsToSend }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message);
+
+    toast.success(`${data.data.count} transações importadas!`);
+    handleOpenChange(false);
+    handleReset();
+    router.refresh();
+    if (onSuccess) onSuccess();
+    
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : 'Erro ao importar');
+  } finally {
+    setIsImporting(false); // Mantive seu loading state
+  }
+};
 
   const handleReset = () => {
     setParsedData([]);
