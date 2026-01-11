@@ -59,7 +59,7 @@ export default async function WorkspaceLayout({
       <div className="flex min-h-screen flex-1 flex-col transition-all duration-300 ease-in-out peer-data-[state=collapsed]:pl-0">
         <Header workspace={workspace} />
       
-        <main className="flex-1 overflow-auto bg-background p-6">
+        <main className="flex-1 bg-background p-6">
           {children} 
         </main>
       </div>

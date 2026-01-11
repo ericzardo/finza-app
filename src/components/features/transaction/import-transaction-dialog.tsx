@@ -387,7 +387,7 @@ export function ImportTransactionDialog({
               </div>
 
               <div className="rounded-lg border border-border">
-                <ScrollArea className="h-100">
+                <ScrollArea className="h-100" data-lenis-prevent="true">
                   <Table>
                     <TableHeader>
                       <TableRow>
