@@ -23,18 +23,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 import { cn } from "@/lib/utils";
-import { filterTransactionSchema, FilterTransactionData, TransactionType } from "@/schemas/transaction";
-import { Bucket } from "@/types";
-
-interface FilterTransactionDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  buckets: Bucket[];
-  currency: string;
-  defaultValues?: Partial<FilterTransactionData>;
-  onApplyFilters: (filters: FilterTransactionData) => void;
-  onClearFilters: () => void;
-}
+import { filterTransactionSchema } from "@/schemas/transaction";
+import { Bucket, FilterTransactionData, FilterTransactionDialogProps, TransactionType } from "@/types";
 
 export function FilterTransactionDialog({
   open,

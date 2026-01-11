@@ -21,26 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import { distributeBalanceRequest } from "@/http/buckets";
-import { Bucket } from "@/types";
-
-interface DistributionTarget {
-  bucketId: string;
-  bucketName: string;
-  value: number;
-  isPercentage: boolean;
-  inputMode: "amount" | "percentage";
-  calculatedAmount?: number; // Para ajudar no preview
-}
-
-interface DistributeBalanceDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  sourceBucket: Bucket;
-  workspaceId: string;
-  buckets: Bucket[];
-  onSuccess?: () => void;
-  currency?: string;
-}
+import { Bucket, DistributionTarget, DistributeBalanceDialogProps } from "@/types";
 
 export function DistributeBalanceDialog({
   open,

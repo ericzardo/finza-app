@@ -19,9 +19,7 @@ import { FilterTransactionDialog } from "@/components/features/transaction/filte
 import { getTransactionsRequest } from "@/http/transactions";
 import { getWorkspaceByIdRequest } from "@/http/workspaces";
 import { getBucketsRequest } from "@/http/buckets";
-import { Transaction, Workspace, Bucket } from "@/types";
-
-type FilterType = "ALL" | "INCOME" | "EXPENSE";
+import { Transaction, Workspace, Bucket, FilterType } from "@/types";
 
 export default function TransactionsPage() {
   const params = useParams();

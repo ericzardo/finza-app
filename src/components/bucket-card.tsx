@@ -1,7 +1,7 @@
 "use client";
 
 import { MoreHorizontal, Pencil, Trash2, AlertCircle, TrendingUp, Wallet, Inbox, ArrowRightLeft, Share2 } from "lucide-react";
-import { Bucket } from "@/types";
+import { Bucket, BucketCardProps } from "@/types";
 import { formatCurrency, cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress"; 
@@ -16,16 +16,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SensitiveValue } from "@/components/ui/sensitive-value";
-
-interface BucketCardProps {
-  bucket: Bucket;
-  currency: string;
-  index: number;
-  onEdit: (bucket: Bucket) => void;
-  onDelete: (bucket: Bucket) => void;
-  onTransfer?: (bucket: Bucket) => void;
-  onDistribute?: (bucket: Bucket) => void;
-}
 
 const COLORS = [
   "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400",

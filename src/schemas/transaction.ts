@@ -34,4 +34,17 @@ export type TransactionData = z.infer<typeof transactionFormSchema>;
 export type CreateTransactionData = z.infer<typeof createTransactionSchema>;
 export type UpdateTransactionData = z.infer<typeof updateTransactionSchema>;
 export type FilterTransactionData = z.infer<typeof filterTransactionSchema>;
+export const importTransactionSchema = z.object({
+  workspaceId: z.string().uuid("ID do workspace inválido"),
+  transactions: z.array(
+    z.object({
+      date: z.coerce.date(),
+      description: z.string().min(1, "Descrição é obrigatória"),
+      amount: z.number().min(0.01, "Valor deve ser maior que zero"),
+      type: transactionTypeEnum,
+    })
+  ).min(1, "Pelo menos uma transação deve ser fornecida"),
+});
+
 export type TransactionType = z.infer<typeof transactionTypeEnum>;
+export type ImportTransactionData = z.infer<typeof importTransactionSchema>;
