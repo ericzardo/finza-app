@@ -243,7 +243,7 @@ export default function TransactionsPage() {
                   setEndDate(filters.endDate);
                   setMinAmount(filters.minAmount?.toString() || "");
                   setMaxAmount(filters.maxAmount?.toString() || "");
-                  if (filters.type && filters.type !== "all") {
+                  if (filters.type && (filters.type as string) !== "all") {
                     setFilter(filters.type as FilterType);
                   }
                   setIsFilterDialogOpen(false);
