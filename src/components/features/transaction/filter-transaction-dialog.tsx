@@ -92,7 +92,7 @@ export function FilterTransactionDialog({
       endDate: undefined,
       minAmount: undefined,
       maxAmount: undefined,
-      type: "all",
+      type: undefined,
     });
     onClearFilters();
     onOpenChange(false);
@@ -107,7 +107,7 @@ export function FilterTransactionDialog({
         endDate: defaultValues?.endDate,
         minAmount: defaultValues?.minAmount,
         maxAmount: defaultValues?.maxAmount,
-        type: defaultValues?.type || "all",
+        type: defaultValues?.type,
       });
     }
   }, [open, defaultValues, reset]);
