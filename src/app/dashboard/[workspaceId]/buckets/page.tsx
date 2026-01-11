@@ -14,6 +14,7 @@ import { AddBucketDialog } from "@/components/features/buckets/add-bucket-dialog
 import { EditBucketDialog } from "@/components/features/buckets/edit-bucket-dialog";
 import { DeleteBucketDialog } from "@/components/features/buckets/delete-bucket-dialog";
 import { TransferBalanceDialog } from "@/components/features/buckets/transfer-balance-dialog";
+import { DistributeBalanceDialog } from "@/components/features/buckets/distribute-balance-dialog";
 
 // Shared Components
 import { BucketCard } from "@/components/bucket-card";
@@ -39,6 +40,7 @@ export default function BucketsPage() {
   const [selectedBucket, setSelectedBucket] = useState<Bucket | null>(null);
   const [bucketToDelete, setBucketToDelete] = useState<Bucket | null>(null);
   const [bucketToTransfer, setBucketToTransfer] = useState<Bucket | null>(null);
+  const [bucketToDistribute, setBucketToDistribute] = useState<Bucket | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -95,6 +97,10 @@ export default function BucketsPage() {
 
   const handleTransferClick = (bucket: Bucket) => {
     setBucketToTransfer(bucket);
+  };
+
+  const handleDistributeClick = (bucket: Bucket) => {
+    setBucketToDistribute(bucket);
   };
 
   if (isLoading) {
@@ -208,6 +214,7 @@ export default function BucketsPage() {
               onEdit={handleEditClick}
               onDelete={handleDeleteClick} 
               onTransfer={handleTransferClick}
+              onDistribute={handleDistributeClick}
             />
           ))
         )}
@@ -235,6 +242,18 @@ export default function BucketsPage() {
           open={!!bucketToTransfer}
           onOpenChange={(open: boolean) => !open && setBucketToTransfer(null)}
           sourceBucket={bucketToTransfer}
+          workspaceId={workspace.id}
+          buckets={buckets}
+          currency={workspace.currency}
+          onSuccess={refreshBuckets}
+        />
+      )}
+
+      {bucketToDistribute && (
+        <DistributeBalanceDialog
+          open={!!bucketToDistribute}
+          onOpenChange={(open: boolean) => !open && setBucketToDistribute(null)}
+          sourceBucket={bucketToDistribute}
           workspaceId={workspace.id}
           buckets={buckets}
           currency={workspace.currency}

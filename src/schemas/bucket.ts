@@ -26,8 +26,20 @@ export const transferBucketSchema = z.object({
   amount: z.number().positive("O valor deve ser positivo").min(0.01, "O valor deve ser maior que zero"),
 });
 
+export const distributeBucketSchema = z.object({
+  sourceBucketId: z.string().uuid("Bucket de origem inválido"),
+  workspaceId: z.string().uuid("Workspace inválido"),
+  amount: z.number().positive("O valor deve ser positivo").min(0.01, "O valor deve ser maior que zero"),
+  targets: z.array(z.object({
+    bucketId: z.string().uuid("Bucket de destino inválido"),
+    value: z.number().min(0, "O valor deve ser positivo"),
+    isPercentage: z.boolean(),
+  })).optional(), // Se não for passado, usa modo automático
+});
+
 export type BucketData = z.infer<typeof bucketFormSchema>;
 export type CreateBucketData = z.infer<typeof createBucketSchema>;
 export type UpdateBucketData = z.infer<typeof updateBucketSchema>;
 export type TransferBucketData = z.infer<typeof transferBucketSchema>;
+export type DistributeBucketData = z.infer<typeof distributeBucketSchema>;
 export type BucketType = z.infer<typeof bucketTypeEnum>;

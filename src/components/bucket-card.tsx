@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal, Pencil, Trash2, AlertCircle, TrendingUp, Wallet, Inbox, ArrowRightLeft } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, AlertCircle, TrendingUp, Wallet, Inbox, ArrowRightLeft, Share2 } from "lucide-react";
 import { Bucket } from "@/types";
 import { formatCurrency, cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -24,6 +24,7 @@ interface BucketCardProps {
   onEdit: (bucket: Bucket) => void;
   onDelete: (bucket: Bucket) => void;
   onTransfer?: (bucket: Bucket) => void;
+  onDistribute?: (bucket: Bucket) => void;
 }
 
 const COLORS = [
@@ -37,7 +38,7 @@ const COLORS = [
   "bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400",
 ];
 
-export function BucketCard({ bucket, currency, index, onEdit, onDelete, onTransfer }: BucketCardProps) {
+export function BucketCard({ bucket, currency, index, onEdit, onDelete, onTransfer, onDistribute }: BucketCardProps) {
   
   const colorClass = COLORS[index % COLORS.length];
 
@@ -176,6 +177,13 @@ export function BucketCard({ bucket, currency, index, onEdit, onDelete, onTransf
                   <DropdownMenuItem onClick={() => onTransfer(bucket)} className="cursor-pointer">
                     <ArrowRightLeft className="mr-2 h-4 w-4" />
                     Mover Saldo
+                  </DropdownMenuItem>
+                )}
+
+                {onDistribute && currentBalance > 0 && (
+                  <DropdownMenuItem onClick={() => onDistribute(bucket)} className="cursor-pointer">
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Distribuir Saldo
                   </DropdownMenuItem>
                 )}
 

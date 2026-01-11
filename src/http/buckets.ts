@@ -1,6 +1,6 @@
-import { CreateBucketData, UpdateBucketData, TransferBucketData } from "@/schemas/bucket";
+import { CreateBucketData, UpdateBucketData, TransferBucketData, DistributeBucketData } from "@/schemas/bucket";
 
-import { Bucket } from "@/types"; 
+import { Bucket } from "@/types";
 
 async function handleHttpError(response: Response, defaultMessage: string) {
   try {
@@ -81,6 +81,36 @@ export async function transferBalanceRequest(data: TransferBucketData): Promise<
 
   if (!response.ok) {
     throw await handleHttpError(response, "Falha ao transferir saldo entre buckets");
+  }
+
+  const result = await response.json();
+  return result.data || result;
+}
+
+export async function distributeBalanceRequest(data: DistributeBucketData): Promise<{
+  sourceBucket: {
+    id: string;
+    name: string;
+    previousBalance: number;
+    newBalance: number;
+  };
+  distributions: Array<{
+    bucketId: string;
+    name: string;
+    amount: number;
+    current_balance: number;
+  }>;
+  totalDistributed: number;
+  remainder: number;
+}> {
+  const response = await fetch("/api/buckets/distribute", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw await handleHttpError(response, "Falha ao distribuir saldo");
   }
 
   const result = await response.json();
