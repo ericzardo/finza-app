@@ -24,7 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 
 import { cn } from "@/lib/utils";
 import { filterTransactionSchema } from "@/schemas/transaction";
-import { Bucket, FilterTransactionData, FilterTransactionDialogProps, TransactionType } from "@/types";
+import { FilterTransactionData, FilterTransactionDialogProps, TransactionType } from "@/types";
 
 export function FilterTransactionDialog({
   open,

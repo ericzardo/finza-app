@@ -183,7 +183,7 @@ export function DistributeBalanceDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0 border-none shadow-xl overflow-hidden">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
         
         {/* HEADER FIXO */}
         <div className="p-6 pb-4">
@@ -279,7 +279,7 @@ export function DistributeBalanceDialog({
                       <div className="px-3 pb-3 pt-0 pl-9 animate-in slide-in-from-top-1 duration-200">
                         <div className="flex gap-2 items-center">
                           {/* Botões de Modo */}
-                          <div className="flex bg-muted rounded-md p-0.5 h-9">
+                          <div className="flex bg-muted rounded-md p-0.5">
                             <button
                               type="button"
                               onClick={(e) => { e.stopPropagation(); updateTargetValue(target.bucketId, 0, false, "amount"); }}
@@ -306,11 +306,10 @@ export function DistributeBalanceDialog({
                           <div className="flex-1 relative">
                             {target.inputMode === "amount" ? (
                               <MoneyInput
-                                value={target.value}
-                                onValueChange={(val) => updateTargetValue(target.bucketId, val, false, "amount")}
+                                value={Number(target.value)}
+                                onValueChange={(val) => updateTargetValue(target.bucketId, Number(val), false, "amount")}
                                 placeholder="0,00"
                                 currencySymbol={currency === "BRL" ? "R$" : "$"}
-                                className="h-9"
                               />
                             ) : (
                               <div className="relative">
@@ -321,7 +320,7 @@ export function DistributeBalanceDialog({
                                     updateTargetValue(target.bucketId, val, true, "percentage");
                                   }}
                                   placeholder="0"
-                                  className="h-9 pr-8"
+                                  className="pr-8"
                                 />
                                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">%</span>
                               </div>
@@ -346,38 +345,35 @@ export function DistributeBalanceDialog({
 
         {/* FOOTER FIXO */}
         <div className="p-6 pt-4 bg-background">
-          <DialogFooter className="flex items-center justify-between sm:justify-between w-full gap-4">
-             <div className="flex flex-col text-sm">
-                <span className="text-muted-foreground">Total a distribuir</span>
-                <span className={cn("font-bold", isOverLimit ? "text-destructive" : "text-primary")}>
-                  {formatCurrency(totalDistributed, currency)}
-                </span>
-             </div>
-
-             <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => handleOpenChange(false)}
-                  disabled={isLoading}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSubmit}
-                  disabled={isLoading || isOverLimit || (targets.length === 0 && !useAutoMode)}
-                  className="min-w-32 bg-primary text-primary-foreground hover:bg-primary/90"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processando...
-                    </>
-                  ) : (
-                    "Confirmar"
-                  )}
-                </Button>
-             </div>
+          <DialogFooter>
+            <div className="flex flex-col text-sm mr-auto">
+              <span className="text-muted-foreground">Total a distribuir</span>
+              <span className={cn("font-bold", isOverLimit ? "text-destructive" : "text-primary")}>
+                {formatCurrency(totalDistributed, currency)}
+              </span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleOpenChange(false)}
+              disabled={isLoading}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              disabled={isLoading || isOverLimit || (targets.length === 0 && !useAutoMode)}
+              className="min-w-32"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Processando...
+                </>
+              ) : (
+                "Confirmar"
+              )}
+            </Button>
           </DialogFooter>
         </div>
 

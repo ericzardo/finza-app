@@ -12,7 +12,6 @@ export async function getCurrentUserId() {
   }
 
   try {
-    console.log("Unauthorized")
     const secret = process.env.JWT_SECRET || ""; 
     
     const decoded = verify(token, secret) as { sub: string; id?: string };
@@ -25,7 +24,6 @@ export async function getCurrentUserId() {
     return userId;
 
   } catch {
-    console.log("Unauthorized")
     throw new AppError("Unauthorized: Invalid token signature", 401);
   }
 }
