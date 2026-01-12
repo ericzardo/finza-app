@@ -103,126 +103,139 @@ export function ImportTransactionDialog({
   };
 
   // Função para processar o arquivo CSV
-  const processCSV = useCallback((file: File) => {
-    setIsLoading(true);
-    setFileName(file.name);
-    setCalculatedOpeningBalance(null);
+    const processCSV = useCallback((file: File) => {
+        setIsLoading(true);
+        setFileName(file.name);
+        setCalculatedOpeningBalance(null);
 
-    Papa.parse(file, {
-      encoding: "ISO-8859-1",
-      complete: (results) => {
-        try {
-          const rows = results.data as string[][];
+        Papa.parse(file, {
+          encoding: "ISO-8859-1",
+          complete: (results) => {
+            try {
+              const rows = results.data as string[][];
 
-          // 1. DETECÇÃO DO SALDO FINAL (CABEÇALHO - Padrão Inter e similares)
-          // Procura nas primeiras 10 linhas por uma célula que contenha "Saldo"
-          let headerBalance = null;
-          for(let i = 0; i < 10 && i < rows.length; i++) {
-             const colA = rows[i][0]?.trim();
-             // Verifica se a coluna A é "Saldo" e se existe valor na coluna B
-             if (colA && (colA === "Saldo" || colA.includes("Saldo"))) {
-                const valB = rows[i][1]; 
-                if (valB) {
-                  headerBalance = parseBrazilianCurrency(valB);
-                  break; 
+              // 1. TENTATIVA A: SALDO NO CABEÇALHO
+              let headerBalance: number | null = null;
+              for(let i = 0; i < 10 && i < rows.length; i++) {
+                const colA = rows[i][0]?.trim();
+                if (colA && (colA === "Saldo" || colA.includes("Saldo"))) {
+                    const valB = rows[i][1]; 
+                    if (valB) {
+                      headerBalance = parseBrazilianCurrency(valB);
+                      break; 
+                    }
                 }
-             }
-          }
+              }
 
-          // 2. ENCONTRAR E SOMAR TRANSAÇÕES
-          const startIndex = rows.findIndex(
-            (row) => row[0] && isValidDate(row[0].trim())
-          );
+              // 2. ENCONTRAR INICIO DAS TRANSAÇÕES
+              const startIndex = rows.findIndex(
+                (row) => row[0] && isValidDate(row[0].trim())
+              );
 
-          if (startIndex === -1) {
-            toast.error("Nenhuma data válida encontrada no arquivo. Verifique o formato (dd/mm/aaaa).");
-            setIsLoading(false);
-            return;
-          }
+              if (startIndex === -1) {
+                toast.error("Nenhuma data válida encontrada. Verifique se é um CSV bancário.");
+                setIsLoading(false);
+                return;
+              }
 
-          const transactions: ParsedTransaction[] = [];
-          let totalTransactionsSum = 0;
+              const transactions: ParsedTransaction[] = [];
+              let totalTransactionsSum = 0;
+              let firstRowBalance: number | null = null; 
 
-          for (let i = startIndex; i < rows.length; i++) {
-            const row = rows[i];
-            if (!row || row.length < 2) continue;
+              // Detectar índices das colunas
+              let valorIndex = -1;
+              let descIndex = -1;
+              let saldoColIndex = -1;
 
-            const dateStr = row[0]?.trim();
-            if (!dateStr || !isValidDate(dateStr)) continue;
+              // Tenta achar pelo cabeçalho (linha anterior ao dados)
+              if (startIndex > 0) {
+                const headerRow = rows[startIndex - 1];
+                for (let j = 0; j < headerRow.length; j++) {
+                    const cell = headerRow[j]?.trim().toLowerCase();
+                    if (cell === "valor" || cell === "amount") valorIndex = j;
+                    if (cell === "descrição" || cell === "description") descIndex = j;
+                    if (cell === "saldo" || cell === "balance") saldoColIndex = j;
+                }
+              }
 
-            const date = parseDate(dateStr);
-            
-            // Busca dinâmica da coluna valor
-            let valorIndex = -1;
-            for (let j = 0; j < row.length; j++) {
-              const cell = row[j]?.trim().toLowerCase();
-              if (cell === "valor") valorIndex = j;
+              // Fallbacks se não achou pelo nome
+              // Nubank padrão: Data(0), Valor(1), Identificador(2), Descrição(3)
+              if (valorIndex === -1) valorIndex = 1; 
+              
+              for (let i = startIndex; i < rows.length; i++) {
+                const row = rows[i];
+                if (!row || row.length < 2) continue;
+
+                const dateStr = row[0]?.trim();
+                if (!dateStr || !isValidDate(dateStr)) continue;
+
+                const date = parseDate(dateStr);
+                
+                // Descrição: Se achou coluna explicita usa ela, senão tenta concatenar inteligentes
+                let description = "Sem descrição";
+                if (descIndex !== -1 && row[descIndex]) {
+                    description = row[descIndex].trim();
+                } else {
+                    // Lógica de fallback: pega tudo que não é data, valor ou saldo
+                    const parts = [];
+                    for (let j = 1; j < row.length; j++) {
+                        if (j !== valorIndex && j !== saldoColIndex && row[j]) {
+                            // Ignora UUIDs/Identificadores do Nubank (ex: 692ef44a...)
+                            // Se for muito longo e sem espaço, provavelmente é ID
+                            if (row[j].length > 20 && !row[j].includes(" ")) continue;
+                            parts.push(row[j].trim());
+                        }
+                    }
+                    if (parts.length > 0) description = parts.join(" - ");
+                }
+
+                const valueStr = row[valorIndex]?.trim();
+                if (!valueStr) continue;
+                const amount = parseBrazilianCurrency(valueStr);
+                
+                totalTransactionsSum += amount;
+                const type: "INCOME" | "EXPENSE" = amount < 0 ? "EXPENSE" : "INCOME";
+
+                // Tenta pegar saldo da linha se existir coluna
+                if (saldoColIndex !== -1 && firstRowBalance === null && row[saldoColIndex]) {
+                    firstRowBalance = parseBrazilianCurrency(row[saldoColIndex]);
+                }
+
+                transactions.push({ date, description, amount, type });
+              }
+
+              if (transactions.length === 0) {
+                toast.error("Nenhuma transação válida encontrada.");
+                setIsLoading(false);
+                return;
+              }
+
+              // 3. RECONCILIAÇÃO
+              const finalBalanceReference = headerBalance !== null ? headerBalance : firstRowBalance;
+
+              if (finalBalanceReference !== null) {
+                const diff = finalBalanceReference - totalTransactionsSum;
+                const roundedDiff = Math.round(diff * 100) / 100;
+                if (Math.abs(roundedDiff) > 0.01) {
+                  setCalculatedOpeningBalance(roundedDiff);
+                }
+              }
+
+              setParsedData(transactions);
+              toast.success(`${transactions.length} transações lidas!`);
+            } catch (error) {
+              console.error("Erro processamento:", error);
+              toast.error("Erro ao ler o arquivo CSV.");
+            } finally {
+              setIsLoading(false);
             }
-            if (valorIndex === -1) valorIndex = row.length - 2; // Fallback para penúltima coluna
-
-            // Busca da descrição
-            const descriptionParts: string[] = [];
-            for (let j = 1; j < valorIndex; j++) {
-              if (row[j] && row[j].trim()) descriptionParts.push(row[j].trim());
-            }
-            const description = descriptionParts.join(" - ") || "Sem descrição";
-
-            const valueStr = row[valorIndex]?.trim();
-            if (!valueStr) continue;
-
-            const amount = parseBrazilianCurrency(valueStr);
-            
-            // Acumula o valor para o cálculo de saldo
-            totalTransactionsSum += amount;
-
-            const type: "INCOME" | "EXPENSE" = amount < 0 ? "EXPENSE" : "INCOME";
-
-            transactions.push({
-              date,
-              description,
-              amount,
-              type,
-            });
-          }
-
-          if (transactions.length === 0) {
-            toast.error("Nenhuma transação válida encontrada no arquivo.");
+          },
+          error: () => {
+            toast.error("Erro crítico ao abrir o arquivo.");
             setIsLoading(false);
-            return;
-          }
-
-          // 3. CÁLCULO OBRIGATÓRIO DO SALDO INICIAL
-          // Se encontramos um saldo no cabeçalho, calculamos a diferença necessária
-          if (headerBalance !== null) {
-             // Matemática: SaldoFinal = SaldoInicial + Movimentações
-             // Logo: SaldoInicial = SaldoFinal - Movimentações
-             const diff = headerBalance - totalTransactionsSum;
-             
-             // Arredonda para 2 casas para evitar bug de float
-             const roundedDiff = Math.round(diff * 100) / 100;
-             
-             // Se houver diferença (saldo inicial pré-existente), salvamos para injetar no save
-             if (Math.abs(roundedDiff) > 0.001) {
-               setCalculatedOpeningBalance(roundedDiff);
-             }
-          }
-
-          setParsedData(transactions);
-          toast.success(`${transactions.length} transações lidas com sucesso!`);
-        } catch (error) {
-          console.error("Erro ao processar CSV:", error);
-          toast.error("Erro ao processar o arquivo. Verifique o formato.");
-        } finally {
-          setIsLoading(false);
-        }
-      },
-      error: (error) => {
-        console.error("Erro ao ler CSV:", error);
-        toast.error("Erro ao ler o arquivo CSV.");
-        setIsLoading(false);
-      },
-    });
-  }, []);
+          },
+        });
+    }, []);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -337,16 +350,27 @@ export function ImportTransactionDialog({
               <div className="rounded-lg border border-border/40 p-4 mb-4 bg-muted/30">
                 <div className="text-xs text-muted-foreground font-medium mb-2">Exemplo do formato esperado:</div>
                 <div className="text-sm">
-                  <div className="grid grid-cols-3 gap-2 text-xs bg-background p-2 rounded border border-border/30">
+                  {/* MUDANÇA AQUI: grid-cols-4 para caber o saldo */}
+                  <div className="grid grid-cols-4 gap-2 text-xs bg-background p-2 rounded border border-border/30">
                     <div className="font-medium text-muted-foreground border-b border-border/30 pb-1">Data</div>
                     <div className="font-medium text-muted-foreground border-b border-border/30 pb-1">Descrição</div>
                     <div className="font-medium text-muted-foreground border-b border-border/30 pb-1 text-right">Valor</div>
+                    {/* Coluna Nova */}
+                    <div className="font-medium text-muted-foreground border-b border-border/30 pb-1 text-right">
+                      Saldo <span className="text-[10px] opacity-70 font-normal">(Opcional)</span>
+                    </div>
+
+                    {/* Linha 1 */}
                     <div className="text-foreground/70">01/01/2024</div>
                     <div className="text-foreground/70">Exemplo de Despesa</div>
                     <div className="text-right text-foreground/70">R$ 100,00</div>
+                    <div className="text-right text-muted-foreground">R$ 1.900,00</div>
+
+                    {/* Linha 2 */}
                     <div className="text-foreground/70">15/01/2024</div>
                     <div className="text-foreground/70">Salário Recebido</div>
                     <div className="text-right text-finza-success">R$ 5.000,00</div>
+                    <div className="text-right text-muted-foreground">R$ 6.900,00</div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">* A primeira coluna deve conter datas no formato dd/mm/aaaa</p>
                 </div>
