@@ -128,8 +128,8 @@ export function DistributeBalanceDialog({
       return { ...target, calculatedAmount: amount };
     });
 
-    const remainder = sourceBalance - totalDistributed;
-    const isOverLimit = remainder < 0; // Tolerância pequena para float pode ser necessária, mas < 0 resolve 99%
+    const remainder = sourceBalance - totalDistributed
+    const isOverLimit = remainder < 0;
 
     return { totalDistributed, remainder, isOverLimit, enrichedTargets };
   };

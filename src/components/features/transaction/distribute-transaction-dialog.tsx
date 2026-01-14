@@ -113,7 +113,7 @@ export function TransactionDistributionStep({
 
     const remainder = totalAmount - totalDistributed;
     // Tolerância de centavos para float
-    const isOverLimit = remainder < -0.02; 
+    const isOverLimit = remainder < 0; 
 
     return { totalDistributed, remainder, isOverLimit };
   };
