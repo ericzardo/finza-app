@@ -30,7 +30,8 @@ export async function listTransactions(workspaceId: string, userId: string) {
     ],
     include: {
       bucket: { select: { name: true } }
-    }
+    },
+    take: 100,
   });
 
   return transactions.map((t: RawTransaction) => ({
