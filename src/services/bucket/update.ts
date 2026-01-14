@@ -7,7 +7,7 @@ interface UpdateServiceProps extends UpdateBucketData {
   userId: string;
 }
 
-export async function updateBucket({ bucketId, userId, name, allocationPercentage, isDefault, type }: UpdateServiceProps) {
+export async function updateBucket({ bucketId, userId, name, allocationPercentage, isDefault, type, initialBalance }: UpdateServiceProps) {
   const bucket = await prisma.bucket.findUnique({
     where: { id: bucketId },
     include: { workspace: true }
@@ -42,20 +42,37 @@ export async function updateBucket({ bucketId, userId, name, allocationPercentag
     isDefault = true;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const data: any = {
+    name,
+    allocation_percentage: allocationPercentage,
+    is_default: isDefault,
+    type: type,
+  };
+
+  if (initialBalance !== undefined) {
+    const oldInitial = Number(bucket.initial_balance);
+    
+    // Se o valor mudou, precisamos ajustar o saldo atual proporcionalmente
+    if (initialBalance !== oldInitial) {
+      const diff = initialBalance - oldInitial;
+      const currentBalance = Number(bucket.current_balance);
+      
+      data.initial_balance = initialBalance;
+      data.current_balance = currentBalance + diff;
+    }
+  }
+
   const updated = await prisma.bucket.update({
     where: { id: bucketId },
-    data: {
-      name,
-      allocation_percentage: allocationPercentage,
-      is_default: isDefault,
-      type: type, 
-    }
+    data,
   });
 
   return {
     ...updated,
     allocation_percentage: Number(updated.allocation_percentage),
     current_balance: Number(updated.current_balance),
+    initial_balance: Number(updated.initial_balance),
     total_allocated: Number(updated.total_allocated),
     total_spent: Number(updated.total_spent), 
     created_at: updated.created_at.toISOString(),

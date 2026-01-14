@@ -11,11 +11,13 @@ export interface Bucket {
   name: string;
   allocation_percentage: number;
   type: BucketType; 
+  
+  initial_balance: number; 
   current_balance: number;
   total_allocated: number;
   total_spent: number;
   is_default: boolean;
-}
+} 
 
 // Tipos de componentes
 export interface BucketCardProps {

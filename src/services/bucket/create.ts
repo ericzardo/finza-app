@@ -6,7 +6,7 @@ interface CreateServiceProps extends CreateBucketData {
   userId: string;
 }
 
-export async function createBucket({ workspaceId, userId, name, allocationPercentage, isDefault, type }: CreateServiceProps) {
+export async function createBucket({ workspaceId, userId, name, allocationPercentage, isDefault, type, initialBalance }: CreateServiceProps) {
   const workspace = await prisma.workspace.findUnique({
     where: { id: workspaceId, user_id: userId }
   });
@@ -20,15 +20,17 @@ export async function createBucket({ workspaceId, userId, name, allocationPercen
 
   // Para buckets do tipo INBOX, forçar allocation_percentage = 0
   const finalAllocationPercentage = type === "INBOX" ? 0 : allocationPercentage;
+  const startBalance = initialBalance || 0;
 
   const bucket = await prisma.bucket.create({
     data: {
       workspace_id: workspaceId,
       name,
       allocation_percentage: finalAllocationPercentage,
-      current_balance: 0,
-      is_default: false, // Forçar false, nunca permitir criação de bucket default pelo usuário
+      is_default: false,
       type,
+      initial_balance: startBalance,
+      current_balance: startBalance,
     }
   });
 
@@ -36,6 +38,7 @@ export async function createBucket({ workspaceId, userId, name, allocationPercen
     ...bucket,
     allocation_percentage: Number(bucket.allocation_percentage),
     current_balance: Number(bucket.current_balance),
+    initial_balance: Number(bucket.initial_balance),
     created_at: bucket.created_at.toISOString(),
   };
 }

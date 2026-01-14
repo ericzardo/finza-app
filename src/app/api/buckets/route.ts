@@ -18,7 +18,8 @@ export async function POST(request: Request) {
       name: data.name,
       allocationPercentage: data.allocationPercentage,
       isDefault: data.isDefault,
-      type: data.type
+      type: data.type,
+      initialBalance: data.initialBalance,
     });
 
     return handleResponse(bucket, { 

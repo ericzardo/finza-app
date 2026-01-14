@@ -10,6 +10,10 @@ const baseBucketSchema = z.object({
     .max(100, "A porcentagem deve ser entre 0 e 100"),
   isDefault: z.boolean(),
   type: bucketTypeEnum,
+
+  initialBalance: z.number("Informe um valor válido")
+    .min(0, "O saldo inicial não pode ser negativo")
+    .default(0),
 });
 
 export const bucketFormSchema = baseBucketSchema;

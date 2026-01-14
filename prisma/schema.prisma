@@ -45,6 +45,7 @@ model Bucket {
   name         String
   type         BucketType @default(SPENDING)
 
+  initial_balance       Decimal @default(0.00) @db.Decimal(10, 2)
   allocation_percentage Decimal @db.Decimal(5, 2)
   current_balance       Decimal @default(0.00) @db.Decimal(10, 2)
   total_allocated       Decimal @default(0.00) @db.Decimal(10, 2)
