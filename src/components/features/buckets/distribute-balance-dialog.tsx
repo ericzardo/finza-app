@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Switch } from "@/components/ui/switch"; // Mudei para Switch (mais bonito pra toggle)
+import { Switch } from "@/components/ui/switch"; 
 import { Label } from "@/components/ui/label";
 import { MoneyInput } from "@/components/ui/money-input";
 import { Input } from "@/components/ui/input";
@@ -42,7 +42,6 @@ export function DistributeBalanceDialog({
       bucket.workspace_id === workspaceId
   );
 
-  // Resetar estados ao abrir/fechar
   useEffect(() => {
     if (open) {
       setUseAutoMode(false);
@@ -58,10 +57,8 @@ export function DistributeBalanceDialog({
     }
   };
 
-  // LÓGICA DO MODO AUTOMÁTICO (Sem useEffect para evitar loop)
   const handleAutoToggle = (checked: boolean) => {
     setUseAutoMode(checked);
-    
     if (checked) {
       const autoTargets: DistributionTarget[] = availableBuckets
         .filter((b) => !b.is_default && Number(b.allocation_percentage) > 0)
@@ -79,11 +76,9 @@ export function DistributeBalanceDialog({
   };
 
   const toggleBucketSelection = (bucket: Bucket) => {
-    // Se estiver em auto mode e tentar editar manual, desliga o auto mode mas mantem os dados
     if (useAutoMode) setUseAutoMode(false);
 
     const exists = targets.find((t) => t.bucketId === bucket.id);
-    
     if (exists) {
       setTargets(targets.filter((t) => t.bucketId !== bucket.id));
     } else {
@@ -101,8 +96,7 @@ export function DistributeBalanceDialog({
   };
 
   const updateTargetValue = (bucketId: string, value: number, isPercentage: boolean, mode: "amount" | "percentage") => {
-    if (useAutoMode) setUseAutoMode(false); // Desliga auto se editar manual
-
+    if (useAutoMode) setUseAutoMode(false);
     setTargets(
       targets.map((t) =>
         t.bucketId === bucketId
@@ -112,29 +106,57 @@ export function DistributeBalanceDialog({
     );
   };
 
-  // Cálculo em tempo real
+  // --- CÁLCULO BLINDADO (Matemática de Centavos) ---
   const calculateTotals = () => {
     const sourceBalance = Number(sourceBucket.current_balance);
-    let totalDistributed = 0;
+    const safeSourceBalance = Math.round(sourceBalance * 100);
+    let safeTotalDistributed = 0;
 
+    // 1. Primeiro Pass: Calcula valores arredondados normais
     const enrichedTargets = targets.map(target => {
-      let amount = 0;
+      let safeAmount = 0;
       if (target.isPercentage) {
-        amount = (target.value / 100) * sourceBalance;
+        safeAmount = Math.round((safeSourceBalance * target.value) / 100);
       } else {
-        amount = target.value;
+        safeAmount = Math.round(target.value * 100);
       }
-      totalDistributed += amount;
-      return { ...target, calculatedAmount: amount };
+      safeTotalDistributed += safeAmount;
+      
+      return { 
+        ...target, 
+        safeAmount, // Guardamos o valor em centavos temporariamente
+        calculatedAmount: safeAmount / 100 
+      };
     });
 
-    const remainder = sourceBalance - totalDistributed
-    const isOverLimit = remainder < 0;
+    let safeRemainder = safeSourceBalance - safeTotalDistributed;
+
+    // 2. A MÁGICA: Se estamos no modo Automático e sobrou centavos (ex: 1 ou 2),
+    //    e a intenção provável era distribuir 100% (ou o resto é insignificante),
+    //    nós alocamos esse resto no primeiro bucket para zerar a conta.
+    
+    // Verifica se tem sobra positiva pequena (1 a 5 centavos) e se tem buckets
+    if (useAutoMode && safeRemainder > 0 && safeRemainder <= 5 && enrichedTargets.length > 0) {
+       // Adiciona a sobra no primeiro bucket
+       enrichedTargets[0].safeAmount += safeRemainder;
+       enrichedTargets[0].calculatedAmount = enrichedTargets[0].safeAmount / 100;
+       
+       // Atualiza totais
+       safeTotalDistributed += safeRemainder;
+       safeRemainder = 0; 
+    }
+
+    // Convertendo de volta para Float
+    const totalDistributed = safeTotalDistributed / 100;
+    const remainder = safeRemainder / 100;
+
+    // Validação com tolerância para float negativo (caso ainda ocorra)
+    const isOverLimit = safeRemainder < -1; 
 
     return { totalDistributed, remainder, isOverLimit, enrichedTargets };
   };
 
-  const { totalDistributed, remainder, isOverLimit } = calculateTotals();
+  const { totalDistributed, remainder, isOverLimit, enrichedTargets } = calculateTotals();
 
   const handleSubmit = async () => {
     try {
@@ -150,21 +172,25 @@ export function DistributeBalanceDialog({
         return;
       }
 
-      if (totalDistributed <= 0 && !useAutoMode) {
+      // Validação de total (com tolerância de float)
+      if (totalDistributed <= 0.001 && !useAutoMode) {
         toast.error("Defina valores para distribuir");
         return;
       }
 
       setIsLoading(true);
 
+      // --- CORREÇÃO DO PAYLOAD ---
+      // Enviamos o valor JÁ CALCULADO e dizemos que NÃO é porcentagem.
+      // Isso força o backend a subtrair exatamente o valor que o usuário vê.
       const requestData = {
         sourceBucketId: sourceBucket.id,
         workspaceId,
         amount: sourceBalance,
-        targets: targets.map((t) => ({
+        targets: enrichedTargets.map((t) => ({ 
           bucketId: t.bucketId,
-          value: t.value,
-          isPercentage: t.isPercentage,
+          value: t.calculatedAmount, // Valor calculado em Reais (arredondado)
+          isPercentage: false, // Força modo valor fixo para evitar erro de arredondamento no backend
         })),
       };
 
@@ -175,7 +201,7 @@ export function DistributeBalanceDialog({
       handleOpenChange(false);
     } catch (error) {
       console.error(error);
-      toast.error("Erro ao distribuir saldo");
+      toast.error("Erro ao distribuir saldo: " + (error instanceof Error ? error.message : "Erro desconhecido"));
     } finally {
       setIsLoading(false);
     }
@@ -185,7 +211,6 @@ export function DistributeBalanceDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden border-none shadow-xl [&>button]:cursor-pointer">
         
-        {/* HEADER FIXO */}
         <div className="p-6 pb-4">
           <DialogHeader>
             <DialogTitle>Distribuir Saldo</DialogTitle>
@@ -194,7 +219,6 @@ export function DistributeBalanceDialog({
             </DialogDescription>
           </DialogHeader>
 
-          {/* CARD DE SALDO DISPONÍVEL (NOVO) */}
           <div className="mt-4 bg-secondary/50 p-4 rounded-xl border border-border/50 flex justify-between items-center">
             <div className="flex flex-col">
               <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">
@@ -213,10 +237,8 @@ export function DistributeBalanceDialog({
           </div>
         </div>
 
-        {/* CORPO COM SCROLL (Resolve o problema de layout) */}
         <div data-lenis-prevent="true" className="flex-1 overflow-y-auto px-6 py-2 space-y-6">
           
-          {/* MODO AUTOMÁTICO TOGGLE */}
           <div className="flex items-center justify-between p-4 rounded-xl border bg-card">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-primary/10 rounded-lg">
@@ -235,7 +257,6 @@ export function DistributeBalanceDialog({
             />
           </div>
 
-          {/* LISTA DE BUCKETS */}
           <div className="space-y-3">
             <Label className="text-base">Selecione os Destinos</Label>
             <div className="grid gap-3">
@@ -251,7 +272,6 @@ export function DistributeBalanceDialog({
                       isSelected ? "border-primary/50 bg-secondary/30" : "border-border bg-card"
                     )}
                   >
-                    {/* CABEÇALHO DO CARD (CHECKBOX) */}
                     <div 
                       className="p-3 flex items-center gap-3 cursor-pointer"
                       onClick={() => toggleBucketSelection(bucket)}
@@ -274,11 +294,9 @@ export function DistributeBalanceDialog({
                       </div>
                     </div>
 
-                    {/* ÁREA DE INPUTS (EXPANDE SE SELECIONADO) */}
                     {isSelected && target && (
                       <div className="px-3 pb-3 pt-0 pl-9 animate-in slide-in-from-top-1 duration-200">
                         <div className="flex gap-2 items-center">
-                          {/* Botões de Modo */}
                           <div className="flex bg-muted rounded-md p-0.5">
                             <button
                               type="button"
@@ -302,7 +320,6 @@ export function DistributeBalanceDialog({
                             </button>
                           </div>
 
-                          {/* Inputs */}
                           <div className="flex-1 relative">
                             {target.inputMode === "amount" ? (
                               <MoneyInput
@@ -327,7 +344,6 @@ export function DistributeBalanceDialog({
                             )}
                           </div>
 
-                          {/* Preview do Valor Calculado (se for %) */}
                           {target.inputMode === "percentage" && (
                              <div className="text-xs text-muted-foreground min-w-20 text-right">
                                = {formatCurrency((Number(sourceBucket.current_balance) * target.value) / 100, currency)}
@@ -343,7 +359,6 @@ export function DistributeBalanceDialog({
           </div>
         </div>
 
-        {/* FOOTER FIXO */}
         <div className="p-6 pt-4 bg-background">
           <DialogFooter>
             <div className="flex flex-col text-sm mr-auto">
