@@ -28,7 +28,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 {children}
               </SmoothScroll>
               <Toaster
-                position="top-right"
+                position="top-center"
                 toastOptions={{
                   classNames: {
                     toast: "bg-background text-foreground border border-border shadow-xl rounded-xl p-4 gap-3",

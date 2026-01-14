@@ -183,7 +183,7 @@ export function DistributeBalanceDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col p-0 gap-0 overflow-hidden border-none shadow-xl [&>button]:cursor-pointer">
         
         {/* HEADER FIXO */}
         <div className="p-6 pb-4">
@@ -214,7 +214,7 @@ export function DistributeBalanceDialog({
         </div>
 
         {/* CORPO COM SCROLL (Resolve o problema de layout) */}
-        <div className="flex-1 overflow-y-auto px-6 py-2 space-y-6">
+        <div data-lenis-prevent="true" className="flex-1 overflow-y-auto px-6 py-2 space-y-6">
           
           {/* MODO AUTOMÁTICO TOGGLE */}
           <div className="flex items-center justify-between p-4 rounded-xl border bg-card">
