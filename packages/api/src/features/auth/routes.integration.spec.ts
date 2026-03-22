@@ -1,260 +1,270 @@
-import { describe, expect, test } from "bun:test";
-import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import type { FastifyInstance } from "fastify";
-import env from "@env";
-import { ErrorCode } from "@errors/app-error";
-import { setupTestServer } from "@utils/test-setup";
-import { changePasswordResponseSchema } from "./schemas";
+import { describe, expect, test } from 'bun:test';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import type { FastifyInstance } from 'fastify';
+import env from '@env';
+import { ErrorCode } from '@errors/app-error';
+import { setupTestServer } from '@utils/test-setup';
+import { changePasswordResponseSchema } from './schemas';
 
-const COOKIE_NAME = "finza_token";
+const COOKIE_NAME = 'finza_token';
 
 function uniqueEmail(prefix: string) {
-	return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}@example.com`;
+  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}@example.com`;
 }
 
 function buildAuthCookie(user: { id: string; email: string }) {
-	const token = jwt.sign({ sub: user.id, email: user.email }, env.JWT_SECRET, {
-		expiresIn: "7d",
-	});
+  const token = jwt.sign({ sub: user.id, email: user.email }, env.JWT_SECRET, {
+    expiresIn: '7d',
+  });
 
-	return {
-		[COOKIE_NAME]: token,
-	};
+  return {
+    [COOKIE_NAME]: token,
+  };
 }
 
 async function ensureBetaPlan(server: FastifyInstance) {
-	return server.prisma.plan.upsert({
-		where: { slug: "beta" },
-		update: {},
-		create: {
-			slug: "beta",
-			name: "Versao BETA",
-			price: 0,
-			features: {
-				max_workspaces: 3,
-			},
-		},
-	});
+  return server.prisma.plan.upsert({
+    where: { slug: 'beta' },
+    update: {},
+    create: {
+      slug: 'beta',
+      name: 'Versao BETA',
+      price: 0,
+      features: {
+        max_workspaces: 3,
+      },
+    },
+  });
 }
 
 async function createTestUser(
-	server: FastifyInstance,
-	options: { password?: string } = {},
+  server: FastifyInstance,
+  options: { password?: string } = {},
 ) {
-	const plan = await ensureBetaPlan(server);
-	const rawPassword = options.password ?? "senha-segura-123";
-	const hashedPassword = await bcrypt.hash(rawPassword, 10);
+  const plan = await ensureBetaPlan(server);
+  const rawPassword = options.password ?? 'senha-segura-123';
+  const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
-	const user = await server.prisma.user.create({
-		data: {
-			name: "Auth Test User",
-			email: uniqueEmail("auth"),
-			password: hashedPassword,
-			plan_id: plan.id,
-		},
-	});
+  const user = await server.prisma.user.create({
+    data: {
+      name: 'Auth Test User',
+      email: uniqueEmail('auth'),
+      password: hashedPassword,
+      plan_id: plan.id,
+    },
+  });
 
-	return { ...user, rawPassword };
+  return { ...user, rawPassword };
 }
 
-describe("POST /auth/change-password", () => {
-	test("altera a senha com sucesso e limpa o cookie", async () => {
-		const server = await setupTestServer();
+describe('POST /auth/change-password', () => {
+  test('altera a senha com sucesso e renova a sessão com novo token', async () => {
+    const server = await setupTestServer();
 
-		try {
-			const user = await createTestUser(server);
+    try {
+      const user = await createTestUser(server);
 
-			const response = await server.inject({
-				method: "POST",
-				url: "/auth/change-password",
-				cookies: buildAuthCookie(user),
-				payload: {
-					currentPassword: user.rawPassword,
-					newPassword: "nova-senha-456",
-				},
-			});
+      const response = await server.inject({
+        method: 'POST',
+        url: '/auth/change-password',
+        cookies: buildAuthCookie(user),
+        payload: {
+          currentPassword: user.rawPassword,
+          newPassword: 'nova-senha-456',
+        },
+      });
 
-			expect(response.statusCode).toBe(200);
-			const parsed = changePasswordResponseSchema.safeParse(response.json());
-			if (!parsed.success) {
-				throw new Error(
-					"Resposta nao corresponde ao schema: " +
-						JSON.stringify(parsed.error),
-				);
-			}
+      expect(response.statusCode).toBe(200);
+      const parsed = changePasswordResponseSchema.safeParse(response.json());
+      if (!parsed.success) {
+        throw new Error(
+          'Resposta nao corresponde ao schema: ' + JSON.stringify(parsed.error),
+        );
+      }
 
-			expect(parsed.data.message).toBe("Senha alterada com sucesso");
+      expect(parsed.data.message).toBe('Senha alterada com sucesso');
 
-			// Verifica que o cookie foi limpo
-			const setCookie = response.headers["set-cookie"];
-			expect(setCookie).toBeDefined();
-			expect(String(setCookie)).toContain(COOKIE_NAME);
+      // Verifica que o Set-Cookie foi enviado com o novo token
+      const setCookie = response.headers['set-cookie'];
+      expect(setCookie).toBeDefined();
+      expect(String(setCookie)).toContain(COOKIE_NAME);
 
-			// Verifica que a nova senha funciona no banco
-			const updatedUser = await server.prisma.user.findUnique({
-				where: { id: user.id },
-			});
-			const newPasswordMatches = await bcrypt.compare(
-				"nova-senha-456",
-				updatedUser!.password,
-			);
-			expect(newPasswordMatches).toBe(true);
-		} finally {
-			await server.close();
-		}
-	});
+      // Extrai e valida o token do Set-Cookie
+      const cookieHeader = String(setCookie);
+      const tokenMatch = cookieHeader.match(
+        new RegExp(`${COOKIE_NAME}=([^;]+)`),
+      );
+      expect(tokenMatch).not.toBeNull();
+      const newToken = tokenMatch![1];
+      const decoded = jwt.verify(newToken, env.JWT_SECRET) as jwt.JwtPayload;
+      expect(decoded.sub).toBe(user.id);
+      expect(decoded.email).toBe(user.email);
 
-	test("retorna 401 quando senha atual estiver incorreta", async () => {
-		const server = await setupTestServer();
+      // Verifica que a nova senha funciona no banco
+      const updatedUser = await server.prisma.user.findUnique({
+        where: { id: user.id },
+      });
+      const newPasswordMatches = await bcrypt.compare(
+        'nova-senha-456',
+        updatedUser!.password,
+      );
+      expect(newPasswordMatches).toBe(true);
+    } finally {
+      await server.close();
+    }
+  });
 
-		try {
-			const user = await createTestUser(server);
+  test('retorna 403 quando senha atual estiver incorreta', async () => {
+    const server = await setupTestServer();
 
-			const response = await server.inject({
-				method: "POST",
-				url: "/auth/change-password",
-				cookies: buildAuthCookie(user),
-				payload: {
-					currentPassword: "senha-errada",
-					newPassword: "nova-senha-456",
-				},
-			});
+    try {
+      const user = await createTestUser(server);
 
-			expect(response.statusCode).toBe(401);
-			const body = response.json();
-			expect(body.code).toBe(ErrorCode.UNAUTHORIZED);
-		} finally {
-			await server.close();
-		}
-	});
+      const response = await server.inject({
+        method: 'POST',
+        url: '/auth/change-password',
+        cookies: buildAuthCookie(user),
+        payload: {
+          currentPassword: 'senha-errada',
+          newPassword: 'nova-senha-456',
+        },
+      });
 
-	test("retorna 401 quando cookie nao for enviado", async () => {
-		const server = await setupTestServer();
+      expect(response.statusCode).toBe(403);
+      const body = response.json();
+      expect(body.code).toBe(ErrorCode.FORBIDDEN);
+    } finally {
+      await server.close();
+    }
+  });
 
-		try {
-			const response = await server.inject({
-				method: "POST",
-				url: "/auth/change-password",
-				payload: {
-					currentPassword: "qualquer",
-					newPassword: "nova-senha-456",
-				},
-			});
+  test('retorna 401 quando cookie nao for enviado', async () => {
+    const server = await setupTestServer();
 
-			expect(response.statusCode).toBe(401);
-			const body = response.json();
-			expect(body.code).toBe(ErrorCode.UNAUTHORIZED);
-		} finally {
-			await server.close();
-		}
-	});
+    try {
+      const response = await server.inject({
+        method: 'POST',
+        url: '/auth/change-password',
+        payload: {
+          currentPassword: 'qualquer',
+          newPassword: 'nova-senha-456',
+        },
+      });
 
-	test("retorna 404 quando usuário não existir", async () => {
-		const server = await setupTestServer();
+      expect(response.statusCode).toBe(401);
+      const body = response.json();
+      expect(body.code).toBe(ErrorCode.UNAUTHORIZED);
+    } finally {
+      await server.close();
+    }
+  });
 
-		try {
-			const cookies = buildAuthCookie({
-				id: "missing-user",
-				email: "missing@example.com",
-			});
+  test('retorna 404 quando usuário não existir', async () => {
+    const server = await setupTestServer();
 
-			const response = await server.inject({
-				method: "POST",
-				url: "/auth/change-password",
-				cookies,
-				payload: {
-					currentPassword: "qualquer",
-					newPassword: "nova-senha-456",
-				},
-			});
+    try {
+      const cookies = buildAuthCookie({
+        id: 'missing-user',
+        email: 'missing@example.com',
+      });
 
-			expect(response.statusCode).toBe(404);
-			const body = response.json();
-			expect(body.code).toBe(ErrorCode.NOT_FOUND);
-		} finally {
-			await server.close();
-		}
-	});
+      const response = await server.inject({
+        method: 'POST',
+        url: '/auth/change-password',
+        cookies,
+        payload: {
+          currentPassword: 'qualquer',
+          newPassword: 'nova-senha-456',
+        },
+      });
 
-	test("retorna 400 quando senhas forem muito curtas", async () => {
-		const server = await setupTestServer();
+      expect(response.statusCode).toBe(404);
+      const body = response.json();
+      expect(body.code).toBe(ErrorCode.NOT_FOUND);
+    } finally {
+      await server.close();
+    }
+  });
 
-		try {
-			const user = await createTestUser(server);
+  test('retorna 400 quando senhas forem muito curtas', async () => {
+    const server = await setupTestServer();
 
-			const response = await server.inject({
-				method: "POST",
-				url: "/auth/change-password",
-				cookies: buildAuthCookie(user),
-				payload: {
-					currentPassword: "short",
-					newPassword: "short",
-				},
-			});
+    try {
+      const user = await createTestUser(server);
 
-			expect(response.statusCode).toBe(400);
-			const body = response.json();
-			expect(body.code).toBe(ErrorCode.VALIDATION_ERROR);
-		} finally {
-			await server.close();
-		}
-	});
+      const response = await server.inject({
+        method: 'POST',
+        url: '/auth/change-password',
+        cookies: buildAuthCookie(user),
+        payload: {
+          currentPassword: 'short',
+          newPassword: 'short',
+        },
+      });
 
-	test("invalida tokens do usuário após trocar a senha", async () => {
-		const server = await setupTestServer();
+      expect(response.statusCode).toBe(400);
+      const body = response.json();
+      expect(body.code).toBe(ErrorCode.VALIDATION_ERROR);
+    } finally {
+      await server.close();
+    }
+  });
 
-		try {
-			const user = await createTestUser(server);
+  test('invalida tokens do usuário após trocar a senha', async () => {
+    const server = await setupTestServer();
 
-			// Cria um token no banco para o usuário
-			await server.prisma.token.create({
-				data: {
-					token: "test-token-123",
-					type: "PASSWORD_RESET",
-					user_id: user.id,
-					expires_at: new Date(Date.now() + 3600000),
-				},
-			});
+    try {
+      const user = await createTestUser(server);
 
-			await server.inject({
-				method: "POST",
-				url: "/auth/change-password",
-				cookies: buildAuthCookie(user),
-				payload: {
-					currentPassword: user.rawPassword,
-					newPassword: "nova-senha-456",
-				},
-			});
+      // Cria um token no banco para o usuário
+      await server.prisma.token.create({
+        data: {
+          token: 'test-token-123',
+          type: 'PASSWORD_RESET',
+          user_id: user.id,
+          expires_at: new Date(Date.now() + 3600000),
+        },
+      });
 
-			// Verifica que os tokens foram removidos
-			const tokens = await server.prisma.token.findMany({
-				where: { user_id: user.id },
-			});
-			expect(tokens).toHaveLength(0);
-		} finally {
-			await server.close();
-		}
-	});
+      await server.inject({
+        method: 'POST',
+        url: '/auth/change-password',
+        cookies: buildAuthCookie(user),
+        payload: {
+          currentPassword: user.rawPassword,
+          newPassword: 'nova-senha-456',
+        },
+      });
 
-	test("retorna 400 quando body estiver vazio", async () => {
-		const server = await setupTestServer();
+      // Verifica que os tokens foram removidos
+      const tokens = await server.prisma.token.findMany({
+        where: { user_id: user.id },
+      });
+      expect(tokens).toHaveLength(0);
+    } finally {
+      await server.close();
+    }
+  });
 
-		try {
-			const user = await createTestUser(server);
+  test('retorna 400 quando body estiver vazio', async () => {
+    const server = await setupTestServer();
 
-			const response = await server.inject({
-				method: "POST",
-				url: "/auth/change-password",
-				cookies: buildAuthCookie(user),
-				payload: {},
-			});
+    try {
+      const user = await createTestUser(server);
 
-			expect(response.statusCode).toBe(400);
-			const body = response.json();
-			expect(body.code).toBe(ErrorCode.VALIDATION_ERROR);
-		} finally {
-			await server.close();
-		}
-	});
+      const response = await server.inject({
+        method: 'POST',
+        url: '/auth/change-password',
+        cookies: buildAuthCookie(user),
+        payload: {},
+      });
+
+      expect(response.statusCode).toBe(400);
+      const body = response.json();
+      expect(body.code).toBe(ErrorCode.VALIDATION_ERROR);
+    } finally {
+      await server.close();
+    }
+  });
 });

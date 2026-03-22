@@ -36,7 +36,10 @@ axiosInstance.interceptors.response.use(
 			const isPublicPage = typeof window !== 'undefined' &&
 				publicPaths.some((p) => window.location.pathname === p)
 
-			if (typeof window !== 'undefined' && !isPublicPage) {
+			const requestUrl = error.config?.url ?? ''
+			const isChangePassword = requestUrl.includes('/auth/change-password')
+
+			if (typeof window !== 'undefined' && !isPublicPage && !isChangePassword) {
 				window.location.href = "/login";
 			}
 		}

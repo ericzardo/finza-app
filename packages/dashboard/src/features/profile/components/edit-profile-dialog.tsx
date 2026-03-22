@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
+import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@lib/utils'
 import {
   Dialog,
@@ -14,7 +15,7 @@ import {
 import { Input } from '@ui/input'
 import { Label } from '@ui/label'
 import { Button } from '@ui/button'
-import { useGetProfile } from '@finza/api-client/hooks'
+import { useGetProfile, usePatchProfile, getProfileQueryKey } from '@finza/api-client/hooks'
 
 const AVATARS = Array.from({ length: 8 }, (_, i) => `/avatars/${i + 1}.webp`)
 
@@ -33,6 +34,24 @@ interface EditProfileDialogProps {
 
 export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps) {
   const { data: user } = useGetProfile()
+  const queryClient = useQueryClient()
+
+  const { mutate, isPending } = usePatchProfile({
+    mutation: {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: getProfileQueryKey() })
+        onOpenChange(false)
+        toast.success('Perfil atualizado com sucesso!')
+      },
+      onError: (error) => {
+        if (error.response?.status === 409) {
+          toast.error('E-mail já cadastrado por outro usuário.')
+        } else {
+          toast.error('Não foi possível atualizar o perfil.')
+        }
+      },
+    },
+  })
 
   const {
     register,
@@ -52,10 +71,13 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
   const selectedAvatar = watch('avatar_url')
 
   const onSubmit = (data: EditProfileForm) => {
-    toast.info('Funcionalidade em breve', {
-      description: 'A edição de perfil estará disponível em uma próxima atualização.',
+    mutate({
+      data: {
+        name: data.name,
+        email: data.email,
+        avatar_url: data.avatar_url ?? undefined,
+      },
     })
-    onOpenChange(false)
   }
 
   return (
@@ -127,8 +149,8 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
             >
               Cancelar
             </Button>
-            <Button variant="accent" type="submit">
-              Salvar
+            <Button variant="accent" type="submit" disabled={isPending}>
+              {isPending ? 'Salvando...' : 'Salvar'}
             </Button>
           </DialogFooter>
         </form>

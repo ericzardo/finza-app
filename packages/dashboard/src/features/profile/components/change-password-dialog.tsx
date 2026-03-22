@@ -13,6 +13,7 @@ import {
 import { Label } from '@ui/label'
 import { Button } from '@ui/button'
 import { PasswordInput } from '@ui/password-input'
+import { usePostAuthChangePassword } from '@finza/api-client/hooks'
 
 const changePasswordSchema = z
   .object({
@@ -47,12 +48,30 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
     },
   })
 
+  const { mutate, isPending } = usePostAuthChangePassword({
+    mutation: {
+      onSuccess: () => {
+        reset()
+        onOpenChange(false)
+        toast.success('Segurança atualizada com sucesso!')
+      },
+      onError: (error) => {
+        if (error.response?.status === 403) {
+          toast.error('Senha atual incorreta. Tente novamente.')
+        } else {
+          toast.error('Não foi possível alterar a senha.')
+        }
+      },
+    },
+  })
+
   const onSubmit = (data: ChangePasswordForm) => {
-    toast.info('Funcionalidade em breve', {
-      description: 'A alteração de senha estará disponível em uma próxima atualização.',
+    mutate({
+      data: {
+        currentPassword: data.currentPassword,
+        newPassword: data.newPassword,
+      },
     })
-    reset()
-    onOpenChange(false)
   }
 
   const handleOpenChange = (value: boolean) => {
@@ -115,8 +134,8 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
             >
               Cancelar
             </Button>
-            <Button variant="accent" type="submit">
-              Alterar Senha
+            <Button variant="accent" type="submit" disabled={isPending}>
+              {isPending ? 'Alterando...' : 'Alterar Senha'}
             </Button>
           </DialogFooter>
         </form>

@@ -7,6 +7,7 @@ import type {
 	PostAuthChangePassword200,
 	PostAuthChangePassword400,
 	PostAuthChangePassword401,
+	PostAuthChangePassword403,
 	PostAuthChangePassword404,
 	PostAuthChangePasswordMutationRequest,
 	PostAuthChangePasswordMutationResponse,
@@ -54,7 +55,7 @@ export function createPostAuthChangePassword400(
 }
 
 /**
- * @description Token inválido ou senha atual incorreta
+ * @description Token inválido ou expirado
  */
 export function createPostAuthChangePassword401(
 	data?: Partial<PostAuthChangePassword401>,
@@ -63,6 +64,34 @@ export function createPostAuthChangePassword401(
 		...{
 			code: faker.helpers.arrayElement<
 				NonNullable<PostAuthChangePassword401>["code"]
+			>([
+				"NOT_FOUND",
+				"UNAUTHORIZED",
+				"FORBIDDEN",
+				"BAD_REQUEST",
+				"CONFLICT",
+				"INTERNAL_SERVER_ERROR",
+				"VALIDATION_ERROR",
+				"HEALTH_CHECK_FAILED",
+				"TOO_MANY_REQUESTS",
+			]),
+			message: faker.string.alpha(),
+			details: {},
+		},
+		...(data || {}),
+	};
+}
+
+/**
+ * @description Senha atual incorreta
+ */
+export function createPostAuthChangePassword403(
+	data?: Partial<PostAuthChangePassword403>,
+): PostAuthChangePassword403 {
+	return {
+		...{
+			code: faker.helpers.arrayElement<
+				NonNullable<PostAuthChangePassword403>["code"]
 			>([
 				"NOT_FOUND",
 				"UNAUTHORIZED",

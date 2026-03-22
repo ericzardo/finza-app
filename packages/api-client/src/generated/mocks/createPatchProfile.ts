@@ -144,7 +144,7 @@ export function createPatchProfileMutationRequest(
 	return {
 		...{
 			name: faker.string.alpha({ length: { min: 3, max: 120 } }),
-			avatar_url: faker.internet.url(),
+			avatar_url: faker.string.alpha(),
 			email: faker.internet.email(),
 		},
 		...(data || {}),

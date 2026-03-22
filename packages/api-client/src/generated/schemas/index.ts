@@ -54,6 +54,7 @@ export {
 	postAuthChangePassword200Schema,
 	postAuthChangePassword400Schema,
 	postAuthChangePassword401Schema,
+	postAuthChangePassword403Schema,
 	postAuthChangePassword404Schema,
 	postAuthChangePasswordMutationRequestSchema,
 	postAuthChangePasswordMutationResponseSchema,

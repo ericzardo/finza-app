@@ -97,6 +97,8 @@ export type {
 	PostAuthChangePassword400CodeEnumKey,
 	PostAuthChangePassword401,
 	PostAuthChangePassword401CodeEnumKey,
+	PostAuthChangePassword403,
+	PostAuthChangePassword403CodeEnumKey,
 	PostAuthChangePassword404,
 	PostAuthChangePassword404CodeEnumKey,
 	PostAuthChangePasswordMutation,
@@ -247,6 +249,7 @@ export {
 	createPostAuthChangePassword200,
 	createPostAuthChangePassword400,
 	createPostAuthChangePassword401,
+	createPostAuthChangePassword403,
 	createPostAuthChangePassword404,
 	createPostAuthChangePasswordMutationRequest,
 	createPostAuthChangePasswordMutationResponse,
@@ -329,6 +332,7 @@ export {
 	postAuthChangePasswordHandlerResponse200,
 	postAuthChangePasswordHandlerResponse400,
 	postAuthChangePasswordHandlerResponse401,
+	postAuthChangePasswordHandlerResponse403,
 	postAuthChangePasswordHandlerResponse404,
 } from "./mocks/postAuthChangePasswordHandler.ts";
 export {
@@ -409,6 +413,7 @@ export {
 	postAuthChangePassword200Schema,
 	postAuthChangePassword400Schema,
 	postAuthChangePassword401Schema,
+	postAuthChangePassword403Schema,
 	postAuthChangePassword404Schema,
 	postAuthChangePasswordMutationRequestSchema,
 	postAuthChangePasswordMutationResponseSchema,
@@ -460,6 +465,7 @@ export { patchProfilePrivacy401CodeEnum } from "./types/PatchProfilePrivacy.ts";
 export { patchProfilePrivacy404CodeEnum } from "./types/PatchProfilePrivacy.ts";
 export { postAuthChangePassword400CodeEnum } from "./types/PostAuthChangePassword.ts";
 export { postAuthChangePassword401CodeEnum } from "./types/PostAuthChangePassword.ts";
+export { postAuthChangePassword403CodeEnum } from "./types/PostAuthChangePassword.ts";
 export { postAuthChangePassword404CodeEnum } from "./types/PostAuthChangePassword.ts";
 export { postAuthLogin400CodeEnum } from "./types/PostAuthLogin.ts";
 export { postAuthLogin401CodeEnum } from "./types/PostAuthLogin.ts";

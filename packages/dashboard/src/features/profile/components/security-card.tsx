@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { Mail, KeyRound, Shield } from 'lucide-react'
+import { Mail, KeyRound, Shield, CheckCircle2, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import { Card } from '@ui/card'
+import { Badge } from '@ui/badge'
 import { Button } from '@ui/button'
 import { Separator } from '@ui/separator'
 import { useGetProfile } from '@finza/api-client/hooks'
@@ -34,6 +36,28 @@ export function SecurityCard() {
                   <p className="text-sm font-medium text-foreground">E-mail</p>
                   <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {user.email_verified_at ? (
+                  <Badge className="gap-1.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400">
+                    <CheckCircle2 className="size-3" />
+                    Confirmado
+                  </Badge>
+                ) : (
+                  <>
+                    <Badge className="gap-1.5 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400">
+                      <AlertCircle className="size-3" />
+                      Pendente
+                    </Badge>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => toast.info('Serviço de e-mail em fase de homologação.')}
+                    >
+                      Verificar e-mail
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
 

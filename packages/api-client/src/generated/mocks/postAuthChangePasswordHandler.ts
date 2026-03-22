@@ -7,6 +7,7 @@ import type {
 	PostAuthChangePasswordMutationResponse,
 	PostAuthChangePassword400,
 	PostAuthChangePassword401,
+	PostAuthChangePassword403,
 	PostAuthChangePassword404,
 } from "../types/PostAuthChangePassword.ts";
 import { http } from "msw";
@@ -38,6 +39,17 @@ export function postAuthChangePasswordHandlerResponse401(
 ) {
 	return new Response(JSON.stringify(data), {
 		status: 401,
+		headers: {
+			"Content-Type": "application/json",
+		},
+	});
+}
+
+export function postAuthChangePasswordHandlerResponse403(
+	data: PostAuthChangePassword403,
+) {
+	return new Response(JSON.stringify(data), {
+		status: 403,
 		headers: {
 			"Content-Type": "application/json",
 		},

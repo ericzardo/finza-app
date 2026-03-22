@@ -34,7 +34,7 @@ export const postAuthChangePassword400Schema = z
 	.describe("Erro de validação");
 
 /**
- * @description Token inválido ou senha atual incorreta
+ * @description Token inválido ou expirado
  */
 export const postAuthChangePassword401Schema = z
 	.object({
@@ -52,7 +52,28 @@ export const postAuthChangePassword401Schema = z
 		message: z.string(),
 		details: z.optional(z.object({}).catchall(z.any())),
 	})
-	.describe("Token inválido ou senha atual incorreta");
+	.describe("Token inválido ou expirado");
+
+/**
+ * @description Senha atual incorreta
+ */
+export const postAuthChangePassword403Schema = z
+	.object({
+		code: z.enum([
+			"NOT_FOUND",
+			"UNAUTHORIZED",
+			"FORBIDDEN",
+			"BAD_REQUEST",
+			"CONFLICT",
+			"INTERNAL_SERVER_ERROR",
+			"VALIDATION_ERROR",
+			"HEALTH_CHECK_FAILED",
+			"TOO_MANY_REQUESTS",
+		]),
+		message: z.string(),
+		details: z.optional(z.object({}).catchall(z.any())),
+	})
+	.describe("Senha atual incorreta");
 
 /**
  * @description Usuário não encontrado

@@ -8,6 +8,7 @@ import type {
 	PostAuthChangePasswordMutationResponse,
 	PostAuthChangePassword400,
 	PostAuthChangePassword401,
+	PostAuthChangePassword403,
 	PostAuthChangePassword404,
 } from "../types/PostAuthChangePassword.ts";
 import type { Client, RequestConfig, ResponseErrorConfig } from "@client";
@@ -37,6 +38,7 @@ export function postAuthChangePasswordMutationOptions<TContext = unknown>(
 		ResponseErrorConfig<
 			| PostAuthChangePassword400
 			| PostAuthChangePassword401
+			| PostAuthChangePassword403
 			| PostAuthChangePassword404
 		>,
 		{ data: PostAuthChangePasswordMutationRequest },
@@ -61,6 +63,7 @@ export function usePostAuthChangePassword<TContext>(
 			ResponseErrorConfig<
 				| PostAuthChangePassword400
 				| PostAuthChangePassword401
+				| PostAuthChangePassword403
 				| PostAuthChangePassword404
 			>,
 			{ data: PostAuthChangePasswordMutationRequest },
@@ -83,6 +86,7 @@ export function usePostAuthChangePassword<TContext>(
 		ResponseErrorConfig<
 			| PostAuthChangePassword400
 			| PostAuthChangePassword401
+			| PostAuthChangePassword403
 			| PostAuthChangePassword404
 		>,
 		{ data: PostAuthChangePasswordMutationRequest },
@@ -94,6 +98,7 @@ export function usePostAuthChangePassword<TContext>(
 		ResponseErrorConfig<
 			| PostAuthChangePassword400
 			| PostAuthChangePassword401
+			| PostAuthChangePassword403
 			| PostAuthChangePassword404
 		>,
 		{ data: PostAuthChangePasswordMutationRequest },
@@ -110,6 +115,7 @@ export function usePostAuthChangePassword<TContext>(
 		ResponseErrorConfig<
 			| PostAuthChangePassword400
 			| PostAuthChangePassword401
+			| PostAuthChangePassword403
 			| PostAuthChangePassword404
 		>,
 		{ data: PostAuthChangePasswordMutationRequest },

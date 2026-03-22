@@ -1,30 +1,36 @@
-import { AppError, ErrorCode } from "@errors/app-error";
-import { changePassword } from "@features/auth/usecases/change-password";
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import env from '@env';
+import { AppError, ErrorCode } from '@errors/app-error';
+import { changePassword } from '@features/auth/usecases/change-password';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
-const COOKIE_NAME = "finza_token";
+const COOKIE_NAME = 'finza_token';
 
 export async function changePasswordController(
-	request: FastifyRequest,
-	reply: FastifyReply,
-	fastify: FastifyInstance,
+  request: FastifyRequest,
+  reply: FastifyReply,
+  fastify: FastifyInstance,
 ) {
-	if (!request.user?.sub) {
-		throw new AppError(
-			ErrorCode.UNAUTHORIZED,
-			401,
-			"Token de autenticação não encontrado",
-		);
-	}
+  if (!request.user?.sub) {
+    throw new AppError(
+      ErrorCode.UNAUTHORIZED,
+      401,
+      'Token de autenticação não encontrado',
+    );
+  }
 
-	const body = request.body as {
-		currentPassword: string;
-		newPassword: string;
-	};
+  const body = request.body as {
+    currentPassword: string;
+    newPassword: string;
+  };
 
-	await changePassword(fastify.prisma, request.user.sub, body);
+  const { token } = await changePassword(
+    fastify.prisma,
+    request.user.sub,
+    env.JWT_SECRET,
+    body,
+  );
 
-	reply.clearCookie(COOKIE_NAME, { path: "/" });
+  reply.setCookie(COOKIE_NAME, token);
 
-	return reply.code(200).send({ message: "Senha alterada com sucesso" });
+  return reply.code(200).send({ message: 'Senha alterada com sucesso' });
 }

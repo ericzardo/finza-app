@@ -110,7 +110,7 @@ export const patchProfileMutationRequestSchema = z.object({
 	name: z.optional(
 		z.string().min(3).max(120).describe("Nome completo do usuário"),
 	),
-	avatar_url: z.optional(z.url().describe("URL do avatar do usuário")),
+	avatar_url: z.optional(z.string().describe("URL do avatar do usuário")),
 	email: z.optional(z.email().describe("Novo e-mail do usuário")),
 });
 

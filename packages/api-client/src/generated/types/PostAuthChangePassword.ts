@@ -65,13 +65,48 @@ export type PostAuthChangePassword401CodeEnumKey =
 	(typeof postAuthChangePassword401CodeEnum)[keyof typeof postAuthChangePassword401CodeEnum];
 
 /**
- * @description Token inválido ou senha atual incorreta
+ * @description Token inválido ou expirado
  */
 export type PostAuthChangePassword401 = {
 	/**
 	 * @type string
 	 */
 	code: PostAuthChangePassword401CodeEnumKey;
+	/**
+	 * @type string
+	 */
+	message: string;
+	/**
+	 * @type object | undefined
+	 */
+	details?: {
+		[key: string]: any;
+	};
+};
+
+export const postAuthChangePassword403CodeEnum = {
+	NOT_FOUND: "NOT_FOUND",
+	UNAUTHORIZED: "UNAUTHORIZED",
+	FORBIDDEN: "FORBIDDEN",
+	BAD_REQUEST: "BAD_REQUEST",
+	CONFLICT: "CONFLICT",
+	INTERNAL_SERVER_ERROR: "INTERNAL_SERVER_ERROR",
+	VALIDATION_ERROR: "VALIDATION_ERROR",
+	HEALTH_CHECK_FAILED: "HEALTH_CHECK_FAILED",
+	TOO_MANY_REQUESTS: "TOO_MANY_REQUESTS",
+} as const;
+
+export type PostAuthChangePassword403CodeEnumKey =
+	(typeof postAuthChangePassword403CodeEnum)[keyof typeof postAuthChangePassword403CodeEnum];
+
+/**
+ * @description Senha atual incorreta
+ */
+export type PostAuthChangePassword403 = {
+	/**
+	 * @type string
+	 */
+	code: PostAuthChangePassword403CodeEnumKey;
 	/**
 	 * @type string
 	 */
@@ -142,5 +177,6 @@ export type PostAuthChangePasswordMutation = {
 	Errors:
 		| PostAuthChangePassword400
 		| PostAuthChangePassword401
+		| PostAuthChangePassword403
 		| PostAuthChangePassword404;
 };

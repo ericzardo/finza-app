@@ -77,9 +77,8 @@ export async function authRoutes(fastify: FastifyInstance) {
 				response: {
 					200: changePasswordResponseSchema,
 					400: appErrorSchema.describe("Erro de validação"),
-					401: appErrorSchema.describe(
-						"Token inválido ou senha atual incorreta",
-					),
+					401: appErrorSchema.describe("Token inválido ou expirado"),
+					403: appErrorSchema.describe("Senha atual incorreta"),
 					404: appErrorSchema.describe("Usuário não encontrado"),
 				},
 				summary: "Alterar senha do usuário",

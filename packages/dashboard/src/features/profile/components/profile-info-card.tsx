@@ -19,6 +19,7 @@ function getInitials(name: string): string {
 function getPlanLabel(plan: string): string {
   const labels: Record<string, string> = {
     free: 'Free',
+    beta: 'Beta',
     pro: 'Pro',
     premium: 'Premium',
   }
@@ -49,7 +50,7 @@ export function ProfileInfoCard() {
                   <h2 className="text-lg font-semibold text-foreground">
                     {user.name}
                   </h2>
-                  <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">
+                  <Badge className="text-[10px] uppercase tracking-wider bg-accent/15 text-accent">
                     {getPlanLabel(user.plan)}
                   </Badge>
                 </div>

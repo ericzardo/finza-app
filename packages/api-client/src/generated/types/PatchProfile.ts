@@ -194,7 +194,7 @@ export type PatchProfileMutationRequest = {
 	name?: string;
 	/**
 	 * @description URL do avatar do usuário
-	 * @type string | undefined, uri
+	 * @type string | undefined
 	 */
 	avatar_url?: string;
 	/**

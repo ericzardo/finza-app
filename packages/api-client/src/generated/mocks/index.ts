@@ -54,6 +54,7 @@ export {
 	createPostAuthChangePassword200,
 	createPostAuthChangePassword400,
 	createPostAuthChangePassword401,
+	createPostAuthChangePassword403,
 	createPostAuthChangePassword404,
 	createPostAuthChangePasswordMutationRequest,
 	createPostAuthChangePasswordMutationResponse,
@@ -136,6 +137,7 @@ export {
 	postAuthChangePasswordHandlerResponse200,
 	postAuthChangePasswordHandlerResponse400,
 	postAuthChangePasswordHandlerResponse401,
+	postAuthChangePasswordHandlerResponse403,
 	postAuthChangePasswordHandlerResponse404,
 } from "./postAuthChangePasswordHandler.ts";
 export {

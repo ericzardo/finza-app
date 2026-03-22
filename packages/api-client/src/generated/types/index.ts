@@ -84,6 +84,8 @@ export type {
 	PostAuthChangePassword400CodeEnumKey,
 	PostAuthChangePassword401,
 	PostAuthChangePassword401CodeEnumKey,
+	PostAuthChangePassword403,
+	PostAuthChangePassword403CodeEnumKey,
 	PostAuthChangePassword404,
 	PostAuthChangePassword404CodeEnumKey,
 	PostAuthChangePasswordMutation,
@@ -148,6 +150,7 @@ export { patchProfilePrivacy401CodeEnum } from "./PatchProfilePrivacy.ts";
 export { patchProfilePrivacy404CodeEnum } from "./PatchProfilePrivacy.ts";
 export { postAuthChangePassword400CodeEnum } from "./PostAuthChangePassword.ts";
 export { postAuthChangePassword401CodeEnum } from "./PostAuthChangePassword.ts";
+export { postAuthChangePassword403CodeEnum } from "./PostAuthChangePassword.ts";
 export { postAuthChangePassword404CodeEnum } from "./PostAuthChangePassword.ts";
 export { postAuthLogin400CodeEnum } from "./PostAuthLogin.ts";
 export { postAuthLogin401CodeEnum } from "./PostAuthLogin.ts";
