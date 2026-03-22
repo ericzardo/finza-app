@@ -1,0 +1,68 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "types": [
+      "vite/client",
+      "node"
+    ],
+    "skipLibCheck": true,
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@components/*": [
+        "./src/components/*"
+      ],
+      "@ui/*": [
+        "./src/components/ui/*"
+      ],
+      "@lib/*": [
+        "./src/lib/*"
+      ],
+      "@features/*": [
+        "./src/features/*"
+      ],
+      "@router": [
+        "./src/router.tsx"
+      ],
+      "@env": [
+        "./src/env.ts"
+      ],
+      "@client": [
+        "../api-client/src/client.ts"
+      ],
+      "@finza/api-client/*": [
+        "../api-client/src/generated/*"
+      ],
+      "@finza/api-client/hooks": [
+        "../api-client/src/generated/hooks/index.ts"
+      ],
+      "@finza/api-client/schemas": [
+        "../api-client/src/generated/schemas/index.ts"
+      ]
+    }
+  },
+  "include": [
+    "src",
+    "vite.config.ts"
+  ]
+}

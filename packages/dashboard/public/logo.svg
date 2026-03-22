@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 100" fill="none">
+  <style>
+    .f-icon { fill: #059669; }
+    .f-text { fill: #1C1917; } /* Stone 900 */
+
+    @media (prefers-color-scheme: dark) {
+      .f-icon { fill: #10B981; }
+      .f-text { fill: #E7E5E4; } /* Stone 200 */
+    }
+  </style>
+
+  <path class="f-icon" d="M20 80 V20 C20 14.477 24.477 10 30 10 H70 C75.523 10 80 14.477 80 20 V35 H45 C39.477 35 35 39.477 35 45 V55 H65 V70 H35 V80 C35 85.523 30.523 90 25 90 H20 V80 Z"/>
+
+  <g class="f-text" transform="translate(95, 38)">
+    <rect width="10" height="52" rx="2" />
+    
+    <path d="M22 52 V0 H32 L52 40 V0 H62 V52 H52 L32 12 V52 H22 Z" />
+    
+    <path d="M74 0 H114 V10 L88 42 H114 V52 H74 V42 L100 10 H74 V0 Z" />
+    
+    <path d="M126 52 V0 H166 V52 H156 V32 H136 V52 H126 Z M136 22 H156 V10 H136 V22 Z" />
+  </g>
+</svg>

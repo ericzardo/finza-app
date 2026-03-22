@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#FBFBFA" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <!-- Title & Description -->
+  <title>Finza</title>
+  <meta name="description" content="Plataforma de orquestração de patrimônio com caixas de propósitos." />
+  <link rel="canonical" href="https://app.finza.com.br/" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://app.finza.com.br/" />
+  <meta property="og:site_name" content="Finza" />
+  <meta property="og:title" content="Finza" />
+  <meta property="og:description" content="Plataforma de orquestração de patrimônio com caixas de propósitos." />
+  <meta property="og:image" content="https://app.finza.com.br/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:locale" content="pt_BR" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@finzahq" />
+  <meta name="twitter:title" content="Finza" />
+  <meta name="twitter:description" content="Plataforma de orquestração de patrimônio com caixas de propósitos." />
+  <meta name="twitter:image" content="https://app.finza.com.br/og-image.png" />
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Finza",
+        "url": "https://app.finza.com.br",
+        "description": "Plataforma de orquestração de patrimônio com caixas de propósitos.",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "All",
+        "inLanguage": "pt-BR",
+        "publisher": {
+          "@type": "Organization",
+          "name": "Finza",
+          "url": "https://app.finza.com.br",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://app.finza.com.br/favicon.svg"
+          }
+        }
+      }
+    </script>
+
+  <!-- Font is loaded via @fontsource-variable/geist (bundled) -->
+</head>
+
+<body>
+  <script>
+    (function () {
+      var t = localStorage.getItem('finza-theme');
+      if (t === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', '#09090B');
+      }
+    })();
+  </script>
+  <div id="root"></div>
+  <script type="module" src="./src/main.tsx"></script>
+</body>
+
+</html>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <style>
+    .f { fill: #059669; }
+    @media (prefers-color-scheme: dark) { .f { fill: #10B981; } }
+  </style>
+  <path class="f" d="M20 80 V20 C20 14.477 24.477 10 30 10 H70 C75.523 10 80 14.477 80 20 V35 H45 C39.477 35 35 39.477 35 45 V55 H65 V70 H35 V80 C35 85.523 30.523 90 25 90 H20 V80 Z"/>
+</svg>

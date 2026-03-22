@@ -1,0 +1,1 @@
+../../../.agent/skills/finza-design-system/SKILL.md

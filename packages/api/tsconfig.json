@@ -1,0 +1,51 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "types": [
+      "bun-types"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@env": [
+        "./src/env.ts"
+      ],
+      "@app": [
+        "./src/app.ts"
+      ],
+      "@errors/*": [
+        "./src/errors/*"
+      ],
+      "@hooks/*": [
+        "./src/hooks/*"
+      ],
+      "@plugins/*": [
+        "./src/plugins/*"
+      ],
+      "@config/*": [
+        "./src/config/*"
+      ],
+      "@utils/*": [
+        "./src/utils/*"
+      ],
+      "@features/*": [
+        "./src/features/*"
+      ],
+      "@db/*": [
+        "./db/prisma/*"
+      ]
+    },
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "strict": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "./**/*"
+  ]
+}

@@ -1,0 +1,1 @@
+../../../.agent/skills/finza-copywriter/SKILL.md
