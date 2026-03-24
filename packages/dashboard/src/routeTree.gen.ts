@@ -21,6 +21,7 @@ import { Route as AuthSignUpRouteImport } from './routes/_auth/sign-up'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as AuthenticatedWorkspaceIdRouteRouteImport } from './routes/_authenticated/$workspaceId/route'
 import { Route as AuthenticatedWorkspaceIdIndexRouteImport } from './routes/_authenticated/$workspaceId/index'
+import { Route as AuthenticatedWorkspaceIdBucketsIndexRouteImport } from './routes/_authenticated/$workspaceId/buckets/index'
 
 const LegalRouteRoute = LegalRouteRouteImport.update({
   id: '/_legal',
@@ -81,6 +82,12 @@ const AuthenticatedWorkspaceIdIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedWorkspaceIdRouteRoute,
   } as any)
+const AuthenticatedWorkspaceIdBucketsIndexRoute =
+  AuthenticatedWorkspaceIdBucketsIndexRouteImport.update({
+    id: '/buckets/',
+    path: '/buckets/',
+    getParentRoute: () => AuthenticatedWorkspaceIdRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/privacidade': typeof LegalPrivacidadeRoute
   '/termos': typeof LegalTermosRoute
   '/$workspaceId/': typeof AuthenticatedWorkspaceIdIndexRoute
+  '/$workspaceId/buckets/': typeof AuthenticatedWorkspaceIdBucketsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,6 +110,7 @@ export interface FileRoutesByTo {
   '/privacidade': typeof LegalPrivacidadeRoute
   '/termos': typeof LegalTermosRoute
   '/$workspaceId': typeof AuthenticatedWorkspaceIdIndexRoute
+  '/$workspaceId/buckets': typeof AuthenticatedWorkspaceIdBucketsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -117,6 +126,7 @@ export interface FileRoutesById {
   '/_legal/privacidade': typeof LegalPrivacidadeRoute
   '/_legal/termos': typeof LegalTermosRoute
   '/_authenticated/$workspaceId/': typeof AuthenticatedWorkspaceIdIndexRoute
+  '/_authenticated/$workspaceId/buckets/': typeof AuthenticatedWorkspaceIdBucketsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -130,6 +140,7 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/termos'
     | '/$workspaceId/'
+    | '/$workspaceId/buckets/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -140,6 +151,7 @@ export interface FileRouteTypes {
     | '/privacidade'
     | '/termos'
     | '/$workspaceId'
+    | '/$workspaceId/buckets'
   id:
     | '__root__'
     | '/'
@@ -154,6 +166,7 @@ export interface FileRouteTypes {
     | '/_legal/privacidade'
     | '/_legal/termos'
     | '/_authenticated/$workspaceId/'
+    | '/_authenticated/$workspaceId/buckets/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -249,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkspaceIdIndexRouteImport
       parentRoute: typeof AuthenticatedWorkspaceIdRouteRoute
     }
+    '/_authenticated/$workspaceId/buckets/': {
+      id: '/_authenticated/$workspaceId/buckets/'
+      path: '/buckets'
+      fullPath: '/$workspaceId/buckets/'
+      preLoaderRoute: typeof AuthenticatedWorkspaceIdBucketsIndexRouteImport
+      parentRoute: typeof AuthenticatedWorkspaceIdRouteRoute
+    }
   }
 }
 
@@ -268,11 +288,14 @@ const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
 
 interface AuthenticatedWorkspaceIdRouteRouteChildren {
   AuthenticatedWorkspaceIdIndexRoute: typeof AuthenticatedWorkspaceIdIndexRoute
+  AuthenticatedWorkspaceIdBucketsIndexRoute: typeof AuthenticatedWorkspaceIdBucketsIndexRoute
 }
 
 const AuthenticatedWorkspaceIdRouteRouteChildren: AuthenticatedWorkspaceIdRouteRouteChildren =
   {
     AuthenticatedWorkspaceIdIndexRoute: AuthenticatedWorkspaceIdIndexRoute,
+    AuthenticatedWorkspaceIdBucketsIndexRoute:
+      AuthenticatedWorkspaceIdBucketsIndexRoute,
   }
 
 const AuthenticatedWorkspaceIdRouteRouteWithChildren =

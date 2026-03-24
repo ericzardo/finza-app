@@ -11,8 +11,7 @@
     "prod": "bun --env-file=.env.prod src/index.ts",
     "test": "bun test --env-file=.env.test --timeout 10000",
     "lint": "eslint .",
-    "seed:dev": "bun --env-file=.env.dev db/prisma/seed.ts",
-    "seed:prod": "bun --env-file=.env.prod db/prisma/seed.ts"
+    "seed": "bun --env-file=.env db/prisma/seed.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

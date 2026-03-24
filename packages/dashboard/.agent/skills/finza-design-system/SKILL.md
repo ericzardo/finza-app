@@ -1,9 +1,11 @@
 ---
 name: finza-design-system
-description: Guia de design e identidade visual "Modern Wealth" da Finza. Define paleta Emerald/Violet sobre base Zinc, tipografia Geist, componentes shadcn/ui, Tailwind v4, estratégias de cache e UX de carregamento para interfaces de alta densidade analítica.
+description: Guia de design e identidade visual "Modern Wealth" da Finza. Define paleta Emerald/Violet sobre base Zinc, tipografia Geist, componentes shadcn/ui e Tailwind v4 para interfaces de alta densidade analítica.
 ---
 
 # 🎨 Finza Design System — "Modern Wealth"
+
+> ⚡ **Pré-requisito:** Leia `packages/dashboard/CLAUDE.md` (ou `.agent/rules/instructions.md`) antes de executar qualquer tarefa de UI. Esta skill trata exclusivamente de identidade visual, paleta e componentes — as regras de arquitetura, roteamento e fetching estão nas instruções do pacote.
 
 Você está projetando interfaces para a Finza, um SaaS de inteligência patrimonial.
 A interface deve transmitir: **Clareza Numérica, Estrutura, Confiança e Sofisticação Discreta**.
@@ -97,6 +99,29 @@ O **Light Theme é o padrão** da Finza, otimizado para legibilidade de dados nu
   - Lado esquerdo: Branding/Arte dark-mode imponente com frases de efeito.
   - Lado direito: Formulário centralizado, limpo, sem distrações.
 
+### Skeleton & Loading States
+
+NUNCA mostre tela em branco. Use Skeleton components do `shadcn/ui`.
+
+**Distinção crítica:**
+- **`TopLoader` (global):** Cuida do loading de *navegação* (transitions entre rotas). Não usar `pendingComponent` em rotas de layout/guard — o TopLoader resolve isso.
+- **`pendingComponent`:** Usar em rotas de *conteúdo* (especialmente workspace-scoped, ex: `$workspaceId/*`) para renderizar o Skeleton da página enquanto os dados carregam.
+
+```tsx
+// ✅ Rota de conteúdo workspace-scoped — use pendingComponent
+export const Route = createFileRoute('/_authenticated/$workspaceId/transactions')({
+  pendingComponent: TransactionsSkeleton,   // ← correto aqui
+  loader: ({ context }) => context.queryClient.ensureQueryData(getTransactionsQueryOptions()),
+  component: TransactionsPage,
+})
+
+// ❌ Rota de layout/guard — NÃO use pendingComponent
+export const Route = createFileRoute('/_authenticated')({
+  // sem pendingComponent — TopLoader global cuida da navegação
+  beforeLoad: async ({ context }) => { ... }
+})
+```
+
 ## 4. Implementação (Tailwind v4 + shadcn/ui)
 - **NUNCA** use CSS inline (`style={{}}`). Tudo deve ser classes do Tailwind CSS.
 - Utilize a função `cn()` para fundir classes dinamicamente.
@@ -107,41 +132,3 @@ O **Light Theme é o padrão** da Finza, otimizado para legibilidade de dados nu
 - Para animações disparadas por scroll, use sempre `framer-motion`.
 - Proibido criar event listeners de scroll manuais. Use `<motion.div />`.
 - **Scrollbars:** Configuradas globalmente no CSS. Use `overflow-y-auto` e deixe o CSS global agir.
-
----
-
-## 6. ⚡ Performance Perceptual & UX de Carregamento
-
-### Princípio: Velocidade é UX
-O usuário deve **sentir** que o app é instantâneo.
-
-### Estratégias de Cache (TanStack Query)
-- **`staleTime`:** Dados financeiros: `1000 * 60 * 2` (2 min). Configuração: `1000 * 60 * 30` (30 min). Estáticos: `Infinity`.
-- **`gcTime`:** Sempre >= `staleTime`. Padrão: `1000 * 60 * 10` (10 min).
-- **`refetchOnWindowFocus`:** `true` para dados financeiros, `false` para configurações.
-- **`placeholderData`:** Use `keepPreviousData` em listagens (paginação/filtros).
-
-### Prefetch Agressivo
-- **Loaders do TanStack Router:** SEMPRE usar `queryClient.ensureQueryData()`.
-- **Hover Prefetch:** Em links de navegação principal.
-- **Prefetch de Rotas Adjacentes:** Na sidebar, prefetch das rotas mais prováveis.
-
-### Skeleton & Loading States
-- NUNCA mostre tela em branco. Use Skeleton components do shadcn/ui.
-- `pendingComponent` nas rotas deve renderizar o Skeleton da página.
-- Transições suaves (`transition` CSS).
-
-### Lazy Loading & Code Splitting
-- Rotas lazy-loaded por padrão (TanStack Router File-based).
-- Componentes pesados: `React.lazy()` + `Suspense`.
-- Imagens: `loading="lazy"` e dimensões explícitas.
-
-### Otimização de Assets
-- Fontes: preload da Geist no `index.html`.
-- Imagens: WebP/AVIF com fallback. `srcset` para responsividade.
-- SVGs: inline para críticos, Lucide para o restante.
-
-### Headers de Cache
-- Assets estáticos (hash): `Cache-Control: public, max-age=31536000, immutable`.
-- HTML: `Cache-Control: no-cache`.
-- API: TanStack Query como camada primária de cache no cliente.

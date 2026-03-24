@@ -1,0 +1,1 @@
+../../../.agent/skills/finza-dashboard-playbook/SKILL.md

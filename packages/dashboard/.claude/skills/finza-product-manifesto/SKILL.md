@@ -1,0 +1,1 @@
+../../../.agent/skills/finza-product-manifesto/SKILL.md

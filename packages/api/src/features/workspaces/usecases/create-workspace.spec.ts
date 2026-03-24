@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'bun:test';
+import { DEFAULT_CATEGORIES } from '@features/workspaces/domain/workspace.types';
 import type { PrismaClient } from '@prisma/client';
 import { createWorkspace } from './create-workspace';
-import { DEFAULT_CATEGORIES } from '@features/workspaces/domain/workspace.types';
 
 type CreateWorkspaceArgs = { data: { name: string; currency: string } };
 type CreateMemberArgs = {
@@ -21,10 +21,21 @@ type CreateManyCategoryArgs = {
   }>;
 };
 
+type CreateBucketArgs = {
+  data: {
+    workspace_id: string;
+    name: string;
+    type: string;
+    allocation_percentage: number;
+    is_default: boolean;
+  };
+};
+
 function buildDb() {
   const workspaceCreateCalls: CreateWorkspaceArgs[] = [];
   const memberCreateCalls: CreateMemberArgs[] = [];
   const categoryCreateManyCalls: CreateManyCategoryArgs[] = [];
+  const bucketCreateCalls: CreateBucketArgs[] = [];
 
   const now = new Date();
 
@@ -56,6 +67,17 @@ function buildDb() {
         return { count: args.data.length };
       },
     },
+    bucket: {
+      create: async (args: CreateBucketArgs) => {
+        bucketCreateCalls.push(args);
+        return {
+          id: 'inbox-id',
+          ...args.data,
+          created_at: now,
+          updated_at: now,
+        };
+      },
+    },
   };
 
   const db = {
@@ -69,6 +91,7 @@ function buildDb() {
     workspaceCreateCalls,
     memberCreateCalls,
     categoryCreateManyCalls,
+    bucketCreateCalls,
     now,
   };
 }
@@ -80,6 +103,7 @@ describe('createWorkspace', () => {
       workspaceCreateCalls,
       memberCreateCalls,
       categoryCreateManyCalls,
+      bucketCreateCalls,
       now,
     } = buildDb();
 
@@ -116,6 +140,15 @@ describe('createWorkspace', () => {
         color: defaultCat.color,
       });
     }
+
+    expect(bucketCreateCalls).toHaveLength(1);
+    expect(bucketCreateCalls[0].data).toEqual({
+      workspace_id: 'ws-id',
+      name: 'INBOX',
+      type: 'INBOX',
+      allocation_percentage: 0,
+      is_default: true,
+    });
 
     expect(result).toEqual({
       id: 'ws-id',

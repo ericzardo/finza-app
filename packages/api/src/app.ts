@@ -15,6 +15,7 @@ import {
 
 import env from "@env";
 import { authRoutes } from "@features/auth/routes";
+import { bucketsRoutes } from "@features/buckets/routes";
 import { healthRoutes } from "@features/health/routes";
 import { usersRoutes } from "@features/users/routes";
 import { workspacesRoutes } from "@features/workspaces/routes";
@@ -55,6 +56,7 @@ export async function build(): Promise<FastifyInstance> {
 	await fastify.register(usersRoutes);
 	await fastify.register(authRoutes);
 	await fastify.register(workspacesRoutes);
+	await fastify.register(bucketsRoutes);
 	await fastify.register(healthRoutes);
 
 	return fastify;

@@ -1,6 +1,6 @@
-import type { PrismaClient } from '@prisma/client';
 import type { WorkspaceWithRole } from '@features/workspaces/domain/workspace.types';
 import { DEFAULT_CATEGORIES } from '@features/workspaces/domain/workspace.types';
+import type { PrismaClient } from '@prisma/client';
 
 interface CreateWorkspaceInput {
   name: string;
@@ -33,6 +33,16 @@ export async function createWorkspace(
         icon: cat.icon,
         color: cat.color,
       })),
+    });
+
+    await tx.bucket.create({
+      data: {
+        workspace_id: workspace.id,
+        name: 'INBOX',
+        type: 'INBOX',
+        allocation_percentage: 0,
+        is_default: true,
+      },
     });
 
     return {

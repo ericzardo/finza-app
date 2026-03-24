@@ -1,4 +1,19 @@
 export {
+	deleteBucketsBucketid400Schema,
+	deleteBucketsBucketid401Schema,
+	deleteBucketsBucketid403Schema,
+	deleteBucketsBucketid404Schema,
+	deleteBucketsBucketidMutationResponseSchema,
+	deleteBucketsBucketidPathParamsSchema,
+} from "./deleteBucketsBucketidSchema.ts";
+export {
+	getBuckets200Schema,
+	getBuckets400Schema,
+	getBuckets401Schema,
+	getBuckets403Schema,
+	getBucketsQueryResponseSchema,
+} from "./getBucketsSchema.ts";
+export {
 	getDocsJson200Schema,
 	getDocsJsonQueryResponseSchema,
 } from "./getDocsJsonSchema.ts";
@@ -36,6 +51,16 @@ export {
 	getWorkspacesWorkspaceidSummaryQueryResponseSchema,
 } from "./getWorkspacesWorkspaceidSummarySchema.ts";
 export {
+	patchBucketsBucketid200Schema,
+	patchBucketsBucketid400Schema,
+	patchBucketsBucketid401Schema,
+	patchBucketsBucketid403Schema,
+	patchBucketsBucketid404Schema,
+	patchBucketsBucketidMutationRequestSchema,
+	patchBucketsBucketidMutationResponseSchema,
+	patchBucketsBucketidPathParamsSchema,
+} from "./patchBucketsBucketidSchema.ts";
+export {
 	patchProfilePrivacy200Schema,
 	patchProfilePrivacy401Schema,
 	patchProfilePrivacy404Schema,
@@ -70,6 +95,14 @@ export {
 	postAuthLogout200Schema,
 	postAuthLogoutMutationResponseSchema,
 } from "./postAuthLogoutSchema.ts";
+export {
+	postBuckets201Schema,
+	postBuckets400Schema,
+	postBuckets401Schema,
+	postBuckets403Schema,
+	postBucketsMutationRequestSchema,
+	postBucketsMutationResponseSchema,
+} from "./postBucketsSchema.ts";
 export {
 	postUsers201Schema,
 	postUsers400Schema,

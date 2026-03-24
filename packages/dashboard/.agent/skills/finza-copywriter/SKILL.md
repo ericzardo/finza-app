@@ -5,7 +5,9 @@ description: Copywriter estratégico da Finza. Define tom de voz B2C, copys de i
 
 # ✍️ Finza Copywriter — Voz, UI Copy & SEO
 
-> **Pré-requisito:** Antes de escrever qualquer copy, leia a skill `finza-product-manifesto` para entender a tese do produto, o público-alvo e o posicionamento da Finza. Toda comunicação deve refletir esse contexto fundacional.
+> ⚡ **Pré-requisito:** Leia `packages/dashboard/CLAUDE.md` antes de qualquer geração de UI. Esta skill trata exclusivamente de voz, copy e SEO editorial — a implementação técnica de `setPageMeta()` está documentada em `dashboard/CLAUDE.md` §7.
+
+> **Pré-requisito de produto:** Antes de escrever qualquer copy, leia a skill `finza-product-manifesto` para entender a tese do produto, o público-alvo e o posicionamento da Finza. Toda comunicação deve refletir esse contexto fundacional.
 
 Você é o Copywriter Estratégico da Finza, uma plataforma de orquestração de patrimônio pessoal.
 Cada palavra na interface deve transmitir **autoridade, clareza e precisão** — como um private banker que nunca desperdiça o tempo do cliente.
@@ -73,14 +75,16 @@ Padrão obrigatório:
 
 ---
 
-## 3. 🔍 SEO & Metadados
+## 3. 🔍 SEO & Metadados (Editorial)
+
+> **Implementação técnica:** Use `setPageMeta()` de `@lib/seo` no `beforeLoad` de cada rota — conforme documentado em `dashboard/CLAUDE.md` §7. Esta seção define apenas **o que escrever**, não como implementar.
 
 ### Regras de Metadados por Página
 Toda rota pública ou com potencial de indexação DEVE definir metadados completos.
 
 #### Title Tag
 - Para páginas públicas: `Finza`.
-- Para páginas internas de dashboard: `Finza | Dashboard`.
+- Para páginas internas de dashboard: `Finza | {Nome da Página}`. Ex: `Finza | Dashboard`, `Finza | Transações`.
 
 #### Meta Description
 - Máx. 155 caracteres.
@@ -102,12 +106,6 @@ twitter:card, twitter:title, twitter:description, twitter:image
 #### Structured Data (JSON-LD)
 - Para páginas públicas (landing, pricing, blog): implementar `Organization`, `WebApplication`, `FAQPage` quando aplicável.
 - Formato: `<script type="application/ld+json">` no `<head>`.
-
-### Padrão de Implementação
-Crie um utilitário em `src/lib/seo.ts` ou use um hook `usePageMeta()` que:
-1. Define `document.title` dinamicamente.
-2. Gerencia meta tags via manipulação direta do DOM que o TanStack Router suporta.
-3. Aceita parâmetros tipados: `{ title, description, ogImage?, canonical?, noindex? }`.
 
 ---
 

@@ -142,7 +142,11 @@ O root layout envolve toda a aplicação e fornece:
 </ReactLenis>
 ```
 
-O `TopLoader` é um componente customizado (`@components/shared/top-loader`) que escuta `useRouterState()` e exibe uma barra de progresso animada durante transições de rota. **NÃO usamos `pendingComponent` nas definições de rota** — o TopLoader global resolve isso.
+O `TopLoader` é um componente customizado (`@components/shared/top-loader`) que escuta `useRouterState()` e exibe uma barra de progresso animada durante transições de rota.
+
+**Distinção de loading states:**
+- **Rotas de layout/guard** (ex: `_authenticated/route.tsx`, `_auth/route.tsx`): **NÃO usar `pendingComponent`** — o TopLoader global cuida da navegação.
+- **Rotas de conteúdo** (ex: `$workspaceId/transactions.tsx`, `$workspaceId/dashboard.tsx`): **USE `pendingComponent`** para exibir o Skeleton da página enquanto o `loader` aguarda os dados.
 
 ### Router Context
 
@@ -211,6 +215,48 @@ Se o usuário não está autenticado, é redirecionado para `/login`. Todas as r
 - Quando rotas workspace-scoped forem criadas (ex: transações, caixas de propósito), elas devem residir sob um caminho dinâmico do tenant: `src/routes/_authenticated/$workspaceId/`.
 - Nesse caso, extraia o `workspaceId` dos parâmetros da rota (`Route.useParams()`) e repasse para os hooks do `@finza/api-client`. **NUNCA** assuma um workspace global genérico.
 
+### Workspace Interceptor (`src/lib/api-client/workspace-interceptor.ts`)
+
+Toda requisição scoped a um workspace envia o header `x-workspace-id` automaticamente via interceptor Axios:
+
+```typescript
+// src/lib/api-client/workspace-interceptor.ts
+import { axiosInstance } from '@client'
+
+let currentWorkspaceId: string | null = null
+
+export function setWorkspaceId(id: string | null): void {
+  currentWorkspaceId = id
+}
+
+axiosInstance.interceptors.request.use((config) => {
+  if (currentWorkspaceId) {
+    config.headers['x-workspace-id'] = currentWorkspaceId
+  }
+  return config
+})
+```
+
+**Uso obrigatório em rotas de workspace:**
+
+```tsx
+// src/routes/_authenticated/$workspaceId/index.tsx
+import { setWorkspaceId } from '@lib/api-client/workspace-interceptor'
+
+function WorkspacePage() {
+  const workspaceId = Route.useParams({ select: (p) => p.workspaceId })
+
+  useEffect(() => {
+    setWorkspaceId(workspaceId)
+    return () => setWorkspaceId(null)  // limpa ao sair da rota
+  }, [workspaceId])
+
+  // Agora todos os hooks enviam x-workspace-id automaticamente
+  const { data } = useGetWorkspaceSummary()
+  return <Dashboard data={data} />
+}
+```
+
 ---
 
 ## 6. 🔐 Autenticação (AuthProvider)
@@ -253,7 +299,85 @@ A função `setPageMeta()` atualiza de forma imperativa: `<title>`, `<meta descr
 
 ---
 
-## 8. 🎨 Integração com o Design System (Skill Obrigatória)
+## 9. ⚠️ Tratamento de Erros em Componentes
+
+Sempre capture erros das mutations usando o padrão abaixo. O interceptor Axios já mapeia `error.response.data.message`, então use `error.message` como fallback.
+
+```typescript
+const { mutate, isPending } = usePostWorkspaces({
+  mutation: {
+    onSuccess: (data) => {
+      toast.success(`Workspace "${data.name}" criado!`)
+      queryClient.invalidateQueries({ queryKey: getWorkspacesQueryKey() })
+    },
+    onError: (error) => {
+      // error.message já foi mapeado pelo interceptor Axios (src/client.ts)
+      toast.error(error.message)
+    },
+  },
+})
+```
+
+**Padrão de form com validação e feedback:**
+
+```tsx
+export function CreateWorkspaceDialog() {
+  const form = useForm<PostWorkspacesMutationRequest>({
+    resolver: zodResolver(postWorkspacesMutationRequestSchema),
+    defaultValues: { name: '', currency: 'BRL' },
+  })
+
+  const { mutate, isPending } = usePostWorkspaces({
+    mutation: {
+      onSuccess: () => {
+        toast.success('Workspace criado com sucesso!')
+        form.reset()
+      },
+      onError: (error) => toast.error(error.message),
+    },
+  })
+
+  return (
+    <form onSubmit={form.handleSubmit((data) => mutate({ data }))}>
+      <Input
+        {...form.register('name')}
+        disabled={isPending}
+        aria-invalid={!!form.formState.errors.name}
+      />
+      {form.formState.errors.name && (
+        <p className="text-xs text-destructive">
+          {form.formState.errors.name.message}
+        </p>
+      )}
+      <Button type="submit" disabled={isPending}>
+        {isPending ? 'Criando...' : 'Criar'}
+      </Button>
+    </form>
+  )
+}
+```
+
+**Regras:**
+- Schemas de validação **sempre** vêm de `@finza/api-client/schemas`.
+- Tipos dos campos **sempre** vêm de `@finza/api-client` (ex: `PostWorkspacesMutationRequest`).
+- Feedback visual: `toast.success` / `toast.error` (Sonner), nunca `alert()`.
+- Estados de loading: desabilite inputs e botões com `disabled={isPending}`.
+
+---
+
+## 10. 🛠️ Scripts do Package (`package.json`)
+
+```bash
+bun run dev       # vite — dev server em localhost:5173
+bun run build     # tsc && vite build
+bun run preview   # vite preview
+```
+
+> Linting é feito com **Biome** a partir da raiz do monorepo: `bun run lint`. Não há `eslint` neste projeto.
+
+---
+
+## 11. 🎨 Integração com o Design System (Skill Obrigatória)
 
 Antes de gerar, refatorar ou propor qualquer alteração na UI/UX, você **DEVE** ler e aplicar obrigatoriamente as regras da Skill global de design.
 

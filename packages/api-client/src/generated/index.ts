@@ -1,16 +1,45 @@
+export type { DeleteBucketsBucketidMutationKey } from "./hooks/useDeleteBucketsBucketid.ts";
+export type { GetBucketsQueryKey } from "./hooks/useGetBuckets.ts";
 export type { GetDocsJsonQueryKey } from "./hooks/useGetDocsJson.ts";
 export type { GetHealthQueryKey } from "./hooks/useGetHealth.ts";
 export type { GetProfileQueryKey } from "./hooks/useGetProfile.ts";
 export type { GetWorkspacesQueryKey } from "./hooks/useGetWorkspaces.ts";
 export type { GetWorkspacesWorkspaceidQueryKey } from "./hooks/useGetWorkspacesWorkspaceid.ts";
 export type { GetWorkspacesWorkspaceidSummaryQueryKey } from "./hooks/useGetWorkspacesWorkspaceidSummary.ts";
+export type { PatchBucketsBucketidMutationKey } from "./hooks/usePatchBucketsBucketid.ts";
 export type { PatchProfileMutationKey } from "./hooks/usePatchProfile.ts";
 export type { PatchProfilePrivacyMutationKey } from "./hooks/usePatchProfilePrivacy.ts";
 export type { PostAuthChangePasswordMutationKey } from "./hooks/usePostAuthChangePassword.ts";
 export type { PostAuthLoginMutationKey } from "./hooks/usePostAuthLogin.ts";
 export type { PostAuthLogoutMutationKey } from "./hooks/usePostAuthLogout.ts";
+export type { PostBucketsMutationKey } from "./hooks/usePostBuckets.ts";
 export type { PostUsersMutationKey } from "./hooks/usePostUsers.ts";
 export type { PostWorkspacesMutationKey } from "./hooks/usePostWorkspaces.ts";
+export type {
+	DeleteBucketsBucketid400,
+	DeleteBucketsBucketid400CodeEnumKey,
+	DeleteBucketsBucketid401,
+	DeleteBucketsBucketid401CodeEnumKey,
+	DeleteBucketsBucketid403,
+	DeleteBucketsBucketid403CodeEnumKey,
+	DeleteBucketsBucketid404,
+	DeleteBucketsBucketid404CodeEnumKey,
+	DeleteBucketsBucketidMutation,
+	DeleteBucketsBucketidMutationResponse,
+	DeleteBucketsBucketidPathParams,
+} from "./types/DeleteBucketsBucketid.ts";
+export type {
+	GetBuckets200,
+	GetBuckets200TypeEnumKey,
+	GetBuckets400,
+	GetBuckets400CodeEnumKey,
+	GetBuckets401,
+	GetBuckets401CodeEnumKey,
+	GetBuckets403,
+	GetBuckets403CodeEnumKey,
+	GetBucketsQuery,
+	GetBucketsQueryResponse,
+} from "./types/GetBuckets.ts";
 export type {
 	GetDocsJson200,
 	GetDocsJsonQuery,
@@ -69,6 +98,23 @@ export type {
 	GetWorkspacesWorkspaceidSummaryQueryResponse,
 } from "./types/GetWorkspacesWorkspaceidSummary.ts";
 export type {
+	PatchBucketsBucketid200,
+	PatchBucketsBucketid200TypeEnumKey,
+	PatchBucketsBucketid400,
+	PatchBucketsBucketid400CodeEnumKey,
+	PatchBucketsBucketid401,
+	PatchBucketsBucketid401CodeEnumKey,
+	PatchBucketsBucketid403,
+	PatchBucketsBucketid403CodeEnumKey,
+	PatchBucketsBucketid404,
+	PatchBucketsBucketid404CodeEnumKey,
+	PatchBucketsBucketidMutation,
+	PatchBucketsBucketidMutationRequest,
+	PatchBucketsBucketidMutationRequestTypeEnumKey,
+	PatchBucketsBucketidMutationResponse,
+	PatchBucketsBucketidPathParams,
+} from "./types/PatchBucketsBucketid.ts";
+export type {
 	PatchProfile200,
 	PatchProfile400,
 	PatchProfile400CodeEnumKey,
@@ -121,6 +167,20 @@ export type {
 	PostAuthLogoutMutationResponse,
 } from "./types/PostAuthLogout.ts";
 export type {
+	PostBuckets201,
+	PostBuckets201TypeEnumKey,
+	PostBuckets400,
+	PostBuckets400CodeEnumKey,
+	PostBuckets401,
+	PostBuckets401CodeEnumKey,
+	PostBuckets403,
+	PostBuckets403CodeEnumKey,
+	PostBucketsMutation,
+	PostBucketsMutationRequest,
+	PostBucketsMutationRequestTypeEnumKey,
+	PostBucketsMutationResponse,
+} from "./types/PostBuckets.ts";
+export type {
 	PostUsers201,
 	PostUsers400,
 	PostUsers400CodeEnumKey,
@@ -141,19 +201,29 @@ export type {
 	PostWorkspacesMutationRequest,
 	PostWorkspacesMutationResponse,
 } from "./types/PostWorkspaces.ts";
+export { deleteBucketsBucketid } from "./clients/deleteBucketsBucketid.ts";
+export { getBuckets } from "./clients/getBuckets.ts";
 export { getDocsJson } from "./clients/getDocsJson.ts";
 export { getHealth } from "./clients/getHealth.ts";
 export { getProfile } from "./clients/getProfile.ts";
 export { getWorkspaces } from "./clients/getWorkspaces.ts";
 export { getWorkspacesWorkspaceid } from "./clients/getWorkspacesWorkspaceid.ts";
 export { getWorkspacesWorkspaceidSummary } from "./clients/getWorkspacesWorkspaceidSummary.ts";
+export { patchBucketsBucketid } from "./clients/patchBucketsBucketid.ts";
 export { patchProfile } from "./clients/patchProfile.ts";
 export { patchProfilePrivacy } from "./clients/patchProfilePrivacy.ts";
 export { postAuthChangePassword } from "./clients/postAuthChangePassword.ts";
 export { postAuthLogin } from "./clients/postAuthLogin.ts";
 export { postAuthLogout } from "./clients/postAuthLogout.ts";
+export { postBuckets } from "./clients/postBuckets.ts";
 export { postUsers } from "./clients/postUsers.ts";
 export { postWorkspaces } from "./clients/postWorkspaces.ts";
+export { deleteBucketsBucketidMutationKey } from "./hooks/useDeleteBucketsBucketid.ts";
+export { deleteBucketsBucketidMutationOptions } from "./hooks/useDeleteBucketsBucketid.ts";
+export { useDeleteBucketsBucketid } from "./hooks/useDeleteBucketsBucketid.ts";
+export { getBucketsQueryKey } from "./hooks/useGetBuckets.ts";
+export { getBucketsQueryOptions } from "./hooks/useGetBuckets.ts";
+export { useGetBuckets } from "./hooks/useGetBuckets.ts";
 export { getDocsJsonQueryKey } from "./hooks/useGetDocsJson.ts";
 export { getDocsJsonQueryOptions } from "./hooks/useGetDocsJson.ts";
 export { useGetDocsJson } from "./hooks/useGetDocsJson.ts";
@@ -172,6 +242,9 @@ export { useGetWorkspacesWorkspaceid } from "./hooks/useGetWorkspacesWorkspaceid
 export { getWorkspacesWorkspaceidSummaryQueryKey } from "./hooks/useGetWorkspacesWorkspaceidSummary.ts";
 export { getWorkspacesWorkspaceidSummaryQueryOptions } from "./hooks/useGetWorkspacesWorkspaceidSummary.ts";
 export { useGetWorkspacesWorkspaceidSummary } from "./hooks/useGetWorkspacesWorkspaceidSummary.ts";
+export { patchBucketsBucketidMutationKey } from "./hooks/usePatchBucketsBucketid.ts";
+export { patchBucketsBucketidMutationOptions } from "./hooks/usePatchBucketsBucketid.ts";
+export { usePatchBucketsBucketid } from "./hooks/usePatchBucketsBucketid.ts";
 export { patchProfileMutationKey } from "./hooks/usePatchProfile.ts";
 export { patchProfileMutationOptions } from "./hooks/usePatchProfile.ts";
 export { usePatchProfile } from "./hooks/usePatchProfile.ts";
@@ -187,12 +260,30 @@ export { usePostAuthLogin } from "./hooks/usePostAuthLogin.ts";
 export { postAuthLogoutMutationKey } from "./hooks/usePostAuthLogout.ts";
 export { postAuthLogoutMutationOptions } from "./hooks/usePostAuthLogout.ts";
 export { usePostAuthLogout } from "./hooks/usePostAuthLogout.ts";
+export { postBucketsMutationKey } from "./hooks/usePostBuckets.ts";
+export { postBucketsMutationOptions } from "./hooks/usePostBuckets.ts";
+export { usePostBuckets } from "./hooks/usePostBuckets.ts";
 export { postUsersMutationKey } from "./hooks/usePostUsers.ts";
 export { postUsersMutationOptions } from "./hooks/usePostUsers.ts";
 export { usePostUsers } from "./hooks/usePostUsers.ts";
 export { postWorkspacesMutationKey } from "./hooks/usePostWorkspaces.ts";
 export { postWorkspacesMutationOptions } from "./hooks/usePostWorkspaces.ts";
 export { usePostWorkspaces } from "./hooks/usePostWorkspaces.ts";
+export {
+	createDeleteBucketsBucketid400,
+	createDeleteBucketsBucketid401,
+	createDeleteBucketsBucketid403,
+	createDeleteBucketsBucketid404,
+	createDeleteBucketsBucketidMutationResponse,
+	createDeleteBucketsBucketidPathParams,
+} from "./mocks/createDeleteBucketsBucketid.ts";
+export {
+	createGetBuckets200,
+	createGetBuckets400,
+	createGetBuckets401,
+	createGetBuckets403,
+	createGetBucketsQueryResponse,
+} from "./mocks/createGetBuckets.ts";
 export {
 	createGetDocsJson200,
 	createGetDocsJsonQueryResponse,
@@ -231,6 +322,16 @@ export {
 	createGetWorkspacesWorkspaceidSummaryQueryResponse,
 } from "./mocks/createGetWorkspacesWorkspaceidSummary.ts";
 export {
+	createPatchBucketsBucketid200,
+	createPatchBucketsBucketid400,
+	createPatchBucketsBucketid401,
+	createPatchBucketsBucketid403,
+	createPatchBucketsBucketid404,
+	createPatchBucketsBucketidMutationRequest,
+	createPatchBucketsBucketidMutationResponse,
+	createPatchBucketsBucketidPathParams,
+} from "./mocks/createPatchBucketsBucketid.ts";
+export {
 	createPatchProfile200,
 	createPatchProfile400,
 	createPatchProfile401,
@@ -266,6 +367,14 @@ export {
 	createPostAuthLogoutMutationResponse,
 } from "./mocks/createPostAuthLogout.ts";
 export {
+	createPostBuckets201,
+	createPostBuckets400,
+	createPostBuckets401,
+	createPostBuckets403,
+	createPostBucketsMutationRequest,
+	createPostBucketsMutationResponse,
+} from "./mocks/createPostBuckets.ts";
+export {
 	createPostUsers201,
 	createPostUsers400,
 	createPostUsers409,
@@ -279,6 +388,20 @@ export {
 	createPostWorkspacesMutationRequest,
 	createPostWorkspacesMutationResponse,
 } from "./mocks/createPostWorkspaces.ts";
+export {
+	deleteBucketsBucketidHandler,
+	deleteBucketsBucketidHandlerResponse400,
+	deleteBucketsBucketidHandlerResponse401,
+	deleteBucketsBucketidHandlerResponse403,
+	deleteBucketsBucketidHandlerResponse404,
+} from "./mocks/deleteBucketsBucketidHandler.ts";
+export {
+	getBucketsHandler,
+	getBucketsHandlerResponse200,
+	getBucketsHandlerResponse400,
+	getBucketsHandlerResponse401,
+	getBucketsHandlerResponse403,
+} from "./mocks/getBucketsHandler.ts";
 export {
 	getDocsJsonHandler,
 	getDocsJsonHandlerResponse200,
@@ -314,6 +437,14 @@ export {
 	getWorkspacesWorkspaceidSummaryHandlerResponse403,
 } from "./mocks/getWorkspacesWorkspaceidSummaryHandler.ts";
 export {
+	patchBucketsBucketidHandler,
+	patchBucketsBucketidHandlerResponse200,
+	patchBucketsBucketidHandlerResponse400,
+	patchBucketsBucketidHandlerResponse401,
+	patchBucketsBucketidHandlerResponse403,
+	patchBucketsBucketidHandlerResponse404,
+} from "./mocks/patchBucketsBucketidHandler.ts";
+export {
 	patchProfileHandler,
 	patchProfileHandlerResponse200,
 	patchProfileHandlerResponse400,
@@ -346,6 +477,13 @@ export {
 	postAuthLogoutHandlerResponse200,
 } from "./mocks/postAuthLogoutHandler.ts";
 export {
+	postBucketsHandler,
+	postBucketsHandlerResponse201,
+	postBucketsHandlerResponse400,
+	postBucketsHandlerResponse401,
+	postBucketsHandlerResponse403,
+} from "./mocks/postBucketsHandler.ts";
+export {
 	postUsersHandler,
 	postUsersHandlerResponse201,
 	postUsersHandlerResponse400,
@@ -357,6 +495,21 @@ export {
 	postWorkspacesHandlerResponse400,
 	postWorkspacesHandlerResponse401,
 } from "./mocks/postWorkspacesHandler.ts";
+export {
+	deleteBucketsBucketid400Schema,
+	deleteBucketsBucketid401Schema,
+	deleteBucketsBucketid403Schema,
+	deleteBucketsBucketid404Schema,
+	deleteBucketsBucketidMutationResponseSchema,
+	deleteBucketsBucketidPathParamsSchema,
+} from "./schemas/deleteBucketsBucketidSchema.ts";
+export {
+	getBuckets200Schema,
+	getBuckets400Schema,
+	getBuckets401Schema,
+	getBuckets403Schema,
+	getBucketsQueryResponseSchema,
+} from "./schemas/getBucketsSchema.ts";
 export {
 	getDocsJson200Schema,
 	getDocsJsonQueryResponseSchema,
@@ -395,6 +548,16 @@ export {
 	getWorkspacesWorkspaceidSummaryQueryResponseSchema,
 } from "./schemas/getWorkspacesWorkspaceidSummarySchema.ts";
 export {
+	patchBucketsBucketid200Schema,
+	patchBucketsBucketid400Schema,
+	patchBucketsBucketid401Schema,
+	patchBucketsBucketid403Schema,
+	patchBucketsBucketid404Schema,
+	patchBucketsBucketidMutationRequestSchema,
+	patchBucketsBucketidMutationResponseSchema,
+	patchBucketsBucketidPathParamsSchema,
+} from "./schemas/patchBucketsBucketidSchema.ts";
+export {
 	patchProfilePrivacy200Schema,
 	patchProfilePrivacy401Schema,
 	patchProfilePrivacy404Schema,
@@ -430,6 +593,14 @@ export {
 	postAuthLogoutMutationResponseSchema,
 } from "./schemas/postAuthLogoutSchema.ts";
 export {
+	postBuckets201Schema,
+	postBuckets400Schema,
+	postBuckets401Schema,
+	postBuckets403Schema,
+	postBucketsMutationRequestSchema,
+	postBucketsMutationResponseSchema,
+} from "./schemas/postBucketsSchema.ts";
+export {
 	postUsers201Schema,
 	postUsers400Schema,
 	postUsers409Schema,
@@ -443,6 +614,14 @@ export {
 	postWorkspacesMutationRequestSchema,
 	postWorkspacesMutationResponseSchema,
 } from "./schemas/postWorkspacesSchema.ts";
+export { deleteBucketsBucketid400CodeEnum } from "./types/DeleteBucketsBucketid.ts";
+export { deleteBucketsBucketid401CodeEnum } from "./types/DeleteBucketsBucketid.ts";
+export { deleteBucketsBucketid403CodeEnum } from "./types/DeleteBucketsBucketid.ts";
+export { deleteBucketsBucketid404CodeEnum } from "./types/DeleteBucketsBucketid.ts";
+export { getBuckets200TypeEnum } from "./types/GetBuckets.ts";
+export { getBuckets400CodeEnum } from "./types/GetBuckets.ts";
+export { getBuckets401CodeEnum } from "./types/GetBuckets.ts";
+export { getBuckets403CodeEnum } from "./types/GetBuckets.ts";
 export { getHealth200DbEnum } from "./types/GetHealth.ts";
 export { getHealth200StatusEnum } from "./types/GetHealth.ts";
 export { getProfile401CodeEnum } from "./types/GetProfile.ts";
@@ -457,6 +636,12 @@ export { getWorkspacesWorkspaceid404CodeEnum } from "./types/GetWorkspacesWorksp
 export { getWorkspacesWorkspaceidSummary400CodeEnum } from "./types/GetWorkspacesWorkspaceidSummary.ts";
 export { getWorkspacesWorkspaceidSummary401CodeEnum } from "./types/GetWorkspacesWorkspaceidSummary.ts";
 export { getWorkspacesWorkspaceidSummary403CodeEnum } from "./types/GetWorkspacesWorkspaceidSummary.ts";
+export { patchBucketsBucketid200TypeEnum } from "./types/PatchBucketsBucketid.ts";
+export { patchBucketsBucketid400CodeEnum } from "./types/PatchBucketsBucketid.ts";
+export { patchBucketsBucketid401CodeEnum } from "./types/PatchBucketsBucketid.ts";
+export { patchBucketsBucketid403CodeEnum } from "./types/PatchBucketsBucketid.ts";
+export { patchBucketsBucketid404CodeEnum } from "./types/PatchBucketsBucketid.ts";
+export { patchBucketsBucketidMutationRequestTypeEnum } from "./types/PatchBucketsBucketid.ts";
 export { patchProfile400CodeEnum } from "./types/PatchProfile.ts";
 export { patchProfile401CodeEnum } from "./types/PatchProfile.ts";
 export { patchProfile404CodeEnum } from "./types/PatchProfile.ts";
@@ -469,6 +654,11 @@ export { postAuthChangePassword403CodeEnum } from "./types/PostAuthChangePasswor
 export { postAuthChangePassword404CodeEnum } from "./types/PostAuthChangePassword.ts";
 export { postAuthLogin400CodeEnum } from "./types/PostAuthLogin.ts";
 export { postAuthLogin401CodeEnum } from "./types/PostAuthLogin.ts";
+export { postBuckets201TypeEnum } from "./types/PostBuckets.ts";
+export { postBuckets400CodeEnum } from "./types/PostBuckets.ts";
+export { postBuckets401CodeEnum } from "./types/PostBuckets.ts";
+export { postBuckets403CodeEnum } from "./types/PostBuckets.ts";
+export { postBucketsMutationRequestTypeEnum } from "./types/PostBuckets.ts";
 export { postUsers400CodeEnum } from "./types/PostUsers.ts";
 export { postUsers409CodeEnum } from "./types/PostUsers.ts";
 export { postWorkspaces201RoleEnum } from "./types/PostWorkspaces.ts";

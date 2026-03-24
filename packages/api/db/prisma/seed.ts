@@ -13,8 +13,17 @@ async function main() {
   for (const plan of plans) {
     await prisma.plan.upsert({
       where: { slug: plan.slug },
-      update: {},
-      create: plan,
+      update: {
+        name: plan.name,
+        price: plan.price,
+        features: plan.features,
+      },
+      create: {
+        slug: plan.slug,
+        name: plan.name,
+        price: plan.price,
+        features: plan.features,
+      },
     });
   }
 

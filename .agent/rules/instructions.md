@@ -8,30 +8,33 @@ A Bun workspaces monorepo for elite financial orchestration.
 finza/
 ├── packages/
 │   ├── api/            # @finza/api - Core business logic and database
-│   ├── dashboard/      # @finza/dashboard - Main financial interface
-│   ├── shared/         # @finza/shared - Zod schemas and universal types
-│   ├── api-client/     # @finza/api-client - Generated SDK and hooks
-│   └── playground/     # @finza/playground - Component testing environment
+│   ├── api-client/     # @finza/api-client - Generated SDK and hooks (via Kubb)
+│   └── dashboard/      # @finza/dashboard - Main financial interface
 ├── package.json        # Root workspace config
 ├── biome.json          # Shared linting/formatting
-└── ...
+└── bun.lock
 
-Packages
+```
+
+## Packages
+
 | Package | Description |
 | :--- | :--- |
-| `@finza/api` | Fastify/Node.js API with Prisma and PostgreSQL |
-| `@finza/dashboard` | React dashboard using Tailwind CSS v4 |
-| `@finza/shared` | Single source of truth for validation and types |
-| `@finza/api-client` | Auto-generated SDK via OpenAPI/Kube |
+| `@finza/api` | Fastify API with Prisma, PostgreSQL and Zod |
+| `@finza/api-client` | Auto-generated SDK via Kubb (OpenAPI → types, hooks, schemas, mocks) |
+| `@finza/dashboard` | React 19 dashboard using TanStack Router + Tailwind CSS v4 |
 
-Commands
+> **Importante:** Não existe `@finza/shared`. O `@finza/api-client` é a fonte compartilhada de tipos e schemas Zod entre a API e o Dashboard.
+
+## Commands
+
 ```bash
-
-bun install             # Install all dependencies
-bun run dev             # Start all packages in dev mode
-bun run build           # Build all packages
-bun run lint            # Check for linting errors
-bun run lint:fix        # Auto-fix linting issues
+bun install                 # Install all dependencies
+bun run dev:api             # Start API server (port 9999, hot reload)
+bun run generate:client     # Regenerate SDK from OpenAPI (API must be running)
+bun run test:api            # Run API tests
+bun run lint                # Check for linting errors (Biome)
+bun run lint:fix            # Auto-fix linting issues (Biome)
 ```
 ## Testing Changes
 
