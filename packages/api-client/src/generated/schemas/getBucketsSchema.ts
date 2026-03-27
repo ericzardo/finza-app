@@ -5,21 +5,85 @@
 
 import { z } from "zod/v4";
 
+export const getBucketsQueryParamsSchema = z
+	.object({
+		startDate: z.optional(
+			z.iso.date().describe("Data de início do período (YYYY-MM-DD)"),
+		),
+		endDate: z.optional(
+			z.iso.date().describe("Data de fim do período (YYYY-MM-DD)"),
+		),
+	})
+	.optional();
+
 /**
  * @description Default Response
  */
 export const getBuckets200Schema = z.array(
-	z.object({
-		id: z.string().describe("ID do caixa"),
-		workspace_id: z.string().describe("ID do workspace"),
-		name: z.string().describe("Nome do caixa"),
-		type: z.enum(["SPENDING", "INVESTMENT", "INBOX"]).describe("Tipo do caixa"),
-		allocation_percentage: z
-			.number()
-			.describe("Percentual de alocação (0-100)"),
-		is_default: z.boolean().describe("Indica se é o caixa padrão (INBOX)"),
-		created_at: z.iso.datetime().describe("Data de criação"),
-	}),
+	z.union([
+		z.object({
+			id: z.string().describe("ID do caixa"),
+			workspace_id: z.string().describe("ID do workspace"),
+			name: z.string().describe("Nome do caixa"),
+			type: z.enum(["INBOX"]),
+			allocation_percentage: z
+				.number()
+				.describe("Percentual de alocação (0-100)"),
+			is_default: z.boolean().describe("Indica se é o caixa padrão (INBOX)"),
+			created_at: z.iso.datetime().describe("Data de criação"),
+			current_amount: z
+				.number()
+				.describe("Montante atual no caixa (receitas − despesas, histórico)"),
+			period_income: z
+				.number()
+				.describe("Total de receitas neste caixa no período"),
+			period_spent: z
+				.number()
+				.describe("Total de despesas neste caixa no período"),
+		}),
+		z.object({
+			id: z.string().describe("ID do caixa"),
+			workspace_id: z.string().describe("ID do workspace"),
+			name: z.string().describe("Nome do caixa"),
+			type: z.enum(["SPENDING"]),
+			allocation_percentage: z
+				.number()
+				.describe("Percentual de alocação (0-100)"),
+			is_default: z.boolean().describe("Indica se é o caixa padrão (INBOX)"),
+			created_at: z.iso.datetime().describe("Data de criação"),
+			current_amount: z
+				.number()
+				.describe("Montante atual no caixa (receitas − despesas, histórico)"),
+			period_allocated: z
+				.number()
+				.describe("Total de receitas alocadas neste caixa no período"),
+			period_spent: z
+				.number()
+				.describe("Total de despesas neste caixa no período"),
+		}),
+		z.object({
+			id: z.string().describe("ID do caixa"),
+			workspace_id: z.string().describe("ID do workspace"),
+			name: z.string().describe("Nome do caixa"),
+			type: z.enum(["INVESTMENT"]),
+			allocation_percentage: z
+				.number()
+				.describe("Percentual de alocação (0-100)"),
+			is_default: z.boolean().describe("Indica se é o caixa padrão (INBOX)"),
+			created_at: z.iso.datetime().describe("Data de criação"),
+			current_invested: z
+				.number()
+				.describe("Montante total aportado historicamente"),
+			period_target: z
+				.number()
+				.describe(
+					"Meta de aporte no período (receita total do workspace × allocation_percentage)",
+				),
+			period_invested: z
+				.number()
+				.describe("Quanto já foi aportado neste caixa no período"),
+		}),
+	]),
 );
 
 /**

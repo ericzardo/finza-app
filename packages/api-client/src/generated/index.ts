@@ -30,6 +30,8 @@ export type {
 } from "./types/DeleteBucketsBucketid.ts";
 export type {
 	GetBuckets200,
+	GetBuckets200TypeEnum2Key,
+	GetBuckets200TypeEnum3Key,
 	GetBuckets200TypeEnumKey,
 	GetBuckets400,
 	GetBuckets400CodeEnumKey,
@@ -38,6 +40,7 @@ export type {
 	GetBuckets403,
 	GetBuckets403CodeEnumKey,
 	GetBucketsQuery,
+	GetBucketsQueryParams,
 	GetBucketsQueryResponse,
 } from "./types/GetBuckets.ts";
 export type {
@@ -282,6 +285,7 @@ export {
 	createGetBuckets400,
 	createGetBuckets401,
 	createGetBuckets403,
+	createGetBucketsQueryParams,
 	createGetBucketsQueryResponse,
 } from "./mocks/createGetBuckets.ts";
 export {
@@ -508,6 +512,7 @@ export {
 	getBuckets400Schema,
 	getBuckets401Schema,
 	getBuckets403Schema,
+	getBucketsQueryParamsSchema,
 	getBucketsQueryResponseSchema,
 } from "./schemas/getBucketsSchema.ts";
 export {
@@ -619,6 +624,8 @@ export { deleteBucketsBucketid401CodeEnum } from "./types/DeleteBucketsBucketid.
 export { deleteBucketsBucketid403CodeEnum } from "./types/DeleteBucketsBucketid.ts";
 export { deleteBucketsBucketid404CodeEnum } from "./types/DeleteBucketsBucketid.ts";
 export { getBuckets200TypeEnum } from "./types/GetBuckets.ts";
+export { getBuckets200TypeEnum2 } from "./types/GetBuckets.ts";
+export { getBuckets200TypeEnum3 } from "./types/GetBuckets.ts";
 export { getBuckets400CodeEnum } from "./types/GetBuckets.ts";
 export { getBuckets401CodeEnum } from "./types/GetBuckets.ts";
 export { getBuckets403CodeEnum } from "./types/GetBuckets.ts";

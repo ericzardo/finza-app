@@ -6,6 +6,7 @@
 import fetch from "@client";
 import type {
 	GetBucketsQueryResponse,
+	GetBucketsQueryParams,
 	GetBuckets400,
 	GetBuckets401,
 	GetBuckets403,
@@ -18,11 +19,12 @@ function getGetBucketsUrl() {
 }
 
 /**
- * @description Lista todos os caixas do workspace.
+ * @description Lista todos os caixas do workspace com agregações financeiras do período.
  * @summary Listar caixas
  * {@link /buckets}
  */
 export async function getBuckets(
+	params?: GetBucketsQueryParams,
 	config: Partial<RequestConfig> & { client?: Client } = {},
 ) {
 	const { client: request = fetch, ...requestConfig } = config;
@@ -34,6 +36,7 @@ export async function getBuckets(
 	>({
 		method: "GET",
 		url: getGetBucketsUrl().url.toString(),
+		params,
 		...requestConfig,
 	});
 	return res.data;

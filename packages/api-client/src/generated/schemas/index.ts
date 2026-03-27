@@ -11,6 +11,7 @@ export {
 	getBuckets400Schema,
 	getBuckets401Schema,
 	getBuckets403Schema,
+	getBucketsQueryParamsSchema,
 	getBucketsQueryResponseSchema,
 } from "./getBucketsSchema.ts";
 export {

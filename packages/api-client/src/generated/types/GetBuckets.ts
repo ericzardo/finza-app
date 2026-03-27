@@ -3,14 +3,39 @@
  * Do not edit manually.
  */
 
+export type GetBucketsQueryParams = {
+	/**
+	 * @description Data de início do período (YYYY-MM-DD)
+	 * @type string | undefined, date
+	 */
+	startDate?: string;
+	/**
+	 * @description Data de fim do período (YYYY-MM-DD)
+	 * @type string | undefined, date
+	 */
+	endDate?: string;
+};
+
 export const getBuckets200TypeEnum = {
-	SPENDING: "SPENDING",
-	INVESTMENT: "INVESTMENT",
 	INBOX: "INBOX",
 } as const;
 
 export type GetBuckets200TypeEnumKey =
 	(typeof getBuckets200TypeEnum)[keyof typeof getBuckets200TypeEnum];
+
+export const getBuckets200TypeEnum2 = {
+	SPENDING: "SPENDING",
+} as const;
+
+export type GetBuckets200TypeEnum2Key =
+	(typeof getBuckets200TypeEnum2)[keyof typeof getBuckets200TypeEnum2];
+
+export const getBuckets200TypeEnum3 = {
+	INVESTMENT: "INVESTMENT",
+} as const;
+
+export type GetBuckets200TypeEnum3Key =
+	(typeof getBuckets200TypeEnum3)[keyof typeof getBuckets200TypeEnum3];
 
 /**
  * @description Default Response
@@ -126,5 +151,6 @@ export type GetBucketsQueryResponse = GetBuckets200;
 
 export type GetBucketsQuery = {
 	Response: GetBuckets200;
+	QueryParams: GetBucketsQueryParams;
 	Errors: GetBuckets400 | GetBuckets401 | GetBuckets403;
 };

@@ -8,26 +8,74 @@ import type {
 	GetBuckets400,
 	GetBuckets401,
 	GetBuckets403,
+	GetBucketsQueryParams,
 	GetBucketsQueryResponse,
 } from "../types/GetBuckets.ts";
 import { faker } from "@faker-js/faker";
+
+export function createGetBucketsQueryParams(
+	data?: Partial<GetBucketsQueryParams>,
+): GetBucketsQueryParams {
+	return {
+		...{
+			startDate: faker.date.anytime().toISOString().substring(0, 10),
+			endDate: faker.date.anytime().toISOString().substring(0, 10),
+		},
+		...(data || {}),
+	};
+}
 
 /**
  * @description Default Response
  */
 export function createGetBuckets200(data?: GetBuckets200): GetBuckets200 {
 	return [
-		...faker.helpers.multiple(() => ({
-			id: faker.string.alpha(),
-			workspace_id: faker.string.alpha(),
-			name: faker.string.alpha(),
-			type: faker.helpers.arrayElement<
-				NonNullable<NonNullable<GetBuckets200>[number]>["type"]
-			>(["SPENDING", "INVESTMENT", "INBOX"]),
-			allocation_percentage: faker.number.float(),
-			is_default: faker.datatype.boolean(),
-			created_at: faker.date.anytime().toISOString(),
-		})),
+		...faker.helpers.multiple(() =>
+			faker.helpers.arrayElement<any>([
+				{
+					id: faker.string.alpha(),
+					workspace_id: faker.string.alpha(),
+					name: faker.string.alpha(),
+					type: faker.helpers.arrayElement<
+						NonNullable<NonNullable<GetBuckets200>[number]>["type"]
+					>(["INBOX"]),
+					allocation_percentage: faker.number.float(),
+					is_default: faker.datatype.boolean(),
+					created_at: faker.date.anytime().toISOString(),
+					current_amount: faker.number.float(),
+					period_income: faker.number.float(),
+					period_spent: faker.number.float(),
+				},
+				{
+					id: faker.string.alpha(),
+					workspace_id: faker.string.alpha(),
+					name: faker.string.alpha(),
+					type: faker.helpers.arrayElement<
+						NonNullable<NonNullable<GetBuckets200>[number]>["type"]
+					>(["SPENDING"]),
+					allocation_percentage: faker.number.float(),
+					is_default: faker.datatype.boolean(),
+					created_at: faker.date.anytime().toISOString(),
+					current_amount: faker.number.float(),
+					period_allocated: faker.number.float(),
+					period_spent: faker.number.float(),
+				},
+				{
+					id: faker.string.alpha(),
+					workspace_id: faker.string.alpha(),
+					name: faker.string.alpha(),
+					type: faker.helpers.arrayElement<
+						NonNullable<NonNullable<GetBuckets200>[number]>["type"]
+					>(["INVESTMENT"]),
+					allocation_percentage: faker.number.float(),
+					is_default: faker.datatype.boolean(),
+					created_at: faker.date.anytime().toISOString(),
+					current_invested: faker.number.float(),
+					period_target: faker.number.float(),
+					period_invested: faker.number.float(),
+				},
+			]),
+		),
 		...(data || []),
 	];
 }

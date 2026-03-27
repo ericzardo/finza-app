@@ -11,6 +11,7 @@ export {
 	createGetBuckets400,
 	createGetBuckets401,
 	createGetBuckets403,
+	createGetBucketsQueryParams,
 	createGetBucketsQueryResponse,
 } from "./createGetBuckets.ts";
 export {

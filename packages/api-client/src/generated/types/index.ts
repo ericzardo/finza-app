@@ -13,6 +13,8 @@ export type {
 } from "./DeleteBucketsBucketid.ts";
 export type {
 	GetBuckets200,
+	GetBuckets200TypeEnum2Key,
+	GetBuckets200TypeEnum3Key,
 	GetBuckets200TypeEnumKey,
 	GetBuckets400,
 	GetBuckets400CodeEnumKey,
@@ -21,6 +23,7 @@ export type {
 	GetBuckets403,
 	GetBuckets403CodeEnumKey,
 	GetBucketsQuery,
+	GetBucketsQueryParams,
 	GetBucketsQueryResponse,
 } from "./GetBuckets.ts";
 export type {
@@ -189,6 +192,8 @@ export { deleteBucketsBucketid401CodeEnum } from "./DeleteBucketsBucketid.ts";
 export { deleteBucketsBucketid403CodeEnum } from "./DeleteBucketsBucketid.ts";
 export { deleteBucketsBucketid404CodeEnum } from "./DeleteBucketsBucketid.ts";
 export { getBuckets200TypeEnum } from "./GetBuckets.ts";
+export { getBuckets200TypeEnum2 } from "./GetBuckets.ts";
+export { getBuckets200TypeEnum3 } from "./GetBuckets.ts";
 export { getBuckets400CodeEnum } from "./GetBuckets.ts";
 export { getBuckets401CodeEnum } from "./GetBuckets.ts";
 export { getBuckets403CodeEnum } from "./GetBuckets.ts";

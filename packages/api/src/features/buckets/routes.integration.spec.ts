@@ -65,7 +65,7 @@ async function createTestWorkspace(server: FastifyInstance, userId: string) {
 	const inbox = await server.prisma.bucket.create({
 		data: {
 			workspace_id: workspace.id,
-			name: "INBOX",
+			name: "Caixa de Entrada",
 			type: "INBOX",
 			allocation_percentage: 0,
 			is_default: true,
@@ -238,7 +238,7 @@ describe("GET /buckets", () => {
 			expect(parsed.data).toHaveLength(2);
 			const inbox = parsed.data.find((b) => b.is_default);
 			expect(inbox).toBeDefined();
-			expect(inbox?.name).toBe("INBOX");
+			expect(inbox?.name).toBe("Caixa de Entrada");
 			expect(inbox?.type).toBe("INBOX");
 		} finally {
 			await server.close();
@@ -289,6 +289,29 @@ describe("GET /buckets", () => {
 
 			expect(response.statusCode).toBe(401);
 			expect(response.json().code).toBe(ErrorCode.UNAUTHORIZED);
+		} finally {
+			await server.close();
+		}
+	});
+
+	test("retorna 400 quando endDate for uma data futura", async () => {
+		const server = await setupTestServer();
+
+		try {
+			const user = await createTestUser(server);
+			const { workspace } = await createTestWorkspace(server, user.id);
+
+			const futureDate = new Date(Date.now() + 86400 * 1000).toISOString();
+
+			const response = await server.inject({
+				method: "GET",
+				url: `/buckets?endDate=${encodeURIComponent(futureDate)}`,
+				cookies: buildAuthCookie(user),
+				headers: { "x-workspace-id": workspace.id },
+			});
+
+			expect(response.statusCode).toBe(400);
+			expect(response.json().code).toBe(ErrorCode.VALIDATION_ERROR);
 		} finally {
 			await server.close();
 		}

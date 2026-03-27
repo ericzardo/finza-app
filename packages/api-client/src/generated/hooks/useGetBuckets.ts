@@ -5,6 +5,7 @@
 
 import type {
 	GetBucketsQueryResponse,
+	GetBucketsQueryParams,
 	GetBuckets400,
 	GetBuckets401,
 	GetBuckets403,
@@ -19,14 +20,16 @@ import type {
 import { getBuckets } from "../clients/getBuckets.ts";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 
-export const getBucketsQueryKey = () => [{ url: "/buckets" }] as const;
+export const getBucketsQueryKey = (params?: GetBucketsQueryParams) =>
+	[{ url: "/buckets" }, ...(params ? [params] : [])] as const;
 
 export type GetBucketsQueryKey = ReturnType<typeof getBucketsQueryKey>;
 
 export function getBucketsQueryOptions(
+	params?: GetBucketsQueryParams,
 	config: Partial<RequestConfig> & { client?: Client } = {},
 ) {
-	const queryKey = getBucketsQueryKey();
+	const queryKey = getBucketsQueryKey(params);
 	return queryOptions<
 		GetBucketsQueryResponse,
 		ResponseErrorConfig<GetBuckets400 | GetBuckets401 | GetBuckets403>,
@@ -35,13 +38,13 @@ export function getBucketsQueryOptions(
 	>({
 		queryKey,
 		queryFn: async ({ signal }) => {
-			return getBuckets({ ...config, signal: config.signal ?? signal });
+			return getBuckets(params, { ...config, signal: config.signal ?? signal });
 		},
 	});
 }
 
 /**
- * @description Lista todos os caixas do workspace.
+ * @description Lista todos os caixas do workspace com agregações financeiras do período.
  * @summary Listar caixas
  * {@link /buckets}
  */
@@ -50,6 +53,7 @@ export function useGetBuckets<
 	TQueryData = GetBucketsQueryResponse,
 	TQueryKey extends QueryKey = GetBucketsQueryKey,
 >(
+	params?: GetBucketsQueryParams,
 	options: {
 		query?: Partial<
 			QueryObserverOptions<
@@ -65,11 +69,11 @@ export function useGetBuckets<
 ) {
 	const { query: queryConfig = {}, client: config = {} } = options ?? {};
 	const { client: queryClient, ...resolvedOptions } = queryConfig;
-	const queryKey = resolvedOptions?.queryKey ?? getBucketsQueryKey();
+	const queryKey = resolvedOptions?.queryKey ?? getBucketsQueryKey(params);
 
 	const query = useQuery(
 		{
-			...getBucketsQueryOptions(config),
+			...getBucketsQueryOptions(params, config),
 			...resolvedOptions,
 			queryKey,
 		} as unknown as QueryObserverOptions,

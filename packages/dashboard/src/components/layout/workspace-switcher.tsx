@@ -39,6 +39,8 @@ export function WorkspaceSwitcher({
 		setDialogOpen(true);
 	};
 
+	if (workspaces)
+
 	return (
 		<>
 			<Popover open={open} onOpenChange={setOpen}>
