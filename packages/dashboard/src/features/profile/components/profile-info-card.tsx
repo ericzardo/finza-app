@@ -36,7 +36,7 @@ export function ProfileInfoCard() {
     <>
       <Card className="border-border/50 bg-card">
         <div className="p-6">
-          <div className="flex items-start justify-between">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="flex items-center gap-4">
               <Avatar className="size-20 border-2 border-border">
                 <AvatarImage src={user.avatar_url ?? undefined} alt={user.name} />
@@ -62,7 +62,7 @@ export function ProfileInfoCard() {
               variant="outline"
               size="sm"
               onClick={() => setEditOpen(true)}
-              className="gap-1.5"
+              className="w-full gap-1.5 md:w-auto"
             >
               <Pencil className="size-3.5" />
               Editar Perfil

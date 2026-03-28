@@ -8,6 +8,7 @@ import { CreateBucketDialog } from "@features/buckets/components/create-bucket-d
 import { WorkspaceBudgetProgress } from "@features/buckets/components/workspace-budget-progress";
 import type { Bucket } from "@features/buckets/types";
 import { getBucketsQueryOptions, useGetBuckets } from "@finza/api-client";
+import { useIsMobile } from "@hooks/use-mobile";
 import { getWorkspaceQueryOptions } from "@lib/api-client/workspace-queries";
 import { setPageMeta } from "@lib/seo";
 import { useQuery } from "@tanstack/react-query";
@@ -54,6 +55,7 @@ function BucketsPage() {
 	const { start, end } = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
 	const [createOpen, setCreateOpen] = useState(false);
+	const isMobile = useIsMobile();
 
 	const defaults = getMonthRange();
 	const [startDate, setStartDate] = useState(start ?? defaults.startDate);
@@ -103,7 +105,7 @@ function BucketsPage() {
 
 	return (
 		<div className="shell-container py-8">
-			<div className="flex items-end justify-between gap-4">
+			<div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-4">
 				<div className="space-y-1">
 					<h1 className="text-2xl font-bold tracking-tight text-foreground">
 						Caixas
@@ -112,8 +114,8 @@ function BucketsPage() {
 						Gerencie os caixas do seu workspace
 					</p>
 				</div>
-				<div className="flex gap-4 items-center justify-end">
-					<div className="flex flex-wrap items-center gap-3">
+				<div className="flex flex-col-reverse gap-3 md:flex-row md:items-center">
+					<div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
 						<div className="flex items-center gap-2">
 							<label
 								htmlFor="filter-start"
@@ -127,7 +129,7 @@ function BucketsPage() {
 								value={startDate}
 								max={endDate}
 								onChange={(e) => handleDateChange("start", e.target.value)}
-								className="h-8 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
+								className="h-8 w-2/4 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 md:h-8 md:w-auto"
 							/>
 						</div>
 						<div className="flex items-center gap-2">
@@ -144,17 +146,17 @@ function BucketsPage() {
 								min={startDate}
 								max={new Date().toISOString().split("T")[0]}
 								onChange={(e) => handleDateChange("end", e.target.value)}
-								className="h-8 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
+								className="h-8 w-2/4 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 md:h-8 md:w-auto"
 							/>
 						</div>
 					</div>
 					<Button
 						variant="accent"
-						size="sm"
 						onClick={() => setCreateOpen(true)}
-						className="shrink-0"
+						size={isMobile ? "lg" : "default"}
+						className="w-full shrink-0 md:w-auto"
 					>
-					<Plus className="size-4" />
+						<Plus className="size-4" />
 						Criar Caixa
 					</Button>
 				</div>

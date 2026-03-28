@@ -41,6 +41,9 @@
       "@features/*": [
         "./src/features/*"
       ],
+      "@hooks/*": [
+        "./src/hooks/*"
+      ],
       "@router": [
         "./src/router.tsx"
       ],

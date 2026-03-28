@@ -377,9 +377,12 @@ bun run preview   # vite preview
 
 ---
 
-## 11. 🎨 Integração com o Design System (Skill Obrigatória)
+## 11. 🎨 Regras de UI
+
+1. **Mobile-First Obrigatório:** O CSS base (classes sem prefixo) DEVE ser o mobile. Use prefixos (`md:`, `lg:`) apenas para expandir o layout.
 
 Antes de gerar, refatorar ou propor qualquer alteração na UI/UX, você **DEVE** ler e aplicar obrigatoriamente as regras da Skill global de design.
 
 - **Referência:** Consulte o arquivo `skills/finza-design-system`.
 - **Mandato:** Se o usuário pedir "Crie uma tela ...", você deve projetá-la com a estética "Wealth Tech Elite" detalhada na skill, sem perguntar.
+

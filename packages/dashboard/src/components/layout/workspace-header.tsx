@@ -12,7 +12,7 @@ export function WorkspaceHeader() {
 	const { data: user } = useGetProfile();
 
 	return (
-		<header className="sticky top-0 z-50 flex h-14 shrink-0 items-center border-b border-border/50 bg-background/80 backdrop-blur-md">
+		<header className="sticky top-0 z-50 hidden h-14 shrink-0 items-center border-b border-border/50 bg-background/80 backdrop-blur-md md:flex">
 			<div className="shell-container ml-0 pl-2.5 flex items-center justify-between">
 				{isWorkspacesLoading ? (
 					<div className="flex items-center gap-2">

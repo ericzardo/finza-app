@@ -1,12 +1,12 @@
 import { Button } from "@components/ui/button";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-} from "@components/ui/dialog";
+	ResponsiveDialog,
+	ResponsiveDialogContent,
+	ResponsiveDialogDescription,
+	ResponsiveDialogFooter,
+	ResponsiveDialogHeader,
+	ResponsiveDialogTitle,
+} from "@ui/responsive-dialog";
 import { Input } from "@components/ui/input";
 import { Label } from "@components/ui/label";
 import {
@@ -24,6 +24,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useIsMobile } from "@hooks/use-mobile";
 
 interface CreateBucketDialogProps {
 	open: boolean;
@@ -35,7 +36,8 @@ export function CreateBucketDialog({
 	onOpenChange,
 }: CreateBucketDialogProps) {
 	const queryClient = useQueryClient();
-
+	const isMobile = useIsMobile();
+	
 	const {
 		register,
 		handleSubmit,
@@ -71,15 +73,15 @@ export function CreateBucketDialog({
 	}
 
 	return (
-		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="sm:max-w-md">
-				<DialogHeader>
-					<DialogTitle>Criar caixa</DialogTitle>
-					<DialogDescription>
+		<ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+			<ResponsiveDialogContent>
+				<ResponsiveDialogHeader>
+					<ResponsiveDialogTitle>Criar caixa</ResponsiveDialogTitle>
+					<ResponsiveDialogDescription>
 						Um caixa organiza como o dinheiro do seu workspace é alocado e
 						gasto.
-					</DialogDescription>
-				</DialogHeader>
+					</ResponsiveDialogDescription>
+				</ResponsiveDialogHeader>
 
 				<form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 					<div className="space-y-2">
@@ -159,22 +161,23 @@ export function CreateBucketDialog({
 						)}
 					</div>
 
-					<DialogFooter>
+					<ResponsiveDialogFooter>
 						<Button
 							type="button"
 							variant="ghost"
+							size={isMobile ? "lg" : "default"}
 							onClick={() => onOpenChange(false)}
 							disabled={isPending}
 						>
 							Cancelar
 						</Button>
-						<Button type="submit" variant="accent" disabled={isPending}>
+						<Button type="submit" size={isMobile ? "lg" : "default"} variant="accent" disabled={isPending}>
 							{isPending && <Loader2 className="size-4 animate-spin" />}
 							Criar caixa
 						</Button>
-					</DialogFooter>
+					</ResponsiveDialogFooter>
 				</form>
-			</DialogContent>
-		</Dialog>
+			</ResponsiveDialogContent>
+		</ResponsiveDialog>
 	);
 }

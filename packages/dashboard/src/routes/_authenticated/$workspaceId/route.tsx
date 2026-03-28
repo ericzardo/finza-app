@@ -1,5 +1,6 @@
 import { WorkspaceHeader } from "@components/layout/workspace-header";
 import { Sidebar } from "@components/layout/sidebar";
+import { MobileHeader } from "@components/layout/mobile-header";
 import { setWorkspaceId } from "@lib/api-client/workspace-interceptor";
 import { getWorkspaceQueryOptions } from "@lib/api-client/workspace-queries";
 import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
@@ -37,11 +38,12 @@ function WorkspaceLayout() {
 	}, [workspaceId]);
 
 	return (
-		<div className="flex h-screen overflow-hidden bg-background">
+		<div className="flex min-h-screen flex-col overflow-hidden bg-background md:flex-row">
 			<Sidebar />
+			<MobileHeader />
 			<div className="flex min-w-0 flex-1 flex-col">
 				<WorkspaceHeader />
-				<main className="flex-1 overflow-y-auto">
+				<main className="flex-1 overflow-y-auto pb-20">
 					<Outlet />
 				</main>
 			</div>

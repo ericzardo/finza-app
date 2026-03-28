@@ -5,17 +5,18 @@ import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
 import { cn } from '@lib/utils'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogFooter,
+  ResponsiveDialogDescription,
+} from '@ui/responsive-dialog'
 import { Input } from '@ui/input'
 import { Label } from '@ui/label'
 import { Button } from '@ui/button'
 import { useGetProfile, usePatchProfile, getProfileQueryKey } from '@finza/api-client/hooks'
+import { useIsMobile } from '@hooks/use-mobile'
 
 const AVATARS = Array.from({ length: 8 }, (_, i) => `/avatars/${i + 1}.webp`)
 
@@ -35,6 +36,7 @@ interface EditProfileDialogProps {
 export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps) {
   const { data: user } = useGetProfile()
   const queryClient = useQueryClient()
+  const isMobile = useIsMobile();
 
   const { mutate, isPending } = usePatchProfile({
     mutation: {
@@ -81,14 +83,14 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Editar Perfil</DialogTitle>
-          <DialogDescription>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Editar Perfil</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Atualize suas informações pessoais e avatar.
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="space-y-2">
@@ -141,20 +143,21 @@ export function EditProfileDialog({ open, onOpenChange }: EditProfileDialogProps
             </div>
           </div>
 
-          <DialogFooter>
+          <ResponsiveDialogFooter>
             <Button
               type="button"
               variant="ghost"
+              size={isMobile ? "lg" : "default"}
               onClick={() => onOpenChange(false)}
             >
               Cancelar
             </Button>
-            <Button variant="accent" type="submit" disabled={isPending}>
+            <Button variant="accent" size={isMobile ? "lg" : "default"} type="submit" disabled={isPending}>
               {isPending ? 'Salvando...' : 'Salvar'}
             </Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

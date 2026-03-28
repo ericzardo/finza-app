@@ -29,42 +29,45 @@ export function SecurityCard() {
 
           <div className="mt-6 space-y-0">
             {/* Email */}
-            <div className="flex items-center justify-between py-4">
-              <div className="flex items-center gap-3">
-                <Mail className="size-4 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">E-mail</p>
-                  <p className="text-sm text-muted-foreground">{user.email}</p>
+            <div className="flex flex-col items-start gap-3 py-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-row justify-between w-full">
+                <div className="flex flex-1 items-center gap-3">
+                  <Mail className="size-4 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium text-foreground">E-mail</p>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {user.email_verified_at ? (
-                  <Badge className="gap-1.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400">
-                    <CheckCircle2 className="size-3" />
-                    Confirmado
-                  </Badge>
-                ) : (
-                  <>
+                <div className="flex flex-col gap-2 md:w-auto md:flex-row md:items-center">
+                  {user.email_verified_at ? (
+                    <Badge className="gap-1.5 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 dark:text-emerald-400">
+                      <CheckCircle2 className="size-3" />
+                      Confirmado
+                    </Badge>
+                  ) : (
                     <Badge className="gap-1.5 bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 dark:text-amber-400">
                       <AlertCircle className="size-3" />
                       Pendente
                     </Badge>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => toast.info('Serviço de e-mail em fase de homologação.')}
-                    >
-                      Verificar e-mail
-                    </Button>
-                  </>
-                )}
+
+                  )}
+                </div>
               </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full md:w-auto"
+                onClick={() => toast.info('Serviço de e-mail em fase de homologação.')}
+              >
+                Verificar e-mail
+              </Button>
             </div>
 
             <Separator />
 
             {/* Password */}
-            <div className="flex items-center justify-between py-4">
+            <div className="flex flex-col items-start gap-3 py-4 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-3">
                 <KeyRound className="size-4 text-muted-foreground" />
                 <div>
@@ -75,6 +78,7 @@ export function SecurityCard() {
               <Button
                 variant="outline"
                 size="sm"
+                className="w-full md:w-auto"
                 onClick={() => setPasswordDialogOpen(true)}
               >
                 Alterar Senha

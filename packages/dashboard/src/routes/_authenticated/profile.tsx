@@ -39,7 +39,7 @@ function ProfilePage() {
     <div className="min-h-screen bg-background">
       <LobbyHeader />
 
-      <main className="shell-container py-10">
+      <main className="shell-container overflow-y-scroll pb-20 py-6 md:py-10">
         <Button
           variant="ghost"
           size="sm"

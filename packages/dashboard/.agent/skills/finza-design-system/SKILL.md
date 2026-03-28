@@ -34,11 +34,22 @@ Todos os tokens de cor, espaçamento e tipografia vivem no `index.css`. **SEMPRE
 
 ---
 
-## 2. Paleta de Cores — "Modern Wealth"
+## 2. Mobile-First Strategy
+
+A Finza deve ser operável com uma mão. A inteligência patrimonial deve estar disponível no momento do gasto, não apenas no escritório.
+
+- **Hierarquia de Empilhamento:** Em telas pequenas, a leitura horizontal é proibida. Elementos que vivem lado a lado no Desktop (ex: Saldo | Métricas) devem ser empilhados verticalmente no Mobile.
+- **Touch-Friendly:** Botões e áreas de clique devem ter no mínimo 44px de altura. Nada de links minúsculos "espremidos".
+- **Densidade Adaptativa:** Alta densidade no Desktop para análise; Respiro e clareza no Mobile para ação rápida.
+- **Navegação de Polegar:** Priorize ações importantes (como "Novo Lançamento") em áreas de fácil alcance pelo polegar.
+
+---
+
+## 3. Paleta de Cores — "Modern Wealth"
 
 O **Light Theme é o padrão** da Finza, otimizado para legibilidade de dados numéricos em longas sessões de uso.
 
-### 2.1 Base Light (Default)
+### 3.1 Base Light (Default)
 | Papel | Valor | Token CSS |
 |---|---|---|
 | Fundo | `#FBFBFA` (Off-white / Parchment) | `--background` |
@@ -49,7 +60,7 @@ O **Light Theme é o padrão** da Finza, otimizado para legibilidade de dados nu
 
 > O off-white `#FBFBFA` reduz fadiga visual comparado ao branco puro, mantendo contraste WCAG AAA com texto Zinc-900.
 
-### 2.2 Base Dark (Elegant)
+### 3.2 Base Dark (Elegant)
 | Papel | Valor | Token CSS |
 |---|---|---|
 | Fundo | `#09090B` (Zinc-950) | `--background` |
@@ -60,7 +71,7 @@ O **Light Theme é o padrão** da Finza, otimizado para legibilidade de dados nu
 
 > Profundidade é criada via bordas Zinc-800 — não via sombras. Superfícies limpas, sem ruído.
 
-### 2.3 Primary — Emerald _(Crescimento & Liquidez)_
+### 3.3 Primary — Emerald _(Crescimento & Liquidez)_
 | Contexto | Hex | oklch | Uso |
 |---|---|---|---|
 | Light | `#059669` (Emerald-600) | `oklch(0.596 0.145 163.225)` | Botões primários, links, indicadores positivos |
@@ -68,7 +79,7 @@ O **Light Theme é o padrão** da Finza, otimizado para legibilidade de dados nu
 
 > Emerald representa **crescimento patrimonial e liquidez**. É a cor de ação principal da Finza.
 
-### 2.4 Accent — Violet _(Inteligência & Tecnologia)_
+### 3.4 Accent — Violet _(Inteligência & Tecnologia)_
 | Contexto | Hex | oklch | Uso |
 |---|---|---|---|
 | Light | `#7C3AED` (Violet-600) | `oklch(0.541 0.281 293.009)` | Features premium, insights de IA, badges especiais |
@@ -76,13 +87,13 @@ O **Light Theme é o padrão** da Finza, otimizado para legibilidade de dados nu
 
 > Violet representa **inteligência artificial e tecnologia**. Usar para diferenciar features "smart" do operacional comum.
 
-### 2.5 Semânticas
+### 3.5 Semânticas
 | Token | Significado | Cor |
 |---|---|---|
 | `--success` | Positivo / ganho | Emerald (alinhado ao primary) |
 | `--destructive` | Erro / perda | Vermelho (mantido do sistema) |
 
-### 2.6 Regras de Aplicação
+### 3.6 Regras de Aplicação
 - **NUNCA** use Emerald ou Violet como cor de fundo de áreas grandes. São cores de **acento cirúrgico**.
 - Botões primários: `bg-primary text-primary-foreground` (Emerald).
 - Botões secundários / ghost: monocromáticos (Zinc).
@@ -93,7 +104,7 @@ O **Light Theme é o padrão** da Finza, otimizado para legibilidade de dados nu
 
 ---
 
-## 3. Diretrizes de Componentes
+## 4. Diretrizes de Componentes
 - **Formulários e Inputs:** Minimalistas. Labels pequenos, inputs com `bg-transparent` ou levemente preenchidos.
 - **Telas de Autenticação (Login/Sign Up):** Layout "Split Screen" (60/40).
   - Lado esquerdo: Branding/Arte dark-mode imponente com frases de efeito.
@@ -122,13 +133,13 @@ export const Route = createFileRoute('/_authenticated')({
 })
 ```
 
-## 4. Implementação (Tailwind v4 + shadcn/ui)
+## 5. Implementação (Tailwind v4 + shadcn/ui)
 - **NUNCA** use CSS inline (`style={{}}`). Tudo deve ser classes do Tailwind CSS.
 - Utilize a função `cn()` para fundir classes dinamicamente.
 - Todos os componentes base devem vir do **shadcn/ui**. Não crie botões ou inputs do zero.
 - Utilize ícones do `lucide-react`. Nenhum outro pacote de ícones é permitido.
 
-## 5. Animações e Interações
+## 6. Animações e Interações
 - Para animações disparadas por scroll, use sempre `framer-motion`.
 - Proibido criar event listeners de scroll manuais. Use `<motion.div />`.
 - **Scrollbars:** Configuradas globalmente no CSS. Use `overflow-y-auto` e deixe o CSS global agir.

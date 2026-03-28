@@ -3,17 +3,18 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogFooter,
+  ResponsiveDialogDescription,
+} from '@ui/responsive-dialog'
 import { Label } from '@ui/label'
 import { Button } from '@ui/button'
 import { PasswordInput } from '@ui/password-input'
 import { usePostAuthChangePassword } from '@finza/api-client/hooks'
+import { useIsMobile } from '@hooks/use-mobile'
 
 const changePasswordSchema = z
   .object({
@@ -48,6 +49,8 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
     },
   })
 
+  const isMobile = useIsMobile();
+
   const { mutate, isPending } = usePostAuthChangePassword({
     mutation: {
       onSuccess: () => {
@@ -80,14 +83,14 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Alterar Senha</DialogTitle>
-          <DialogDescription>
+    <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Alterar Senha</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Digite sua senha atual e defina uma nova senha.
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
@@ -126,20 +129,21 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
             )}
           </div>
 
-          <DialogFooter>
+          <ResponsiveDialogFooter>
             <Button
               type="button"
               variant="ghost"
+              size={isMobile ? "lg" : "default"}
               onClick={() => handleOpenChange(false)}
             >
               Cancelar
             </Button>
-            <Button variant="accent" type="submit" disabled={isPending}>
+            <Button variant="accent" size={isMobile ? "lg" : "default"} type="submit" disabled={isPending}>
               {isPending ? 'Alterando...' : 'Alterar Senha'}
             </Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

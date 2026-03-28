@@ -4,13 +4,13 @@ import { postWorkspacesMutationRequestSchema } from '@finza/api-client/schemas'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@ui/dialog'
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from '@ui/responsive-dialog'
 import { Label } from '@ui/label'
 import { Input } from '@ui/input'
 import {
@@ -24,6 +24,7 @@ import { Loader2 } from 'lucide-react'
 import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import { useQueryClient } from '@tanstack/react-query'
+import { useIsMobile } from '@hooks/use-mobile'
 
 const CURRENCIES = [
   { code: 'BRL', symbol: 'R$', label: 'Real Brasileiro' },
@@ -38,6 +39,7 @@ interface CreateWorkspaceDialogProps {
 
 export function CreateWorkspaceDialog({ open, onOpenChange }: CreateWorkspaceDialogProps) {
   const queryClient = useQueryClient()
+  const isMobile = useIsMobile();
 
   const {
     register,
@@ -73,14 +75,14 @@ export function CreateWorkspaceDialog({ open, onOpenChange }: CreateWorkspaceDia
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Criar workspace</DialogTitle>
-          <DialogDescription>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>Criar workspace</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             Um workspace serve para organizar suas finanças por áreas.
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
@@ -123,22 +125,23 @@ export function CreateWorkspaceDialog({ open, onOpenChange }: CreateWorkspaceDia
             )}
           </div>
 
-          <DialogFooter>
+          <ResponsiveDialogFooter>
             <Button
               type="button"
               variant="ghost"
+              size={isMobile ? "lg" : "default"}
               onClick={() => onOpenChange(false)}
               disabled={isPending}
             >
               Cancelar
             </Button>
-            <Button type="submit" variant="accent" disabled={isPending}>
+            <Button type="submit" size={isMobile ? "lg" : "default"} variant="accent" disabled={isPending}>
               {isPending && <Loader2 className="size-4 animate-spin" />}
               Criar workspace
             </Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   )
 }

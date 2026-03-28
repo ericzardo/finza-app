@@ -62,12 +62,13 @@ function useNavItems(workspaceId: string): NavItem[] {
 
 export interface SidebarProps {
 	className?: string;
+	onNavigate?: () => void;
 }
 
 const EXPANDED_WIDTH = 240;
 const COLLAPSED_WIDTH = 64;
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, onNavigate }: SidebarProps) {
 	const [collapsed, setCollapsed] = useState(false);
 	const { workspaceId } = useParams({ from: "/_authenticated/$workspaceId" });
 	const navItems = useNavItems(workspaceId);
@@ -79,7 +80,7 @@ export function Sidebar({ className }: SidebarProps) {
 			animate={{ width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH }}
 			transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
 			className={twMerge(
-				"relative flex h-screen shrink-0 flex-col border-r border-border/50 bg-card",
+				"relative hidden h-screen shrink-0 flex-col border-r border-border/50 bg-card md:flex",
 				className,
 			)}
 		>
@@ -133,6 +134,7 @@ export function Sidebar({ className }: SidebarProps) {
 									? "bg-accent/15 text-accent"
 									: "text-muted-foreground hover:bg-muted hover:text-foreground",
 							)}
+							onClick={onNavigate}
 						>
 							<span
 								className={twMerge(
