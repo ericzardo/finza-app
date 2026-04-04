@@ -1,4 +1,4 @@
-import { type PrismaClient, TransactionType } from '@prisma/client';
+import { type PrismaClient, TransactionType, BucketType } from '@prisma/client';
 
 export interface BucketDistributionItem {
   bucketId: string;
@@ -12,12 +12,19 @@ export interface GetWorkspaceSummaryResult {
   currentBalance: number;
   maxBalance: number;
   totalInvested: number;
+  pendingBalance: number;
   distribution: BucketDistributionItem[];
 }
 
 interface GetWorkspaceSummaryOptions {
   startDate?: Date;
   endDate?: Date;
+}
+
+function safeNumber(val: unknown): number {
+  if (val == null) return 0;
+  const n = Number(val);
+  return Number.isNaN(n) ? 0 : n;
 }
 
 export async function getWorkspaceSummary(
@@ -35,12 +42,13 @@ export async function getWorkspaceSummary(
         }
       : {};
 
-  // currentBalance & totalInvested — aggregate by type
+  // currentBalance — aggregate by type (only paid)
   const aggregations = await db.transaction.groupBy({
     by: ['type'],
     where: {
       workspace_id: workspaceId,
       is_paid: true,
+      is_internal: false,
       canceled_at: null,
       ...dateFilter,
     },
@@ -51,19 +59,55 @@ export async function getWorkspaceSummary(
   let expense = 0;
 
   for (const agg of aggregations) {
-    const amount = Number(agg._sum.amount ?? 0);
+    const amount = safeNumber(agg._sum.amount);
     if (agg.type === TransactionType.INCOME) income = amount;
     else if (agg.type === TransactionType.EXPENSE) expense = amount;
   }
 
   const currentBalance = income - expense;
-  const totalInvested = income;
+
+  // totalInvested — sum of transactions in INVESTMENT type buckets
+  const investmentBuckets = await db.bucket.findMany({
+    where: { workspace_id: workspaceId, type: BucketType.INVESTMENT },
+    select: { id: true },
+  });
+
+  let totalInvested = 0;
+  if (investmentBuckets.length > 0) {
+    const investmentBucketIds = investmentBuckets.map((b) => b.id);
+    const investmentAgg = await db.transaction.aggregate({
+      where: {
+        workspace_id: workspaceId,
+        bucket_id: { in: investmentBucketIds },
+        is_paid: true,
+        is_internal: false,
+        canceled_at: null,
+        ...dateFilter,
+      },
+      _sum: { amount: true },
+    });
+    totalInvested = safeNumber(investmentAgg._sum.amount);
+  }
+
+  // pendingBalance — sum of absolute amounts where is_paid = false
+  const pendingAgg = await db.transaction.aggregate({
+    where: {
+      workspace_id: workspaceId,
+      is_paid: false,
+      is_internal: false,
+      canceled_at: null,
+      ...dateFilter,
+    },
+    _sum: { amount: true },
+  });
+  const pendingBalance = safeNumber(pendingAgg._sum.amount);
 
   // maxBalance — compute running balance over all paid transactions sorted by date
   const allTransactions = await db.transaction.findMany({
     where: {
       workspace_id: workspaceId,
       is_paid: true,
+      is_internal: false,
       canceled_at: null,
       type: { in: [TransactionType.INCOME, TransactionType.EXPENSE] },
       ...dateFilter,
@@ -76,24 +120,25 @@ export async function getWorkspaceSummary(
   let maxBalance = 0;
 
   for (const tx of allTransactions) {
-    const amount = Number(tx.amount);
+    const amount = safeNumber(tx.amount);
     if (tx.type === TransactionType.INCOME) running += amount;
     else running -= amount;
     if (running > maxBalance) maxBalance = running;
   }
 
-  // distribution — per bucket (direct transactions + splits)
+  // distribution — per bucket (direct transactions + splits), respecting sign
   const buckets = await db.bucket.findMany({
     where: { workspace_id: workspaceId },
     select: { id: true, name: true, type: true },
   });
 
-  // Direct transactions assigned to a bucket
+  // Direct transactions assigned to a bucket, grouped by bucket AND type
   const directAggs = await db.transaction.groupBy({
-    by: ['bucket_id'],
+    by: ['bucket_id', 'type'],
     where: {
       workspace_id: workspaceId,
       is_paid: true,
+      is_internal: false,
       canceled_at: null,
       bucket_id: { not: null },
       ...dateFilter,
@@ -101,35 +146,64 @@ export async function getWorkspaceSummary(
     _sum: { amount: true },
   });
 
-  // TransactionSplits assigned to a bucket
-  const splitAggs = await db.transactionSplit.groupBy({
-    by: ['bucket_id'],
+  // TransactionSplits — need transaction type to determine sign
+  const splitRows = await db.transactionSplit.findMany({
     where: {
       transaction: {
         workspace_id: workspaceId,
         is_paid: true,
+        is_internal: false,
         canceled_at: null,
         ...dateFilter,
       },
     },
-    _sum: { amount: true },
+    select: {
+      bucket_id: true,
+      amount: true,
+      transaction: { select: { type: true } },
+    },
   });
 
+  // Build bucket amount map: income - expense per bucket
+  // Exception: INVESTMENT buckets treat EXPENSE as positive (aporte = contribution)
+  const bucketTypeMap = new Map<string, BucketType>(
+    buckets.map((b) => [b.id, b.type]),
+  );
   const bucketAmountMap = new Map<string, number>();
 
   for (const agg of directAggs) {
     if (!agg.bucket_id) continue;
     const current = bucketAmountMap.get(agg.bucket_id) ?? 0;
-    bucketAmountMap.set(agg.bucket_id, current + Number(agg._sum.amount ?? 0));
+    const amount = safeNumber(agg._sum.amount);
+    const isInvestment =
+      bucketTypeMap.get(agg.bucket_id) === BucketType.INVESTMENT;
+    if (agg.type === TransactionType.INCOME) {
+      bucketAmountMap.set(agg.bucket_id, current + amount);
+    } else if (agg.type === TransactionType.EXPENSE) {
+      bucketAmountMap.set(
+        agg.bucket_id,
+        isInvestment ? current + amount : current - amount,
+      );
+    }
   }
 
-  for (const agg of splitAggs) {
-    const current = bucketAmountMap.get(agg.bucket_id) ?? 0;
-    bucketAmountMap.set(agg.bucket_id, current + Number(agg._sum.amount ?? 0));
+  for (const split of splitRows) {
+    const current = bucketAmountMap.get(split.bucket_id) ?? 0;
+    const amount = safeNumber(split.amount);
+    const isInvestment =
+      bucketTypeMap.get(split.bucket_id) === BucketType.INVESTMENT;
+    if (split.transaction.type === TransactionType.INCOME) {
+      bucketAmountMap.set(split.bucket_id, current + amount);
+    } else if (split.transaction.type === TransactionType.EXPENSE) {
+      bucketAmountMap.set(
+        split.bucket_id,
+        isInvestment ? current + amount : current - amount,
+      );
+    }
   }
 
   const totalDistributed = Array.from(bucketAmountMap.values()).reduce(
-    (sum, v) => sum + v,
+    (sum, v) => sum + Math.abs(v),
     0,
   );
 
@@ -143,11 +217,17 @@ export async function getWorkspaceSummary(
         amount,
         percentage:
           totalDistributed > 0
-            ? Math.round((amount / totalDistributed) * 10000) / 100
+            ? Math.round((Math.abs(amount) / totalDistributed) * 10000) / 100
             : 0,
       };
     })
-    .filter((item) => item.amount > 0);
+    .filter((item) => item.amount !== 0);
 
-  return { currentBalance, maxBalance, totalInvested, distribution };
+  return {
+    currentBalance,
+    maxBalance,
+    totalInvested,
+    pendingBalance,
+    distribution,
+  };
 }

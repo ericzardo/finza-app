@@ -100,7 +100,7 @@ function buildDb(
 }
 
 describe("listBuckets", () => {
-	test("retorna caixa INBOX sem campos de agregação", async () => {
+	test("retorna caixa INBOX com campos de agregação financeira", async () => {
 		const now = new Date();
 
 		const mockBuckets: MockBucket[] = [
@@ -125,7 +125,11 @@ describe("listBuckets", () => {
 		expect(inbox.id).toBe("inbox-id");
 		expect(inbox.name).toBe("Caixa de Entrada");
 		expect(inbox.is_default).toBe(true);
-		expect("current_amount" in inbox).toBe(false);
+		if (inbox.type === "INBOX") {
+			expect(inbox.current_amount).toBeDefined();
+			expect(inbox.period_income).toBeDefined();
+			expect(inbox.period_spent).toBeDefined();
+		}
 	});
 
 	test("retorna caixa SPENDING com campos de agregação financeira", async () => {

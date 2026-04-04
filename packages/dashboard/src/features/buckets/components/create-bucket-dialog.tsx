@@ -58,6 +58,9 @@ export function CreateBucketDialog({
 			onSuccess: (data) => {
 				toast.success(`Caixa "${data.name}" criado com sucesso!`);
 				queryClient.invalidateQueries({ queryKey: getBucketsQueryKey() });
+				queryClient.invalidateQueries({
+					queryKey: [{ url: "/workspaces/:workspaceId/summary" }],
+				});
 				reset();
 				onOpenChange(false);
 			},
@@ -137,7 +140,7 @@ export function CreateBucketDialog({
 						<Label htmlFor="bucket-allocation">
 							Alocação{" "}
 							<span className="text-muted-foreground">
-								(% da receita do workspace)
+								(meta de próposito)
 							</span>
 						</Label>
 						<div className="relative">
@@ -147,7 +150,7 @@ export function CreateBucketDialog({
 								min={0}
 								max={100}
 								step={1}
-								className="pr-8"
+								className="pr-8 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
 								{...register("allocation_percentage", { valueAsNumber: true })}
 							/>
 							<span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">

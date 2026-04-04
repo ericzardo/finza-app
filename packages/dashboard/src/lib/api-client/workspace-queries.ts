@@ -28,6 +28,7 @@ export interface WorkspaceSummary {
 	currentBalance: number;
 	maxBalance: number;
 	totalInvested: number;
+	pendingBalance: number;
 	distribution: Array<{
 		bucketId: string;
 		bucketName: string;

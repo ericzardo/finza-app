@@ -1,23 +1,17 @@
 import { Skeleton } from '@ui/skeleton'
 
-export function WorkspaceDashboardSkeleton() {
+export function DashboardDataSkeleton() {
   return (
-    <div className="shell-container py-8">
-      {/* Page title */}
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-4 w-72" />
-      </div>
-
+    <>
       {/* Metric cards */}
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
-            className="rounded-lg border border-border bg-stone-50 p-5 dark:bg-zinc-900"
+            className="min-w-0 rounded-lg border border-border bg-stone-50 p-5 dark:bg-zinc-900"
           >
             <div className="flex items-center gap-3">
-              <Skeleton className="size-9 rounded-md" />
+              <Skeleton className="size-9 shrink-0 rounded-md" />
               <Skeleton className="h-4 w-24" />
             </div>
             <div className="mt-4 space-y-2">
@@ -46,6 +40,23 @@ export function WorkspaceDashboardSkeleton() {
           </div>
         </div>
       </div>
+    </>
+  )
+}
+
+export function WorkspaceDashboardSkeleton() {
+  return (
+    <div className="shell-container py-8">
+      {/* Header: title + date picker */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+        <Skeleton className="h-8 w-full md:w-64" />
+      </div>
+
+      <DashboardDataSkeleton />
     </div>
   )
 }

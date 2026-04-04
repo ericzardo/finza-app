@@ -469,7 +469,8 @@ describe('GET /workspaces/:workspaceId/summary', () => {
       expect(response.statusCode).toBe(200);
       const body = response.json();
       expect(body.currentBalance).toBe(1500); // 2000 - 500
-      expect(body.totalInvested).toBe(2000);
+      expect(body.totalInvested).toBe(0); // no INVESTMENT buckets
+      expect(body.pendingBalance).toBe(999); // unpaid bonus
     } finally {
       await server.close();
     }
@@ -568,7 +569,7 @@ describe('GET /workspaces/:workspaceId/summary', () => {
       expect(body.distribution).toHaveLength(1);
       expect(body.distribution[0].bucketId).toBe(bucket.id);
       expect(body.distribution[0].bucketName).toBe('Lazer');
-      expect(body.distribution[0].amount).toBe(500);
+      expect(body.distribution[0].amount).toBe(-500); // expense = negative
       expect(body.distribution[0].percentage).toBe(100);
     } finally {
       await server.close();
@@ -613,7 +614,7 @@ describe('GET /workspaces/:workspaceId/summary', () => {
       expect(response.statusCode).toBe(200);
       const body = response.json();
       expect(body.currentBalance).toBe(1000); // apenas a transação dentro do período
-      expect(body.totalInvested).toBe(1000);
+      expect(body.totalInvested).toBe(0); // no INVESTMENT buckets
     } finally {
       await server.close();
     }

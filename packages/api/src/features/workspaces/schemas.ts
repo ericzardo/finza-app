@@ -63,18 +63,25 @@ const bucketDistributionItemSchema = z.object({
   bucketId: z.string().describe('ID do caixa'),
   bucketName: z.string().describe('Nome do caixa'),
   bucketType: z.string().describe('Tipo do caixa'),
-  amount: z.number().describe('Valor alocado no caixa'),
+  amount: z
+    .number()
+    .describe('Saldo real do caixa no período (receitas − despesas)'),
   percentage: z.number().describe('Percentual do total'),
 });
 
 export const getWorkspaceSummaryResponseSchema = z.object({
   currentBalance: z
     .number()
-    .describe('Saldo atual (receitas - despesas pagas)'),
+    .describe('Saldo atual (receitas pagas − despesas pagas no período)'),
   maxBalance: z.number().describe('Maior saldo histórico atingido'),
   totalInvested: z
     .number()
-    .describe('Total aportado (soma das receitas pagas)'),
+    .describe('Soma das transações em buckets do tipo INVESTMENT no período'),
+  pendingBalance: z
+    .number()
+    .describe(
+      'Soma do valor absoluto de todas as transações com is_paid = false no período',
+    ),
   distribution: z
     .array(bucketDistributionItemSchema)
     .describe('Distribuição de saldo por caixas de propósitos'),

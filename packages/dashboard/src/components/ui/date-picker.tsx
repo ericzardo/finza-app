@@ -51,12 +51,12 @@ export function DatePicker({
 				<Button
 					variant="outline"
 					className={twMerge(
-						"h-8 justify-start gap-2 px-3 text-sm font-normal",
+						"h-10 md:h-8 justify-start gap-2 px-3 text-sm font-normal",
 						!value && "text-muted-foreground",
 						className,
 					)}
 				>
-					<CalendarIcon className="size-3.5 shrink-0 text-muted-foreground" />
+					<CalendarIcon className="size-4 md:size-3.5 shrink-0 text-muted-foreground" />
 					{value ? formatDisplay(value) : placeholder}
 				</Button>
 			</PopoverTrigger>

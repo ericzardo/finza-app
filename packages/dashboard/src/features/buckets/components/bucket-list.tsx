@@ -83,7 +83,7 @@ function InboxBucketCard({
 	const spentPct = Math.round(spentRatio * 100);
 
 	return (
-		<Card className="relative overflow-hidden">
+		<Card className="min-w-0 relative overflow-hidden">
 			<div className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-amber-500/10 blur-3xl" />
 			<CardHeader className="pb-3">
 				<div className="flex items-start gap-3">
@@ -99,12 +99,12 @@ function InboxBucketCard({
 				</div>
 			</CardHeader>
 			<CardContent className="space-y-5">
-				<div className="flex items-end justify-between gap-4">
-					<div>
+				<div className="flex flex-col justify-between gap-4">
+					<div className="min-w-0">
 						<p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
 							Saldo Atual
 						</p>
-						<Sensitive className="mt-1 text-3xl font-bold tracking-tight tabular-nums text-foreground">
+						<Sensitive className="mt-1 text-2xl font-bold tracking-tight tabular-nums text-foreground sm:text-3xl">
 							{formatCurrency(bucket.current_amount, currency)}
 						</Sensitive>
 					</div>
@@ -162,7 +162,7 @@ function SpendingBucketCard({
 		bucket.period_allocated > 0;
 
 	return (
-		<Card>
+		<Card className="min-w-0 overflow-hidden">
 			<CardHeader className="pb-3">
 				<div className="flex items-start gap-3">
 					<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted">
@@ -178,12 +178,12 @@ function SpendingBucketCard({
 				</div>
 			</CardHeader>
 			<CardContent className="space-y-5">
-				<div className="flex items-end justify-between gap-4">
-					<div>
+				<div className="flex flex-col justify-between gap-4">
+					<div className="min-w-0">
 						<p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
 							Saldo Atual
 						</p>
-						<Sensitive className="mt-1 text-3xl font-bold tracking-tight tabular-nums text-foreground">
+						<Sensitive className="mt-1 block truncate text-2xl font-bold tracking-tight tabular-nums text-foreground sm:text-3xl">
 							{formatCurrency(bucket.current_amount, currency)}
 						</Sensitive>
 					</div>
@@ -243,7 +243,7 @@ function InvestmentBucketCard({
 	const isGoalReached = progressPct >= 100;
 
 	return (
-		<Card>
+		<Card className="min-w-0 overflow-hidden">
 			<CardHeader className="pb-3">
 				<div className="flex items-start gap-3">
 					<div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/40">
@@ -259,12 +259,12 @@ function InvestmentBucketCard({
 				</div>
 			</CardHeader>
 			<CardContent className="space-y-5">
-				<div className="flex items-end justify-between gap-4">
-					<div>
+				<div className="flex flex-col justify-between gap-4">
+					<div className="min-w-0">
 						<p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
 							Total Aportado
 						</p>
-						<Sensitive className="mt-1 text-3xl font-bold tracking-tight tabular-nums text-foreground">
+						<Sensitive className="mt-1 block truncate text-2xl font-bold tracking-tight tabular-nums text-foreground sm:text-3xl">
 							{formatCurrency(bucket.current_invested, currency)}
 						</Sensitive>
 					</div>

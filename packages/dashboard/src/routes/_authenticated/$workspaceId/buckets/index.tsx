@@ -1,3 +1,4 @@
+import { MonthRangePicker } from "@components/shared/month-range-picker";
 import { Button } from "@components/ui/button";
 import { BucketList } from "@features/buckets/components/bucket-list";
 import {
@@ -10,6 +11,7 @@ import type { Bucket } from "@features/buckets/types";
 import { getBucketsQueryOptions, useGetBuckets } from "@finza/api-client";
 import { useIsMobile } from "@hooks/use-mobile";
 import { getWorkspaceQueryOptions } from "@lib/api-client/workspace-queries";
+import { getMonthRange } from "@lib/date";
 import { setPageMeta } from "@lib/seo";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -22,16 +24,6 @@ const searchSchema = z.object({
 	end: z.string().optional(),
 });
 
-function getMonthRange() {
-	const now = new Date();
-	const start = new Date(now.getFullYear(), now.getMonth(), 1);
-	const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-	return {
-		startDate: start.toISOString().split("T")[0],
-		endDate: end.toISOString().split("T")[0],
-	};
-}
-
 export const Route = createFileRoute("/_authenticated/$workspaceId/buckets/")({
 	validateSearch: searchSchema,
 	beforeLoad: () => {
@@ -40,8 +32,14 @@ export const Route = createFileRoute("/_authenticated/$workspaceId/buckets/")({
 			description: "Visualize e gerencie os caixas do seu workspace.",
 		});
 	},
-	loader: ({ context }) => {
-		const { startDate, endDate } = getMonthRange();
+	loaderDeps: ({ search }) => ({
+		start: search.start,
+		end: search.end,
+	}),
+	loader: ({ context, deps }) => {
+		const defaults = getMonthRange();
+		const startDate = deps.start ?? defaults.startDate;
+		const endDate = deps.end ?? defaults.endDate;
 		return context.queryClient.ensureQueryData(
 			getBucketsQueryOptions({ startDate, endDate }),
 		);
@@ -58,8 +56,8 @@ function BucketsPage() {
 	const isMobile = useIsMobile();
 
 	const defaults = getMonthRange();
-	const [startDate, setStartDate] = useState(start ?? defaults.startDate);
-	const [endDate, setEndDate] = useState(end ?? defaults.endDate);
+	const startDate = start ?? defaults.startDate;
+	const endDate = end ?? defaults.endDate;
 
 	const { data: workspace } = useQuery(getWorkspaceQueryOptions(workspaceId));
 	const currency = workspace?.currency ?? "BRL";
@@ -71,11 +69,9 @@ function BucketsPage() {
 		refetch,
 	} = useGetBuckets<Bucket[]>({ startDate, endDate });
 
-	function handleDateChange(field: "start" | "end", value: string) {
-		if (field === "start") setStartDate(value);
-		else setEndDate(value);
+	function handleDateChange(newStart: string, newEnd: string) {
 		navigate({
-			search: (prev) => ({ ...prev, [field]: value }),
+			search: { start: newStart, end: newEnd },
 			replace: true,
 			resetScroll: false,
 		});
@@ -114,42 +110,12 @@ function BucketsPage() {
 						Gerencie os caixas do seu workspace
 					</p>
 				</div>
-				<div className="flex flex-col-reverse gap-3 md:flex-row md:items-center">
-					<div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
-						<div className="flex items-center gap-2">
-							<label
-								htmlFor="filter-start"
-								className="text-sm font-medium text-muted-foreground"
-							>
-								De
-							</label>
-							<input
-								id="filter-start"
-								type="date"
-								value={startDate}
-								max={endDate}
-								onChange={(e) => handleDateChange("start", e.target.value)}
-								className="h-8 w-2/4 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 md:h-8 md:w-auto"
-							/>
-						</div>
-						<div className="flex items-center gap-2">
-							<label
-								htmlFor="filter-end"
-								className="text-sm font-medium text-muted-foreground"
-							>
-								Até
-							</label>
-							<input
-								id="filter-end"
-								type="date"
-								value={endDate}
-								min={startDate}
-								max={new Date().toISOString().split("T")[0]}
-								onChange={(e) => handleDateChange("end", e.target.value)}
-								className="h-8 w-2/4 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 md:h-8 md:w-auto"
-							/>
-						</div>
-					</div>
+				<div className="flex flex-col-reverse gap-3 md:flex-row md:items-start">
+					<MonthRangePicker
+						startDate={startDate}
+						endDate={endDate}
+						onChange={handleDateChange}
+					/>
 					<Button
 						variant="accent"
 						onClick={() => setCreateOpen(true)}

@@ -1,0 +1,22 @@
+info:
+  name: authenticate-user
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:9999/auth/login
+  body:
+    type: json
+    data: |-
+      {
+        "email": "eric@zardo.dev",
+        "password": "Alemao(2025)Zardo-"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
