@@ -11,3 +11,11 @@ export function formatCurrency(value: number, currency: string) {
     currency,
   }).format(value)
 }
+
+export function getCurrencySymbol(currency: string): string {
+  return (
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency })
+      .formatToParts(0)
+      .find((part) => part.type === 'currency')?.value ?? currency
+  )
+}

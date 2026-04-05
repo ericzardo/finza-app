@@ -204,11 +204,14 @@ model Transaction {
   bucket_id              String?
   category_id            String?
   transaction_pattern_id String?
+  source_transaction_id  String?
   type                   TransactionType
   amount                 Decimal             @db.Decimal(12, 2)
   description            String
   date                   DateTime
   is_paid                Boolean             @default(true)
+  is_internal            Boolean             @default(false)
+  transfer_pair_id       String?
   installment_number     Int?
   canceled_at            DateTime?
   canceled_by            String?
@@ -216,11 +219,13 @@ model Transaction {
   created_at             DateTime            @default(now())
   updated_at             DateTime            @updatedAt
   splits                 TransactionSplit[]
+  internal_transactions  Transaction[]       @relation("CascadeInternals")
   bank_account           BankAccount?        @relation(fields: [bank_account_id], references: [id])
   bucket                 Bucket?             @relation(fields: [bucket_id], references: [id])
   category               Category?           @relation(fields: [category_id], references: [id])
   credit_card            CreditCard?         @relation(fields: [credit_card_id], references: [id])
   invoice                Invoice?            @relation(fields: [invoice_id], references: [id])
+  source_transaction     Transaction?        @relation("CascadeInternals", fields: [source_transaction_id], references: [id], onDelete: Cascade)
   transaction_pattern    TransactionPattern? @relation(fields: [transaction_pattern_id], references: [id])
   workspace              Workspace           @relation(fields: [workspace_id], references: [id], onDelete: Cascade)
 

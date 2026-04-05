@@ -13,7 +13,7 @@ export function WorkspaceHeader() {
 
 	return (
 		<header className="sticky top-0 z-50 hidden h-14 shrink-0 items-center border-b border-border/50 bg-background/80 backdrop-blur-md md:flex">
-			<div className="shell-container ml-0 pl-2.5 flex items-center justify-between">
+			<div className="shell-container flex w-full items-center justify-between px-4">
 				{isWorkspacesLoading ? (
 					<div className="flex items-center gap-2">
 						<Skeleton className="h-6 w-6 animate-pulse rounded-full bg-muted" />

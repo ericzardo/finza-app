@@ -30,7 +30,7 @@ export function PasswordInput({ className, ...props }: PasswordInputProps) {
 				aria-label={isVisible ? "Ocultar senha" : "Mostrar senha"}
 				aria-pressed={isVisible}
 				onClick={toggleVisibility}
-				className="absolute inset-y-0 right-0 flex cursor-pointer items-center pr-2.5 text-muted-foreground transition-colors hover:text-foreground"
+				className="absolute inset-y-0 right-0 flex w-10 md:w-9 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
 			>
 				<Icon className="size-4" aria-hidden="true" />
 			</button>

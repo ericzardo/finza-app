@@ -1,179 +1,179 @@
-import { describe, expect, test } from "bun:test";
-import { DEFAULT_CATEGORIES } from "@features/workspaces/domain/workspace.types";
-import type { PrismaClient } from "@prisma/client";
-import { createWorkspace } from "./create-workspace";
+import { describe, expect, test } from 'bun:test';
+import { DEFAULT_CATEGORIES } from '@features/workspaces/domain/workspace.types';
+import type { PrismaClient } from '@prisma/client';
+import { createWorkspace } from './create-workspace';
 
 type CreateWorkspaceArgs = { data: { name: string; currency: string } };
 type CreateMemberArgs = {
-	data: {
-		workspace_id: string;
-		user_id: string;
-		role: string;
-		accepted_at: Date;
-	};
+  data: {
+    workspace_id: string;
+    user_id: string;
+    role: string;
+    accepted_at: Date;
+  };
 };
 type CreateManyCategoryArgs = {
-	data: Array<{
-		workspace_id: string;
-		name: string;
-		icon: string | null;
-		color: string | null;
-	}>;
+  data: Array<{
+    workspace_id: string;
+    name: string;
+    icon: string | null;
+    color: string | null;
+  }>;
 };
 
 type CreateBucketArgs = {
-	data: {
-		workspace_id: string;
-		name: string;
-		type: string;
-		allocation_percentage: number;
-		is_default: boolean;
-	};
+  data: {
+    workspace_id: string;
+    name: string;
+    type: string;
+    allocation_percentage: number;
+    is_default: boolean;
+  };
 };
 
 function buildDb() {
-	const workspaceCreateCalls: CreateWorkspaceArgs[] = [];
-	const memberCreateCalls: CreateMemberArgs[] = [];
-	const categoryCreateManyCalls: CreateManyCategoryArgs[] = [];
-	const bucketCreateCalls: CreateBucketArgs[] = [];
+  const workspaceCreateCalls: CreateWorkspaceArgs[] = [];
+  const memberCreateCalls: CreateMemberArgs[] = [];
+  const categoryCreateManyCalls: CreateManyCategoryArgs[] = [];
+  const bucketCreateCalls: CreateBucketArgs[] = [];
 
-	const now = new Date();
+  const now = new Date();
 
-	const txMock = {
-		workspace: {
-			create: async (args: CreateWorkspaceArgs) => {
-				workspaceCreateCalls.push(args);
-				return {
-					id: "ws-id",
-					name: args.data.name,
-					currency: args.data.currency,
-					created_at: now,
-					updated_at: now,
-				};
-			},
-		},
-		workspaceMember: {
-			create: async (args: CreateMemberArgs) => {
-				memberCreateCalls.push(args);
-				return {
-					id: "member-id",
-					...args.data,
-				};
-			},
-		},
-		category: {
-			createMany: async (args: CreateManyCategoryArgs) => {
-				categoryCreateManyCalls.push(args);
-				return { count: args.data.length };
-			},
-		},
-		bucket: {
-			create: async (args: CreateBucketArgs) => {
-				bucketCreateCalls.push(args);
-				return {
-					id: "inbox-id",
-					...args.data,
-					created_at: now,
-					updated_at: now,
-				};
-			},
-		},
-	};
+  const txMock = {
+    workspace: {
+      create: async (args: CreateWorkspaceArgs) => {
+        workspaceCreateCalls.push(args);
+        return {
+          id: 'ws-id',
+          name: args.data.name,
+          currency: args.data.currency,
+          created_at: now,
+          updated_at: now,
+        };
+      },
+    },
+    workspaceMember: {
+      create: async (args: CreateMemberArgs) => {
+        memberCreateCalls.push(args);
+        return {
+          id: 'member-id',
+          ...args.data,
+        };
+      },
+    },
+    category: {
+      createMany: async (args: CreateManyCategoryArgs) => {
+        categoryCreateManyCalls.push(args);
+        return { count: args.data.length };
+      },
+    },
+    bucket: {
+      create: async (args: CreateBucketArgs) => {
+        bucketCreateCalls.push(args);
+        return {
+          id: 'inbox-id',
+          ...args.data,
+          created_at: now,
+          updated_at: now,
+        };
+      },
+    },
+  };
 
-	const db = {
-		$transaction: async (fn: (tx: typeof txMock) => Promise<unknown>) => {
-			return fn(txMock);
-		},
-	} as unknown as PrismaClient;
+  const db = {
+    $transaction: async (fn: (tx: typeof txMock) => Promise<unknown>) => {
+      return fn(txMock);
+    },
+  } as unknown as PrismaClient;
 
-	return {
-		db,
-		workspaceCreateCalls,
-		memberCreateCalls,
-		categoryCreateManyCalls,
-		bucketCreateCalls,
-		now,
-	};
+  return {
+    db,
+    workspaceCreateCalls,
+    memberCreateCalls,
+    categoryCreateManyCalls,
+    bucketCreateCalls,
+    now,
+  };
 }
 
-describe("createWorkspace", () => {
-	test("cria workspace com member OWNER e 7 categorias padrão", async () => {
-		const {
-			db,
-			workspaceCreateCalls,
-			memberCreateCalls,
-			categoryCreateManyCalls,
-			bucketCreateCalls,
-			now,
-		} = buildDb();
+describe('createWorkspace', () => {
+  test('cria workspace com member OWNER e 7 categorias padrão', async () => {
+    const {
+      db,
+      workspaceCreateCalls,
+      memberCreateCalls,
+      categoryCreateManyCalls,
+      bucketCreateCalls,
+      now,
+    } = buildDb();
 
-		const result = await createWorkspace(db, {
-			name: "Meu Workspace",
-			currency: "BRL",
-			userId: "user-id",
-		});
+    const result = await createWorkspace(db, {
+      name: 'Meu Workspace',
+      currency: 'BRL',
+      userId: 'user-id',
+    });
 
-		expect(workspaceCreateCalls).toEqual([
-			{ data: { name: "Meu Workspace", currency: "BRL" } },
-		]);
+    expect(workspaceCreateCalls).toEqual([
+      { data: { name: 'Meu Workspace', currency: 'BRL' } },
+    ]);
 
-		expect(memberCreateCalls).toEqual([
-			{
-				data: {
-					workspace_id: "ws-id",
-					user_id: "user-id",
-					role: "OWNER",
-					accepted_at: expect.any(Date),
-				},
-			},
-		]);
+    expect(memberCreateCalls).toEqual([
+      {
+        data: {
+          workspace_id: 'ws-id',
+          user_id: 'user-id',
+          role: 'OWNER',
+          accepted_at: expect.any(Date),
+        },
+      },
+    ]);
 
-		expect(categoryCreateManyCalls).toHaveLength(1);
-		const [categoryCall] = categoryCreateManyCalls;
-		expect(categoryCall.data).toHaveLength(7);
+    expect(categoryCreateManyCalls).toHaveLength(1);
+    const [categoryCall] = categoryCreateManyCalls;
+    expect(categoryCall.data).toHaveLength(7);
 
-		for (const defaultCat of DEFAULT_CATEGORIES) {
-			expect(categoryCall.data).toContainEqual({
-				workspace_id: "ws-id",
-				name: defaultCat.name,
-				icon: defaultCat.icon,
-				color: defaultCat.color,
-			});
-		}
+    for (const defaultCat of DEFAULT_CATEGORIES) {
+      expect(categoryCall.data).toContainEqual({
+        workspace_id: 'ws-id',
+        name: defaultCat.name,
+        icon: defaultCat.icon,
+        color: defaultCat.color,
+      });
+    }
 
-		expect(bucketCreateCalls).toHaveLength(1);
-		expect(bucketCreateCalls[0].data).toEqual({
-			workspace_id: "ws-id",
-			name: "Caixa de Entrada",
-			type: "INBOX",
-			allocation_percentage: 0,
-			is_default: true,
-		});
+    expect(bucketCreateCalls).toHaveLength(1);
+    expect(bucketCreateCalls[0].data).toEqual({
+      workspace_id: 'ws-id',
+      name: 'Caixa de Entrada',
+      type: 'INBOX',
+      allocation_percentage: 0,
+      is_default: true,
+    });
 
-		expect(result).toEqual({
-			id: "ws-id",
-			name: "Meu Workspace",
-			currency: "BRL",
-			role: "OWNER",
-			totalBalance: 0,
-			created_at: now.toISOString(),
-		});
-	});
+    expect(result).toEqual({
+      id: 'ws-id',
+      name: 'Meu Workspace',
+      currency: 'BRL',
+      role: 'OWNER',
+      totalBalance: 0,
+      created_at: now.toISOString(),
+    });
+  });
 
-	test("cria workspace com moeda customizada", async () => {
-		const { db, workspaceCreateCalls } = buildDb();
+  test('cria workspace com moeda customizada', async () => {
+    const { db, workspaceCreateCalls } = buildDb();
 
-		const result = await createWorkspace(db, {
-			name: "USD Workspace",
-			currency: "USD",
-			userId: "user-id",
-		});
+    const result = await createWorkspace(db, {
+      name: 'USD Workspace',
+      currency: 'USD',
+      userId: 'user-id',
+    });
 
-		expect(workspaceCreateCalls).toEqual([
-			{ data: { name: "USD Workspace", currency: "USD" } },
-		]);
+    expect(workspaceCreateCalls).toEqual([
+      { data: { name: 'USD Workspace', currency: 'USD' } },
+    ]);
 
-		expect(result.currency).toBe("USD");
-		expect(result.role).toBe("OWNER");
-	});
+    expect(result.currency).toBe('USD');
+    expect(result.role).toBe('OWNER');
+  });
 });

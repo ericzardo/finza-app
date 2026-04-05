@@ -1,0 +1,23 @@
+info:
+  name: create-workspace
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://localhost:9999/workspaces
+  body:
+    type: json
+    data: |-
+      {
+        "name": "Meu Workspace",
+        "currency": "BRL",
+        "userId": "cmni90a5z0000gwlwmww5hpvv"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

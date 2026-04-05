@@ -9,6 +9,9 @@ import "@lib/api-client/workspace-interceptor";
 import { AppLoader } from "@components/shared/app-loader";
 
 export const Route = createFileRoute("/_authenticated/$workspaceId")({
+	beforeLoad: ({ params }) => {
+		setWorkspaceId(params.workspaceId);
+	},
 	loader: async ({ context, params }) => {
 		try {
 			return await context.queryClient.ensureQueryData(

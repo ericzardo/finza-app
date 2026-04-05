@@ -50,6 +50,13 @@ function buildDb(options: BuildDbOptions = {}) {
         return { count: 7 };
       },
     },
+    bucket: {
+      create: async (_args: unknown) => ({
+        id: 'bucket-id',
+        name: 'Caixa de Entrada',
+        type: 'INBOX',
+      }),
+    },
   };
 
   const db = {

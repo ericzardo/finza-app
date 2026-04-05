@@ -26,22 +26,6 @@ finza/
 
 > **Importante:** Não existe `@finza/shared`. O `@finza/api-client` é a fonte compartilhada de tipos e schemas Zod entre a API e o Dashboard.
 
-## Commands
-
-```bash
-bun install                 # Install all dependencies
-bun run dev:api             # Start API server (port 9999, hot reload)
-bun run generate:client     # Regenerate SDK from OpenAPI (API must be running)
-bun run test:api            # Run API tests
-bun run lint                # Check for linting errors (Biome)
-bun run lint:fix            # Auto-fix linting issues (Biome)
-```
-## Testing Changes
-
-- Do NOT run `build` to test AI results - only run `lint` to verify code quality.
-- Run `bun run lint` to check for errors.
-- Run `bunx tsc --noEmit` inside the package folder to verify TypeScript errors
-
 ## Code Patterns (All Packages)
 
 ### File Naming
@@ -74,9 +58,15 @@ export function MyComponent({ className, children, ...props }: MyComponentProps)
 
 ## Tooling
 - bun - package manager and workspace management.
-- Biome - linting and formatting.
 - TypeScript - strict mode enabled.
 
-## Git Commits
-- Do NOT commit automatically - only commit when explicitly asked by the user.
-- Wait for user approval before running git commit.
+## Workflow and Git (Mandatory)
+
+Finza uses a rigorous approval pipeline. **NEVER** attempt to commit directly to the `main` or `staging` branches.
+
+1. **Development:** All new code must originate in a `feature/feature-name` branch.
+2. **Pull Requests:** After completing the task, you should only request the user to push the feature branch and open a PR for `staging`.
+3. **Deployment:** Deployment to production is done exclusively via merging `staging` into `main`.
+4. **Respect for Contracts:** Before any push, ensure that `bun run build` in the monorepo root passes without errors, guaranteeing integrity between the API and the Dashboard.
+
+Contract Enforcement: Any change in @finza/api that affects the OpenAPI spec MUST be followed by regenerating @finza/api-client. The Dashboard MUST ONLY consume the API through the generated client.
