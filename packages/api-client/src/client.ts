@@ -6,7 +6,6 @@ import axios, {
 	type AxiosError,
 } from "axios";
 
-
 export const axiosInstance: AxiosInstance = axios.create({
 	baseURL: env.API_URL || "http://localhost:9999",
 	headers: {
@@ -24,22 +23,24 @@ axiosInstance.interceptors.response.use(
 	(response) => response,
 	(error: AxiosError<ApiErrorResponse>) => {
 		if (!error.response) {
-			error.message = "Não foi possível conectar aos servidores da Finza. Tente novamente mais tarde!";
-		} 
+			error.message =
+				"Não foi possível conectar aos servidores da Finza. Tente novamente mais tarde!";
+		}
 		// 2. Erro mapeado pela Error Handler da API
 		else if (error.response.data && error.response.data.message) {
 			error.message = error.response.data.message;
 		}
 
 		if (error.response?.status === 401) {
-			const publicPaths = ['/', '/login', '/sign-up']
-			const isPublicPage = typeof window !== 'undefined' &&
-				publicPaths.some((p) => window.location.pathname === p)
+			const publicPaths = ["/", "/login", "/sign-up"];
+			const isPublicPage =
+				typeof window !== "undefined" &&
+				publicPaths.some((p) => window.location.pathname === p);
 
-			const requestUrl = error.config?.url ?? ''
-			const isChangePassword = requestUrl.includes('/auth/change-password')
+			const requestUrl = error.config?.url ?? "";
+			const isChangePassword = requestUrl.includes("/auth/change-password");
 
-			if (typeof window !== 'undefined' && !isPublicPage && !isChangePassword) {
+			if (typeof window !== "undefined" && !isPublicPage && !isChangePassword) {
 				window.location.href = "/login";
 			}
 		}

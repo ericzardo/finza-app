@@ -6,7 +6,6 @@
     "types": [
       "bun-types"
     ],
-    "baseUrl": ".",
     "paths": {
       "@env": [
         "./src/env.ts"

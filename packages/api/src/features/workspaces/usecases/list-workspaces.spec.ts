@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { TransactionType, type PrismaClient } from '@prisma/client';
+import { type PrismaClient } from '@prisma/client';
 import { listWorkspaces } from './list-workspaces';
 
 type FindManyArgs = {
