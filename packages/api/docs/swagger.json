@@ -1,0 +1,4338 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Finza API",
+    "description": "Documentação da API da Finza — gerenciamento financeiro pessoal e colaborativo.",
+    "version": "1.0.0"
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "finza_token"
+      }
+    },
+    "schemas": {}
+  },
+  "paths": {
+    "/docs/json": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Default Response"
+          }
+        }
+      }
+    },
+    "/users": {
+      "post": {
+        "summary": "Cadastro de usuário",
+        "tags": [
+          "users"
+        ],
+        "description": "Cria um novo usuário na plataforma.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 120,
+                    "description": "Nome completo do usuário"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                    "description": "E-mail do usuário"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "description": "Senha do usuário (mínimo 8 caracteres)"
+                  }
+                },
+                "required": [
+                  "name",
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "security": [],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID do usuário"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Nome completo do usuário"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                      "description": "E-mail do usuário"
+                    },
+                    "plan": {
+                      "type": "string",
+                      "description": "Plano do usuário"
+                    },
+                    "avatar_url": {
+                      "nullable": true,
+                      "description": "URL do avatar do usuário",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "plan",
+                    "avatar_url"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "E-mail já cadastrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "E-mail já cadastrado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile": {
+      "get": {
+        "summary": "Perfil do usuário autenticado",
+        "tags": [
+          "users"
+        ],
+        "description": "Retorna os dados do usuário autenticado.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID do usuário"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Nome completo do usuário"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                      "description": "E-mail do usuário"
+                    },
+                    "plan": {
+                      "type": "string",
+                      "description": "Plano do usuário"
+                    },
+                    "avatar_url": {
+                      "nullable": true,
+                      "description": "URL do avatar do usuário",
+                      "type": "string"
+                    },
+                    "is_privacy_enabled": {
+                      "type": "boolean",
+                      "description": "Indica se a privacidade de valores do usuario esta habilitada"
+                    },
+                    "email_verified_at": {
+                      "nullable": true,
+                      "description": "Data de verificação do e-mail",
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "plan",
+                    "avatar_url",
+                    "is_privacy_enabled",
+                    "email_verified_at"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuário não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Usuário não encontrado"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Atualizar perfil do usuário",
+        "tags": [
+          "users"
+        ],
+        "description": "Atualiza os dados do perfil do usuário autenticado. Se o e-mail for alterado, a verificação é resetada.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 120,
+                    "description": "Nome completo do usuário"
+                  },
+                  "avatar_url": {
+                    "type": "string",
+                    "description": "URL do avatar do usuário"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                    "description": "Novo e-mail do usuário"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID do usuário"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Nome completo do usuário"
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                      "description": "E-mail do usuário"
+                    },
+                    "plan": {
+                      "type": "string",
+                      "description": "Plano do usuário"
+                    },
+                    "avatar_url": {
+                      "nullable": true,
+                      "description": "URL do avatar do usuário",
+                      "type": "string"
+                    },
+                    "is_privacy_enabled": {
+                      "type": "boolean",
+                      "description": "Indica se a privacidade de valores do usuario esta habilitada"
+                    },
+                    "email_verified_at": {
+                      "nullable": true,
+                      "description": "Data de verificação do e-mail",
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "email",
+                    "plan",
+                    "avatar_url",
+                    "is_privacy_enabled",
+                    "email_verified_at"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuário não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Usuário não encontrado"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "E-mail já cadastrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "E-mail já cadastrado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/profile/privacy": {
+      "patch": {
+        "summary": "Toggle de privacidade do usuário",
+        "tags": [
+          "users"
+        ],
+        "description": "Alterna o estado de privacidade de valores do usuário autenticado.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "is_privacy_enabled": {
+                      "type": "boolean",
+                      "description": "Novo estado da privacidade de valores do usuário"
+                    }
+                  },
+                  "required": [
+                    "is_privacy_enabled"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuário não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Usuário não encontrado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Login de usuário",
+        "tags": [
+          "auth"
+        ],
+        "description": "Autentica um usuário com email e senha. O token JWT é enviado via HttpOnly cookie.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                    "description": "E-mail do usuário"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 8,
+                    "description": "Senha do usuário (mínimo 8 caracteres)"
+                  }
+                },
+                "required": [
+                  "email",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "ID do usuário"
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Nome completo do usuário"
+                        },
+                        "email": {
+                          "type": "string",
+                          "format": "email",
+                          "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                          "description": "E-mail do usuário"
+                        },
+                        "plan": {
+                          "type": "string",
+                          "description": "Plano do usuário"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "email",
+                        "plan"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "user"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Credenciais inválidas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Credenciais inválidas"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Logout de usuário",
+        "tags": [
+          "auth"
+        ],
+        "description": "Encerra a sessão do usuário removendo o cookie de autenticação.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Mensagem de confirmação"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/change-password": {
+      "post": {
+        "summary": "Alterar senha do usuário",
+        "tags": [
+          "auth"
+        ],
+        "description": "Altera a senha do usuário autenticado. Requer a senha atual para confirmação. Invalida a sessão atual após a troca.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "currentPassword": {
+                    "type": "string",
+                    "minLength": 8,
+                    "description": "Senha atual do usuário (mínimo 8 caracteres)"
+                  },
+                  "newPassword": {
+                    "type": "string",
+                    "minLength": 8,
+                    "description": "Nova senha do usuário (mínimo 8 caracteres)"
+                  }
+                },
+                "required": [
+                  "currentPassword",
+                  "newPassword"
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "description": "Mensagem de confirmação"
+                    }
+                  },
+                  "required": [
+                    "message"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou expirado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou expirado"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Senha atual incorreta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Senha atual incorreta"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Usuário não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Usuário não encontrado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces": {
+      "get": {
+        "summary": "Listar workspaces do usuário",
+        "tags": [
+          "workspaces"
+        ],
+        "description": "Lista todos os workspaces do usuário autenticado.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "ID do workspace"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Nome do workspace"
+                      },
+                      "currency": {
+                        "type": "string",
+                        "description": "Moeda do workspace"
+                      },
+                      "totalBalance": {
+                        "type": "number",
+                        "description": "Saldo total do workspace"
+                      },
+                      "role": {
+                        "type": "string",
+                        "enum": [
+                          "OWNER",
+                          "EDITOR",
+                          "VIEWER"
+                        ],
+                        "description": "Papel do usuário no workspace"
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                        "description": "Data de criação do workspace"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "name",
+                      "currency",
+                      "totalBalance",
+                      "role",
+                      "created_at"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Criar workspace",
+        "tags": [
+          "workspaces"
+        ],
+        "description": "Cria um novo workspace e adiciona o usuário autenticado como OWNER. Também cria 7 categorias padrão.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Nome do workspace"
+                  },
+                  "currency": {
+                    "default": "BRL",
+                    "description": "Código da moeda (ex: BRL, USD)",
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 3
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID do workspace"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Nome do workspace"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "Moeda do workspace"
+                    },
+                    "totalBalance": {
+                      "type": "number",
+                      "description": "Saldo total do workspace"
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "OWNER",
+                        "EDITOR",
+                        "VIEWER"
+                      ],
+                      "description": "Papel do usuário no workspace"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data de criação do workspace"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "currency",
+                    "totalBalance",
+                    "role",
+                    "created_at"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}": {
+      "get": {
+        "summary": "Obter workspace",
+        "tags": [
+          "workspaces"
+        ],
+        "description": "Retorna os metadados do workspace.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "description": "ID do workspace"
+          }
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID do workspace"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Nome do workspace"
+                    },
+                    "currency": {
+                      "type": "string",
+                      "description": "Moeda do workspace"
+                    },
+                    "role": {
+                      "type": "string",
+                      "enum": [
+                        "OWNER",
+                        "EDITOR",
+                        "VIEWER"
+                      ],
+                      "description": "Papel do usuário no workspace"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data de criação do workspace"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "currency",
+                    "role",
+                    "created_at"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Header x-workspace-id ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Header x-workspace-id ausente"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Workspace não encontrado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/summary": {
+      "get": {
+        "summary": "Resumo financeiro do workspace",
+        "tags": [
+          "workspaces"
+        ],
+        "description": "Retorna o consolidado financeiro do workspace. Todos os dados são filtráveis por startDate e endDate opcionais.",
+        "parameters": [
+          {
+            "schema": {},
+            "in": "query",
+            "name": "startDate",
+            "required": false,
+            "description": "Data de início do período (Aceita YYYY-MM-DD ou ISO 8601)"
+          },
+          {
+            "schema": {},
+            "in": "query",
+            "name": "endDate",
+            "required": false,
+            "description": "Data de fim do período (Aceita YYYY-MM-DD ou ISO 8601)"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "description": "ID do workspace"
+          }
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "currentBalance": {
+                      "type": "number",
+                      "description": "Saldo atual (receitas pagas − despesas pagas no período)"
+                    },
+                    "maxBalance": {
+                      "type": "number",
+                      "description": "Maior saldo histórico atingido"
+                    },
+                    "totalInvested": {
+                      "type": "number",
+                      "description": "Soma das transações em buckets do tipo INVESTMENT no período"
+                    },
+                    "pendingBalance": {
+                      "type": "number",
+                      "description": "Soma do valor absoluto de todas as transações com is_paid = false no período"
+                    },
+                    "distribution": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bucketId": {
+                            "type": "string",
+                            "description": "ID do caixa"
+                          },
+                          "bucketName": {
+                            "type": "string",
+                            "description": "Nome do caixa"
+                          },
+                          "bucketType": {
+                            "type": "string",
+                            "description": "Tipo do caixa"
+                          },
+                          "amount": {
+                            "type": "number",
+                            "description": "Saldo real do caixa no período (receitas − despesas)"
+                          },
+                          "percentage": {
+                            "type": "number",
+                            "description": "Percentual do total"
+                          }
+                        },
+                        "required": [
+                          "bucketId",
+                          "bucketName",
+                          "bucketType",
+                          "amount",
+                          "percentage"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Distribuição de saldo por caixas de propósitos"
+                    }
+                  },
+                  "required": [
+                    "currentBalance",
+                    "maxBalance",
+                    "totalInvested",
+                    "pendingBalance",
+                    "distribution"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Header x-workspace-id ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Header x-workspace-id ausente"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/buckets": {
+      "post": {
+        "summary": "Criar caixa",
+        "tags": [
+          "buckets"
+        ],
+        "description": "Cria um novo caixa no workspace.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "description": "Nome do caixa"
+                  },
+                  "type": {
+                    "default": "SPENDING",
+                    "description": "Tipo do caixa",
+                    "type": "string",
+                    "enum": [
+                      "SPENDING",
+                      "INVESTMENT"
+                    ]
+                  },
+                  "allocation_percentage": {
+                    "default": 0,
+                    "description": "Percentual de alocação (0-100)",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID do caixa"
+                    },
+                    "workspace_id": {
+                      "type": "string",
+                      "description": "ID do workspace"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Nome do caixa"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "SPENDING",
+                        "INVESTMENT",
+                        "INBOX"
+                      ],
+                      "description": "Tipo do caixa"
+                    },
+                    "allocation_percentage": {
+                      "type": "number",
+                      "description": "Percentual de alocação (0-100)"
+                    },
+                    "is_default": {
+                      "type": "boolean",
+                      "description": "Indica se é o caixa padrão (INBOX)"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data de criação"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace_id",
+                    "name",
+                    "type",
+                    "allocation_percentage",
+                    "is_default",
+                    "created_at"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação ou header ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação ou header ausente"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Listar caixas",
+        "tags": [
+          "buckets"
+        ],
+        "description": "Lista todos os caixas do workspace com agregações financeiras do período.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            },
+            "in": "query",
+            "name": "startDate",
+            "required": false,
+            "description": "Data de início do período (YYYY-MM-DD)"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            },
+            "in": "query",
+            "name": "endDate",
+            "required": false,
+            "description": "Data de fim do período (YYYY-MM-DD)"
+          }
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "ID do caixa"
+                          },
+                          "workspace_id": {
+                            "type": "string",
+                            "description": "ID do workspace"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Nome do caixa"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "INBOX"
+                            ]
+                          },
+                          "allocation_percentage": {
+                            "type": "number",
+                            "description": "Percentual de alocação (0-100)"
+                          },
+                          "is_default": {
+                            "type": "boolean",
+                            "description": "Indica se é o caixa padrão (INBOX)"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                            "description": "Data de criação"
+                          },
+                          "current_amount": {
+                            "type": "number",
+                            "description": "Montante atual no caixa (receitas − despesas, histórico)"
+                          },
+                          "period_income": {
+                            "type": "number",
+                            "description": "Total de receitas neste caixa no período"
+                          },
+                          "period_spent": {
+                            "type": "number",
+                            "description": "Total de despesas neste caixa no período"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "workspace_id",
+                          "name",
+                          "type",
+                          "allocation_percentage",
+                          "is_default",
+                          "created_at",
+                          "current_amount",
+                          "period_income",
+                          "period_spent"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "ID do caixa"
+                          },
+                          "workspace_id": {
+                            "type": "string",
+                            "description": "ID do workspace"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Nome do caixa"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "SPENDING"
+                            ]
+                          },
+                          "allocation_percentage": {
+                            "type": "number",
+                            "description": "Percentual de alocação (0-100)"
+                          },
+                          "is_default": {
+                            "type": "boolean",
+                            "description": "Indica se é o caixa padrão (INBOX)"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                            "description": "Data de criação"
+                          },
+                          "current_amount": {
+                            "type": "number",
+                            "description": "Montante atual no caixa (receitas − despesas, histórico)"
+                          },
+                          "period_allocated": {
+                            "type": "number",
+                            "description": "Total de receitas alocadas neste caixa no período"
+                          },
+                          "period_spent": {
+                            "type": "number",
+                            "description": "Total de despesas neste caixa no período"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "workspace_id",
+                          "name",
+                          "type",
+                          "allocation_percentage",
+                          "is_default",
+                          "created_at",
+                          "current_amount",
+                          "period_allocated",
+                          "period_spent"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "ID do caixa"
+                          },
+                          "workspace_id": {
+                            "type": "string",
+                            "description": "ID do workspace"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Nome do caixa"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "INVESTMENT"
+                            ]
+                          },
+                          "allocation_percentage": {
+                            "type": "number",
+                            "description": "Percentual de alocação (0-100)"
+                          },
+                          "is_default": {
+                            "type": "boolean",
+                            "description": "Indica se é o caixa padrão (INBOX)"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                            "description": "Data de criação"
+                          },
+                          "current_invested": {
+                            "type": "number",
+                            "description": "Montante total aportado historicamente"
+                          },
+                          "period_target": {
+                            "type": "number",
+                            "description": "Meta de aporte no período (receita total do workspace × allocation_percentage)"
+                          },
+                          "period_invested": {
+                            "type": "number",
+                            "description": "Quanto já foi aportado neste caixa no período"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "workspace_id",
+                          "name",
+                          "type",
+                          "allocation_percentage",
+                          "is_default",
+                          "created_at",
+                          "current_invested",
+                          "period_target",
+                          "period_invested"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Header x-workspace-id ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Header x-workspace-id ausente"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/buckets/{bucketId}": {
+      "patch": {
+        "summary": "Atualizar caixa",
+        "tags": [
+          "buckets"
+        ],
+        "description": "Atualiza nome, tipo ou percentual de alocação do caixa. O caixa INBOX não pode ser editado.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "description": "Nome do caixa",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "type": {
+                    "description": "Tipo do caixa",
+                    "type": "string",
+                    "enum": [
+                      "SPENDING",
+                      "INVESTMENT"
+                    ]
+                  },
+                  "allocation_percentage": {
+                    "description": "Percentual de alocação (0-100)",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "bucketId",
+            "required": true,
+            "description": "ID do caixa"
+          }
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID do caixa"
+                    },
+                    "workspace_id": {
+                      "type": "string",
+                      "description": "ID do workspace"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Nome do caixa"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "SPENDING",
+                        "INVESTMENT",
+                        "INBOX"
+                      ],
+                      "description": "Tipo do caixa"
+                    },
+                    "allocation_percentage": {
+                      "type": "number",
+                      "description": "Percentual de alocação (0-100)"
+                    },
+                    "is_default": {
+                      "type": "boolean",
+                      "description": "Indica se é o caixa padrão (INBOX)"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data de criação"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace_id",
+                    "name",
+                    "type",
+                    "allocation_percentage",
+                    "is_default",
+                    "created_at"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação ou header ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação ou header ausente"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão ou tentativa de editar INBOX",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão ou tentativa de editar INBOX"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Caixa não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Caixa não encontrado"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Deletar caixa",
+        "tags": [
+          "buckets"
+        ],
+        "description": "Remove um caixa do workspace. O caixa INBOX não pode ser deletado.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "bucketId",
+            "required": true,
+            "description": "ID do caixa"
+          }
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "400": {
+            "description": "Header x-workspace-id ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Header x-workspace-id ausente"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão ou tentativa de deletar INBOX",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão ou tentativa de deletar INBOX"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Caixa não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Caixa não encontrado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions": {
+      "post": {
+        "summary": "Criar transação",
+        "tags": [
+          "transactions"
+        ],
+        "description": "Cria uma nova transação no workspace. Se bucket_id não for informado, a transação é automaticamente atribuída ao Caixa de Entrada (INBOX).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "INCOME",
+                      "EXPENSE",
+                      "TRANSFER"
+                    ],
+                    "description": "Tipo da transação: INCOME (receita), EXPENSE (despesa) ou TRANSFER (transferência)"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "description": "Valor da transação (positivo, em reais)"
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255,
+                    "description": "Descrição da transação"
+                  },
+                  "date": {
+                    "description": "Data da transação (aceita YYYY-MM-DD ou ISO 8601)"
+                  },
+                  "is_paid": {
+                    "default": true,
+                    "description": "Se verdadeiro, a transação é efetivada e afeta saldos. Se falso, fica como pendente.",
+                    "type": "boolean"
+                  },
+                  "bucket_id": {
+                    "description": "ID do caixa de propósito. Se omitido, a transação vai para o Caixa de Entrada (INBOX).",
+                    "type": "string"
+                  },
+                  "bank_account_id": {
+                    "description": "ID da conta bancária (débito ou PIX). Mutuamente exclusivo com credit_card_id.",
+                    "type": "string"
+                  },
+                  "credit_card_id": {
+                    "description": "ID do cartão de crédito. Mutuamente exclusivo com bank_account_id.",
+                    "type": "string"
+                  },
+                  "category_id": {
+                    "description": "ID da categoria da transação",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "type",
+                  "amount",
+                  "description",
+                  "date"
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID da transação"
+                    },
+                    "workspace_id": {
+                      "type": "string",
+                      "description": "ID do workspace"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "INCOME",
+                        "EXPENSE",
+                        "TRANSFER"
+                      ],
+                      "description": "Tipo da transação"
+                    },
+                    "amount": {
+                      "type": "number",
+                      "description": "Valor da transação"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Descrição da transação"
+                    },
+                    "date": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data da transação (ISO 8601)"
+                    },
+                    "is_paid": {
+                      "type": "boolean",
+                      "description": "Status de pagamento"
+                    },
+                    "is_internal": {
+                      "type": "boolean",
+                      "description": "Se verdadeiro, é uma transferência interna automática (Cascata)"
+                    },
+                    "transfer_pair_id": {
+                      "nullable": true,
+                      "description": "ID que liga o par de transações internas da Cascata",
+                      "type": "string"
+                    },
+                    "bucket_id": {
+                      "nullable": true,
+                      "description": "ID do caixa de propósito",
+                      "type": "string"
+                    },
+                    "bank_account_id": {
+                      "nullable": true,
+                      "description": "ID da conta bancária",
+                      "type": "string"
+                    },
+                    "credit_card_id": {
+                      "nullable": true,
+                      "description": "ID do cartão de crédito",
+                      "type": "string"
+                    },
+                    "category_id": {
+                      "nullable": true,
+                      "description": "ID da categoria",
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data de criação do registro"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace_id",
+                    "type",
+                    "amount",
+                    "description",
+                    "date",
+                    "is_paid",
+                    "is_internal",
+                    "transfer_pair_id",
+                    "bucket_id",
+                    "bank_account_id",
+                    "credit_card_id",
+                    "category_id",
+                    "created_at"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação ou header ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação ou header ausente"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Caixa, conta bancária, cartão ou categoria não encontrados",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Caixa, conta bancária, cartão ou categoria não encontrados"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Listar transações",
+        "tags": [
+          "transactions"
+        ],
+        "description": "Retorna a lista paginada de transações do workspace. Suporta filtros por período, caixa, status de pagamento e tipo.",
+        "parameters": [
+          {
+            "schema": {},
+            "in": "query",
+            "name": "startDate",
+            "required": false,
+            "description": "Início do período de filtro (YYYY-MM-DD ou ISO 8601)"
+          },
+          {
+            "schema": {},
+            "in": "query",
+            "name": "endDate",
+            "required": false,
+            "description": "Fim do período de filtro (YYYY-MM-DD ou ISO 8601)"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "query",
+            "name": "bucketId",
+            "required": false,
+            "description": "Filtrar por ID do caixa de propósito"
+          },
+          {
+            "schema": {
+              "type": "boolean"
+            },
+            "in": "query",
+            "name": "isPaid",
+            "required": false,
+            "description": "Filtrar por status de pagamento (true = pagas, false = pendentes)"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "enum": [
+                "INCOME",
+                "EXPENSE",
+                "TRANSFER"
+              ]
+            },
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "description": "Filtrar por tipo de transação"
+          },
+          {
+            "schema": {
+              "default": 1,
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "description": "Número da página para paginação"
+          },
+          {
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Quantidade de itens por página (máx. 100)"
+          }
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "workspace_id": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "INCOME",
+                              "EXPENSE",
+                              "TRANSFER"
+                            ]
+                          },
+                          "amount": {
+                            "type": "number"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "date": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                          },
+                          "is_paid": {
+                            "type": "boolean"
+                          },
+                          "is_internal": {
+                            "type": "boolean"
+                          },
+                          "transfer_pair_id": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "bucket_id": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "bank_account_id": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "credit_card_id": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "category_id": {
+                            "nullable": true,
+                            "type": "string"
+                          },
+                          "created_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "workspace_id",
+                          "type",
+                          "amount",
+                          "description",
+                          "date",
+                          "is_paid",
+                          "is_internal",
+                          "transfer_pair_id",
+                          "bucket_id",
+                          "bank_account_id",
+                          "credit_card_id",
+                          "category_id",
+                          "created_at"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Lista de transações"
+                    },
+                    "total": {
+                      "type": "number",
+                      "description": "Total de transações que correspondem aos filtros"
+                    },
+                    "page": {
+                      "type": "number",
+                      "description": "Página atual"
+                    },
+                    "limit": {
+                      "type": "number",
+                      "description": "Itens por página"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "total",
+                    "page",
+                    "limit"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Header x-workspace-id ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Header x-workspace-id ausente"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/internal": {
+      "get": {
+        "summary": "Listar transferências internas",
+        "tags": [
+          "transactions"
+        ],
+        "description": "Retorna a lista paginada de pares de transferências internas (Cascata) do workspace. Cada par representa uma movimentação automática entre caixas de propósito.",
+        "parameters": [
+          {
+            "schema": {},
+            "in": "query",
+            "name": "startDate",
+            "required": false,
+            "description": "Início do período de filtro (YYYY-MM-DD ou ISO 8601)"
+          },
+          {
+            "schema": {},
+            "in": "query",
+            "name": "endDate",
+            "required": false,
+            "description": "Fim do período de filtro (YYYY-MM-DD ou ISO 8601)"
+          },
+          {
+            "schema": {
+              "default": 1,
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 9007199254740991
+            },
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "description": "Número da página para paginação"
+          },
+          {
+            "schema": {
+              "default": 20,
+              "type": "integer",
+              "exclusiveMinimum": true,
+              "maximum": 100
+            },
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Quantidade de itens por página (máx. 100)"
+          }
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "transfer_pair_id": {
+                            "type": "string",
+                            "description": "ID que liga o par de transações internas"
+                          },
+                          "date": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                            "description": "Data da transferência interna (ISO 8601)"
+                          },
+                          "amount": {
+                            "type": "number",
+                            "description": "Valor transferido entre caixas"
+                          },
+                          "from_bucket_name": {
+                            "type": "string",
+                            "description": "Nome do caixa de origem (débito)"
+                          },
+                          "to_bucket_name": {
+                            "type": "string",
+                            "description": "Nome do caixa de destino (crédito)"
+                          },
+                          "reason": {
+                            "type": "string",
+                            "enum": [
+                              "CASCADE_INSUFFICIENT_BALANCE"
+                            ],
+                            "description": "Motivo da transferência interna"
+                          }
+                        },
+                        "required": [
+                          "transfer_pair_id",
+                          "date",
+                          "amount",
+                          "from_bucket_name",
+                          "to_bucket_name",
+                          "reason"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Lista de pares de transferências internas"
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "number",
+                          "description": "Total de pares que correspondem aos filtros"
+                        },
+                        "page": {
+                          "type": "number",
+                          "description": "Página atual"
+                        },
+                        "limit": {
+                          "type": "number",
+                          "description": "Itens por página"
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "page",
+                        "limit"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Header x-workspace-id ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Header x-workspace-id ausente"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{transactionId}": {
+      "delete": {
+        "summary": "Deletar transação",
+        "tags": [
+          "transactions"
+        ],
+        "description": "Remove uma transação do workspace. As divisões (splits) associadas são deletadas automaticamente em cascata. O saldo dos caixas é recalculado dinamicamente.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "transactionId",
+            "required": true,
+            "description": "ID da transação a ser deletada"
+          }
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Transação deletada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "nullable": true,
+                  "enum": [
+                    null
+                  ],
+                  "description": "Transação deletada com sucesso"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transação não encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Transação não encontrada"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Atualizar transação",
+        "tags": [
+          "transactions"
+        ],
+        "description": "Atualiza uma transação existente no workspace. Pelo menos um campo deve ser fornecido. O saldo dos caixas é recalculado dinamicamente.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "description": "Tipo da transação: INCOME, EXPENSE ou TRANSFER",
+                    "type": "string",
+                    "enum": [
+                      "INCOME",
+                      "EXPENSE",
+                      "TRANSFER"
+                    ]
+                  },
+                  "amount": {
+                    "description": "Valor da transação (positivo, em reais)",
+                    "type": "number",
+                    "minimum": 0,
+                    "exclusiveMinimum": true
+                  },
+                  "description": {
+                    "description": "Descrição da transação",
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 255
+                  },
+                  "date": {
+                    "description": "Data da transação (aceita YYYY-MM-DD ou ISO 8601)"
+                  },
+                  "is_paid": {
+                    "description": "Status de pagamento da transação",
+                    "type": "boolean"
+                  },
+                  "bucket_id": {
+                    "description": "ID do caixa de propósito",
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "transactionId",
+            "required": true,
+            "description": "ID da transação a ser atualizada"
+          }
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "ID da transação"
+                    },
+                    "workspace_id": {
+                      "type": "string",
+                      "description": "ID do workspace"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "INCOME",
+                        "EXPENSE",
+                        "TRANSFER"
+                      ],
+                      "description": "Tipo da transação"
+                    },
+                    "amount": {
+                      "type": "number",
+                      "description": "Valor da transação"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Descrição da transação"
+                    },
+                    "date": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data da transação (ISO 8601)"
+                    },
+                    "is_paid": {
+                      "type": "boolean",
+                      "description": "Status de pagamento"
+                    },
+                    "is_internal": {
+                      "type": "boolean",
+                      "description": "Se verdadeiro, é uma transferência interna automática (Cascata)"
+                    },
+                    "transfer_pair_id": {
+                      "nullable": true,
+                      "description": "ID que liga o par de transações internas da Cascata",
+                      "type": "string"
+                    },
+                    "bucket_id": {
+                      "nullable": true,
+                      "description": "ID do caixa de propósito",
+                      "type": "string"
+                    },
+                    "bank_account_id": {
+                      "nullable": true,
+                      "description": "ID da conta bancária",
+                      "type": "string"
+                    },
+                    "credit_card_id": {
+                      "nullable": true,
+                      "description": "ID do cartão de crédito",
+                      "type": "string"
+                    },
+                    "category_id": {
+                      "nullable": true,
+                      "description": "ID da categoria",
+                      "type": "string"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                      "description": "Data de criação do registro"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace_id",
+                    "type",
+                    "amount",
+                    "description",
+                    "date",
+                    "is_paid",
+                    "is_internal",
+                    "transfer_pair_id",
+                    "bucket_id",
+                    "bank_account_id",
+                    "credit_card_id",
+                    "category_id",
+                    "created_at"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação ou nenhum campo fornecido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação ou nenhum campo fornecido"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transação ou caixa não encontrados",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Transação ou caixa não encontrados"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "description": "Health check da API e do banco",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ok"
+                      ]
+                    },
+                    "db": {
+                      "type": "string",
+                      "enum": [
+                        "up"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "db"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": []
+}
