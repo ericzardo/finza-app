@@ -346,8 +346,7 @@ describe('PATCH /profile', () => {
       const parsed = updateProfileResponseSchema.safeParse(response.json());
       if (!parsed.success) {
         throw new Error(
-          'Resposta nao corresponde ao schema: ' +
-            JSON.stringify(parsed.error),
+          'Resposta nao corresponde ao schema: ' + JSON.stringify(parsed.error),
         );
       }
 

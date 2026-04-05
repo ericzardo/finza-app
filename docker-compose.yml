@@ -1,0 +1,23 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
+    ports:
+      - "9999:9999"
+    env_file:
+      - packages/api/.env.dev
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: packages/dashboard/Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:9999}
+        VITE_APP_URL: ${VITE_APP_URL:-http://localhost:5173}
+    ports:
+      - "5173:80"
+    depends_on:
+      - api
+    restart: unless-stopped
