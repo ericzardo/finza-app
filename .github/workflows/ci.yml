@@ -7,8 +7,11 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-    
+    env:
+      DATABASE_URL: "postgresql://placeholder:5432/db"
+      DIRECT_URL: "postgresql://placeholder:5432/db"
+      JWT_SECRET: "placeholder_secret_minimum_8"
+
     steps:
       - uses: actions/checkout@v4
 

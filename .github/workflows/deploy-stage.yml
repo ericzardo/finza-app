@@ -12,7 +12,6 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: read
       packages: write
@@ -33,6 +32,10 @@ jobs:
           context: .
           file: packages/api/Dockerfile
           push: true
+          build-args: |
+            DATABASE_URL=postgresql://placeholder:5432/db
+            DIRECT_URL=postgresql://placeholder:5432/db
+            JWT_SECRET=placeholder_secret_minimum_8
           tags: |
             ${{ env.IMAGE_API }}:stage
             ${{ env.IMAGE_API }}:stage-${{ github.sha }}
@@ -53,7 +56,6 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Deploy via SSH
@@ -65,6 +67,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd /srv/finza
-            docker compose -f docker-compose.stage.yml pull
-            docker compose -f docker-compose.stage.yml up -d
+            git pull origin staging
+            docker compose -f infra/docker-compose.stage.yml pull
+            docker compose -f infra/docker-compose.stage.yml up -d
             docker image prune -f

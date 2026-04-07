@@ -1,6 +1,6 @@
 services:
   api-prod:
-    image: ghcr.io/ericzardo/finza/api:latest
+    image: ghcr.io/ericzardo/finza-app/api:latest
     ports:
       - "9999:9999"
     env_file:
@@ -10,7 +10,7 @@ services:
       - finza-prod
 
   dashboard-prod:
-    image: ghcr.io/ericzardo/finza/dashboard:latest
+    image: ghcr.io/ericzardo/finza-app/dashboard:latest
     ports:
       - "3000:80"
     depends_on:

@@ -19,7 +19,16 @@ COPY packages/api/ packages/api/
 # 5. Copy api-client source (workspace dependency)
 COPY packages/api-client/ packages/api-client/
 
-# 6. Generate Prisma Client
+# 6. Variable ambient args
+ARG DATABASE_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+ARG DIRECT_URL="postgresql://placeholder:placeholder@localhost:5432/placeholder"
+ARG JWT_SECRET="placeholder_secret_minimum_8_characters"
+
+ENV DATABASE_URL=$DATABASE_URL
+ENV DIRECT_URL=$DIRECT_URL
+ENV JWT_SECRET=$JWT_SECRET
+
+# 7. Generate Prisma Client
 WORKDIR /app/packages/api
 RUN bunx prisma generate
 

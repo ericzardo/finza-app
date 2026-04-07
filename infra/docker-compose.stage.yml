@@ -1,6 +1,6 @@
 services:
   api-stage:
-    image: ghcr.io/ericzardo/finza/api:stage
+    image: ghcr.io/ericzardo/finza-app/api:stage
     ports:
       - "9998:9999"
     env_file:
@@ -10,7 +10,7 @@ services:
       - finza-stage
 
   dashboard-stage:
-    image: ghcr.io/ericzardo/finza/dashboard:stage
+    image: ghcr.io/ericzardo/finza-app/dashboard:stage
     ports:
       - "3001:80"
     depends_on:
