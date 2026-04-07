@@ -68,6 +68,6 @@ jobs:
           script: |
             cd /srv/finza
             git pull origin staging
-            docker compose -f infra/docker-compose.prod.yml pull
-            docker compose -f infra/docker-compose.prod.yml up -d
+            docker compose -f infra/docker-compose.stage.yml pull
+            docker compose -f infra/docker-compose.stage.yml up -d
             docker image prune -f
