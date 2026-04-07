@@ -1,0 +1,24 @@
+services:
+  api-stage:
+    image: ghcr.io/ericzardo/finza/api:stage
+    ports:
+      - "9998:9999"
+    env_file:
+      - /srv/finza/env/stage.api.env
+    restart: unless-stopped
+    networks:
+      - finza-stage
+
+  dashboard-stage:
+    image: ghcr.io/ericzardo/finza/dashboard:stage
+    ports:
+      - "3001:80"
+    depends_on:
+      - api-stage
+    restart: unless-stopped
+    networks:
+      - finza-stage
+
+networks:
+  finza-stage:
+    driver: bridge

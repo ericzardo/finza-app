@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [staging, main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Instalar dependências
+        run: bun install
+
+      - name: Gerar Prisma Client
+        run: bunx prisma generate
+        working-directory: packages/api
+
+      - name: Rodar testes da API
+        run: bun run test
+        working-directory: packages/api

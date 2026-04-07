@@ -1,0 +1,24 @@
+services:
+  api-prod:
+    image: ghcr.io/ericzardo/finza/api:latest
+    ports:
+      - "9999:9999"
+    env_file:
+      - /srv/finza/env/prod.api.env
+    restart: unless-stopped
+    networks:
+      - finza-prod
+
+  dashboard-prod:
+    image: ghcr.io/ericzardo/finza/dashboard:latest
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-prod
+    restart: unless-stopped
+    networks:
+      - finza-prod
+
+networks:
+  finza-prod:
+    driver: bridge
