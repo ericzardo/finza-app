@@ -32,6 +32,10 @@ jobs:
           context: .
           file: packages/api/Dockerfile
           push: true
+          build-args: |
+            DATABASE_URL=postgresql://placeholder:5432/db
+            DIRECT_URL=postgresql://placeholder:5432/db
+            JWT_SECRET=placeholder_secret_minimum_8
           tags: |
             ${{ env.IMAGE_API }}:latest
             ${{ env.IMAGE_API }}:prod-${{ github.sha }}
@@ -63,6 +67,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd /srv/finza
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d
+            git pull origin main
+            docker compose -f infra/docker-compose.prod.yml pull
+            docker compose -f infra/docker-compose.prod.yml up -d
             docker image prune -f
