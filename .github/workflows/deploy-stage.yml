@@ -12,7 +12,6 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: read
       packages: write
@@ -53,7 +52,6 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
-    FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Deploy via SSH
