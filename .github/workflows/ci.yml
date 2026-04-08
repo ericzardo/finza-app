@@ -6,10 +6,24 @@ on:
 
 jobs:
   test:
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: db-finza-2026
+          POSTGRES_DB: finza_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
     runs-on: ubuntu-latest
     env:
-      DATABASE_URL: "postgresql://placeholder:5432/db"
-      DIRECT_URL: "postgresql://placeholder:5432/db"
+      DATABASE_URL: "postgresql://postgres:db-finza-2026@localhost:5432/finza_test"
+      DIRECT_URL: "postgresql://postgres:db-finza-2026@localhost:5432/finza_test"
       JWT_SECRET: "placeholder_secret_minimum_8"
 
     steps:
@@ -24,6 +38,10 @@ jobs:
 
       - name: Gerar Prisma Client
         run: bunx prisma generate
+        working-directory: packages/api
+
+      - name: Sincronizar Banco de Teste
+        run: bunx prisma db push
         working-directory: packages/api
 
       - name: Rodar testes da API
