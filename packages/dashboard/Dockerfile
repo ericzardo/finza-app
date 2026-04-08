@@ -20,6 +20,9 @@ COPY packages/api-client/ packages/api-client/
 COPY packages/dashboard/ packages/dashboard/
 
 # 3. Pipeline de Geração: Prisma → Swagger → Kubb
+ENV DATABASE_URL="postgresql://johndoe:mypassword@localhost:5432/mydb"
+ENV DIRECT_URL="postgresql://johndoe:mypassword@localhost:5432/mydb"
+ENV JWT_SECRET="uma-string-qualquer-com-mais-de-oito-caracteres"
 
 # 3a. Gerar Prisma Client (necessário para tipos do Swagger)
 WORKDIR /app/packages/api
