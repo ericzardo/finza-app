@@ -67,7 +67,9 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             cd /srv/finza
-            git pull origin staging
+            git fetch origin
+            git checkout main
+            git pull origin main
             docker compose -f infra/docker-compose.stage.yml pull
             docker compose -f infra/docker-compose.stage.yml up -d
             docker image prune -f
