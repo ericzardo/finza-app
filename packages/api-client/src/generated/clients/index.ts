@@ -18,5 +18,7 @@ export { postAuthLogin } from "./postAuthLogin.ts";
 export { postAuthLogout } from "./postAuthLogout.ts";
 export { postBuckets } from "./postBuckets.ts";
 export { postTransactions } from "./postTransactions.ts";
+export { postTransactionsImportConfirm } from "./postTransactionsImportConfirm.ts";
+export { postTransactionsImportPreview } from "./postTransactionsImportPreview.ts";
 export { postUsers } from "./postUsers.ts";
 export { postWorkspaces } from "./postWorkspaces.ts";

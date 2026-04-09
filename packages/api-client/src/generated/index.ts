@@ -18,6 +18,8 @@ export type { PostAuthLoginMutationKey } from "./hooks/usePostAuthLogin.ts";
 export type { PostAuthLogoutMutationKey } from "./hooks/usePostAuthLogout.ts";
 export type { PostBucketsMutationKey } from "./hooks/usePostBuckets.ts";
 export type { PostTransactionsMutationKey } from "./hooks/usePostTransactions.ts";
+export type { PostTransactionsImportConfirmMutationKey } from "./hooks/usePostTransactionsImportConfirm.ts";
+export type { PostTransactionsImportPreviewMutationKey } from "./hooks/usePostTransactionsImportPreview.ts";
 export type { PostUsersMutationKey } from "./hooks/usePostUsers.ts";
 export type { PostWorkspacesMutationKey } from "./hooks/usePostWorkspaces.ts";
 export type {
@@ -262,6 +264,34 @@ export type {
 	PostTransactionsMutationResponse,
 } from "./types/PostTransactions.ts";
 export type {
+	PostTransactionsImportConfirm200,
+	PostTransactionsImportConfirm400,
+	PostTransactionsImportConfirm400CodeEnumKey,
+	PostTransactionsImportConfirm401,
+	PostTransactionsImportConfirm401CodeEnumKey,
+	PostTransactionsImportConfirm403,
+	PostTransactionsImportConfirm403CodeEnumKey,
+	PostTransactionsImportConfirm404,
+	PostTransactionsImportConfirm404CodeEnumKey,
+	PostTransactionsImportConfirmMutation,
+	PostTransactionsImportConfirmMutationRequest,
+	PostTransactionsImportConfirmMutationResponse,
+	TransactionsTypeEnum2Key,
+} from "./types/PostTransactionsImportConfirm.ts";
+export type {
+	PostTransactionsImportPreview200,
+	PostTransactionsImportPreview200FormatEnumKey,
+	PostTransactionsImportPreview400,
+	PostTransactionsImportPreview400CodeEnumKey,
+	PostTransactionsImportPreview401,
+	PostTransactionsImportPreview401CodeEnumKey,
+	PostTransactionsImportPreview403,
+	PostTransactionsImportPreview403CodeEnumKey,
+	PostTransactionsImportPreviewMutation,
+	PostTransactionsImportPreviewMutationResponse,
+	TransactionsTypeEnumKey,
+} from "./types/PostTransactionsImportPreview.ts";
+export type {
 	PostUsers201,
 	PostUsers400,
 	PostUsers400CodeEnumKey,
@@ -302,6 +332,8 @@ export { postAuthLogin } from "./clients/postAuthLogin.ts";
 export { postAuthLogout } from "./clients/postAuthLogout.ts";
 export { postBuckets } from "./clients/postBuckets.ts";
 export { postTransactions } from "./clients/postTransactions.ts";
+export { postTransactionsImportConfirm } from "./clients/postTransactionsImportConfirm.ts";
+export { postTransactionsImportPreview } from "./clients/postTransactionsImportPreview.ts";
 export { postUsers } from "./clients/postUsers.ts";
 export { postWorkspaces } from "./clients/postWorkspaces.ts";
 export { deleteBucketsBucketidMutationKey } from "./hooks/useDeleteBucketsBucketid.ts";
@@ -364,6 +396,12 @@ export { usePostBuckets } from "./hooks/usePostBuckets.ts";
 export { postTransactionsMutationKey } from "./hooks/usePostTransactions.ts";
 export { postTransactionsMutationOptions } from "./hooks/usePostTransactions.ts";
 export { usePostTransactions } from "./hooks/usePostTransactions.ts";
+export { postTransactionsImportConfirmMutationKey } from "./hooks/usePostTransactionsImportConfirm.ts";
+export { postTransactionsImportConfirmMutationOptions } from "./hooks/usePostTransactionsImportConfirm.ts";
+export { usePostTransactionsImportConfirm } from "./hooks/usePostTransactionsImportConfirm.ts";
+export { postTransactionsImportPreviewMutationKey } from "./hooks/usePostTransactionsImportPreview.ts";
+export { postTransactionsImportPreviewMutationOptions } from "./hooks/usePostTransactionsImportPreview.ts";
+export { usePostTransactionsImportPreview } from "./hooks/usePostTransactionsImportPreview.ts";
 export { postUsersMutationKey } from "./hooks/usePostUsers.ts";
 export { postUsersMutationOptions } from "./hooks/usePostUsers.ts";
 export { usePostUsers } from "./hooks/usePostUsers.ts";
@@ -520,6 +558,22 @@ export {
 	createPostTransactionsMutationResponse,
 } from "./mocks/createPostTransactions.ts";
 export {
+	createPostTransactionsImportConfirm200,
+	createPostTransactionsImportConfirm400,
+	createPostTransactionsImportConfirm401,
+	createPostTransactionsImportConfirm403,
+	createPostTransactionsImportConfirm404,
+	createPostTransactionsImportConfirmMutationRequest,
+	createPostTransactionsImportConfirmMutationResponse,
+} from "./mocks/createPostTransactionsImportConfirm.ts";
+export {
+	createPostTransactionsImportPreview200,
+	createPostTransactionsImportPreview400,
+	createPostTransactionsImportPreview401,
+	createPostTransactionsImportPreview403,
+	createPostTransactionsImportPreviewMutationResponse,
+} from "./mocks/createPostTransactionsImportPreview.ts";
+export {
 	createPostUsers201,
 	createPostUsers400,
 	createPostUsers409,
@@ -665,6 +719,21 @@ export {
 	postTransactionsHandlerResponse403,
 	postTransactionsHandlerResponse404,
 } from "./mocks/postTransactionsHandler.ts";
+export {
+	postTransactionsImportConfirmHandler,
+	postTransactionsImportConfirmHandlerResponse200,
+	postTransactionsImportConfirmHandlerResponse400,
+	postTransactionsImportConfirmHandlerResponse401,
+	postTransactionsImportConfirmHandlerResponse403,
+	postTransactionsImportConfirmHandlerResponse404,
+} from "./mocks/postTransactionsImportConfirmHandler.ts";
+export {
+	postTransactionsImportPreviewHandler,
+	postTransactionsImportPreviewHandlerResponse200,
+	postTransactionsImportPreviewHandlerResponse400,
+	postTransactionsImportPreviewHandlerResponse401,
+	postTransactionsImportPreviewHandlerResponse403,
+} from "./mocks/postTransactionsImportPreviewHandler.ts";
 export {
 	postUsersHandler,
 	postUsersHandlerResponse201,
@@ -818,6 +887,22 @@ export {
 	postBucketsMutationResponseSchema,
 } from "./schemas/postBucketsSchema.ts";
 export {
+	postTransactionsImportConfirm200Schema,
+	postTransactionsImportConfirm400Schema,
+	postTransactionsImportConfirm401Schema,
+	postTransactionsImportConfirm403Schema,
+	postTransactionsImportConfirm404Schema,
+	postTransactionsImportConfirmMutationRequestSchema,
+	postTransactionsImportConfirmMutationResponseSchema,
+} from "./schemas/postTransactionsImportConfirmSchema.ts";
+export {
+	postTransactionsImportPreview200Schema,
+	postTransactionsImportPreview400Schema,
+	postTransactionsImportPreview401Schema,
+	postTransactionsImportPreview403Schema,
+	postTransactionsImportPreviewMutationResponseSchema,
+} from "./schemas/postTransactionsImportPreviewSchema.ts";
+export {
 	postTransactions201Schema,
 	postTransactions400Schema,
 	postTransactions401Schema,
@@ -911,6 +996,16 @@ export { postTransactions401CodeEnum } from "./types/PostTransactions.ts";
 export { postTransactions403CodeEnum } from "./types/PostTransactions.ts";
 export { postTransactions404CodeEnum } from "./types/PostTransactions.ts";
 export { postTransactionsMutationRequestTypeEnum } from "./types/PostTransactions.ts";
+export { postTransactionsImportConfirm400CodeEnum } from "./types/PostTransactionsImportConfirm.ts";
+export { postTransactionsImportConfirm401CodeEnum } from "./types/PostTransactionsImportConfirm.ts";
+export { postTransactionsImportConfirm403CodeEnum } from "./types/PostTransactionsImportConfirm.ts";
+export { postTransactionsImportConfirm404CodeEnum } from "./types/PostTransactionsImportConfirm.ts";
+export { transactionsTypeEnum2 } from "./types/PostTransactionsImportConfirm.ts";
+export { postTransactionsImportPreview200FormatEnum } from "./types/PostTransactionsImportPreview.ts";
+export { postTransactionsImportPreview400CodeEnum } from "./types/PostTransactionsImportPreview.ts";
+export { postTransactionsImportPreview401CodeEnum } from "./types/PostTransactionsImportPreview.ts";
+export { postTransactionsImportPreview403CodeEnum } from "./types/PostTransactionsImportPreview.ts";
+export { transactionsTypeEnum } from "./types/PostTransactionsImportPreview.ts";
 export { postUsers400CodeEnum } from "./types/PostUsers.ts";
 export { postUsers409CodeEnum } from "./types/PostUsers.ts";
 export { postWorkspaces201RoleEnum } from "./types/PostWorkspaces.ts";

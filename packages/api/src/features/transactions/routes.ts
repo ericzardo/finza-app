@@ -2,15 +2,20 @@ import { appErrorSchema } from '@errors/app-error-schemas';
 import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
+import { confirmImportController } from './controllers/confirm-import.controller';
 import { createTransactionController } from './controllers/create-transaction.controller';
 import { deleteTransactionController } from './controllers/delete-transaction.controller';
 import { listInternalTransactionsController } from './controllers/list-internal-transactions.controller';
 import { listTransactionsController } from './controllers/list-transactions.controller';
+import { previewImportController } from './controllers/preview-import.controller';
 import { updateTransactionController } from './controllers/update-transaction.controller';
 import {
   createTransactionBodySchema,
   createTransactionResponseSchema,
   deleteTransactionParamsSchema,
+  importConfirmBodySchema,
+  importConfirmResponseSchema,
+  importPreviewResponseSchema,
   listInternalTransactionsQuerySchema,
   listInternalTransactionsResponseSchema,
   listTransactionsQuerySchema,
@@ -144,5 +149,59 @@ export async function transactionsRoutes(fastify: FastifyInstance) {
       },
     },
     (request, reply) => updateTransactionController(request, reply, fastify),
+  );
+
+  // --- Import ---
+
+  fastify.withTypeProvider<ZodTypeProvider>().post(
+    '/transactions/import/preview',
+    {
+      preHandler: [fastify.authenticate, fastify.validateWorkspace],
+      schema: {
+        tags: ['transactions'],
+        summary: 'Preview de importação de extrato',
+        description:
+          'Recebe um arquivo bancário (OFX, CSV Nubank ou CSV Inter) e retorna as transações parseadas para revisão. Não salva nada no banco.',
+        consumes: ['multipart/form-data'],
+        response: {
+          200: importPreviewResponseSchema,
+          400: appErrorSchema.describe(
+            'Formato não reconhecido, arquivo vazio ou erro de parsing',
+          ),
+          401: appErrorSchema.describe('Token inválido ou ausente'),
+          403: appErrorSchema.describe('Sem permissão no workspace'),
+        },
+        produces: ['application/json'],
+        security: [{ cookieAuth: [] }],
+      },
+    },
+    (request, reply) => previewImportController(request, reply, fastify),
+  );
+
+  fastify.withTypeProvider<ZodTypeProvider>().post(
+    '/transactions/import/confirm',
+    {
+      preHandler: [fastify.authenticate, fastify.validateWorkspace],
+      schema: {
+        tags: ['transactions'],
+        summary: 'Confirmar importação de transações',
+        description:
+          'Recebe as transações aprovadas pelo usuário e as salva no Caixa de Entrada (INBOX) do workspace. Transações duplicadas (mesma data, valor e descrição) são automaticamente ignoradas.',
+        body: importConfirmBodySchema,
+        response: {
+          200: importConfirmResponseSchema,
+          400: appErrorSchema.describe('Erro de validação'),
+          401: appErrorSchema.describe('Token inválido ou ausente'),
+          403: appErrorSchema.describe('Sem permissão no workspace'),
+          404: appErrorSchema.describe(
+            'Caixa de Entrada (INBOX) não encontrado no workspace',
+          ),
+        },
+        consumes: ['application/json'],
+        produces: ['application/json'],
+        security: [{ cookieAuth: [] }],
+      },
+    },
+    (request, reply) => confirmImportController(request, reply, fastify),
   );
 }

@@ -271,3 +271,54 @@ export const updateTransactionResponseSchema = z.object({
   category_id: z.string().nullable().describe('ID da categoria'),
   created_at: z.string().datetime().describe('Data de criação do registro'),
 });
+
+// --- POST /transactions/import/preview ---
+
+export const importFormatSchema = z.enum(['OFX', 'NUBANK_CSV', 'INTER_CSV']);
+
+export const previewTransactionSchema = z.object({
+  date: z.string().datetime().describe('Data da transação (ISO 8601)'),
+  amount: z.number().describe('Valor absoluto em BRL (float, sempre positivo)'),
+  description: z.string().describe('Descrição original da transação'),
+  type: z
+    .enum(['INCOME', 'EXPENSE'])
+    .describe('Tipo inferido pelo sinal do valor'),
+});
+
+export const importPreviewResponseSchema = z.object({
+  format: importFormatSchema.describe('Formato detectado do arquivo'),
+  transactions: z
+    .array(previewTransactionSchema)
+    .describe('Transações parseadas do arquivo'),
+  count: z.number().describe('Total de transações encontradas'),
+});
+
+// --- POST /transactions/import/confirm ---
+
+export const importConfirmItemSchema = z.object({
+  date: z.coerce.date().describe('Data da transação'),
+  amount: z
+    .number()
+    .positive('O valor deve ser maior que zero')
+    .describe('Valor absoluto da transação'),
+  description: z
+    .string()
+    .min(1, 'A descrição é obrigatória')
+    .describe('Descrição da transação'),
+  type: z
+    .enum(['INCOME', 'EXPENSE'])
+    .describe('Tipo da transação: INCOME ou EXPENSE'),
+});
+
+export const importConfirmBodySchema = z.object({
+  transactions: z
+    .array(importConfirmItemSchema)
+    .min(1, 'Envie ao menos uma transação')
+    .describe('Transações aprovadas pelo usuário'),
+});
+
+export const importConfirmResponseSchema = z.object({
+  imported: z.number().describe('Transações efetivamente importadas'),
+  duplicates: z.number().describe('Transações ignoradas por duplicidade'),
+  total: z.number().describe('Total recebido no request'),
+});
