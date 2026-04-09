@@ -72,4 +72,6 @@ jobs:
             git pull origin staging
             docker compose -f infra/docker-compose.prod.yml pull
             docker compose -f infra/docker-compose.prod.yml up -d
+            docker exec infra-api-prod-1 bunx prisma migrate deploy
+            docker exec infra-api-prod-1 bun run db/prisma/seed.ts || true
             docker image prune -f
