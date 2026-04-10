@@ -437,105 +437,101 @@ function PreviewTable({
         </Badge>
       </div>
 
-      <div className="max-h-[60vh] overflow-y-auto overflow-x-auto rounded-lg border border-border">
-        {/* Header */}
-        <div className="sticky top-0 z-10 flex min-w-[540px] items-center gap-3 border-b border-border bg-muted/80 px-3 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground backdrop-blur-sm">
-          <button
-            type="button"
-            onClick={onToggleAll}
-            className={cn(
-              "flex size-4 shrink-0 items-center justify-center rounded border transition-colors",
-              allSelected
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-muted-foreground/30 hover:border-primary/50",
-            )}
-            aria-label={allSelected ? "Desmarcar todas" : "Selecionar todas"}
-          >
-            {allSelected && (
-              <CheckCircle2 className="size-3" />
-            )}
-          </button>
-          <span className="w-20">Data</span>
-          <span className="flex-1">Descrição</span>
-          <span className="w-20 text-center">Tipo</span>
-          <span className="w-28 text-right">Valor</span>
+      {/* Negative margins on mobile to negate dialog padding; normal on sm+ */}
+      <div className="-mx-4 border-y border-border sm:mx-0 sm:rounded-lg sm:border">
+        <div className="max-h-80 overflow-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead className="sticky top-0 z-10">
+              <tr className="border-b border-border bg-muted text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <th className="w-10 py-2 pl-4 pr-1 text-left sm:pl-3">
+                  <button
+                    type="button"
+                    onClick={onToggleAll}
+                    className={cn(
+                      "flex size-4 shrink-0 items-center justify-center rounded border transition-colors",
+                      allSelected
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground/30 hover:border-primary/50",
+                    )}
+                    aria-label={allSelected ? "Desmarcar todas" : "Selecionar todas"}
+                  >
+                    {allSelected && <CheckCircle2 className="size-3" />}
+                  </button>
+                </th>
+                <th className="w-20 px-3 py-2 text-left">Data</th>
+                <th className="px-3 py-2 text-left">Descrição</th>
+                <th className="w-24 px-3 py-2 text-center">Tipo</th>
+                <th className="w-28 py-2 pl-3 pr-4 text-right sm:pr-3">Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.map((tx, index) => {
+                const isSelected = selected.has(index);
+                const isIncome = tx.type === "INCOME";
+                const formattedDate = new Date(tx.date).toLocaleDateString("pt-BR", {
+                  day: "2-digit",
+                  month: "2-digit",
+                });
+
+                return (
+                  <tr
+                    key={`${tx.date}-${tx.amount}-${tx.description}-${index}`}
+                    onClick={() => onToggleItem(index)}
+                    className={cn(
+                      "cursor-pointer border-b border-border transition-colors last:border-b-0",
+                      isSelected
+                        ? "bg-background hover:bg-muted/30"
+                        : "bg-muted/10 opacity-60 hover:opacity-80",
+                    )}
+                  >
+                    <td className="py-2.5 pl-4 pr-1 sm:pl-3">
+                      <span
+                        className={cn(
+                          "flex size-4 shrink-0 items-center justify-center rounded border transition-colors",
+                          isSelected
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-muted-foreground/30",
+                        )}
+                      >
+                        {isSelected && <CheckCircle2 className="size-3" />}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5 tabular-nums text-muted-foreground">
+                      {formattedDate}
+                    </td>
+                    <td className="max-w-0 truncate px-3 py-2.5 text-foreground">
+                      {tx.description}
+                    </td>
+                    <td className="px-3 py-2.5 text-center">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-xs",
+                          isIncome
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
+                            : "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-400",
+                        )}
+                      >
+                        {isIncome ? "Receita" : "Despesa"}
+                      </Badge>
+                    </td>
+                    <td
+                      className={cn(
+                        "whitespace-nowrap py-2.5 pl-3 pr-4 text-right font-semibold tabular-nums sm:pr-3",
+                        isIncome
+                          ? "text-emerald-700 dark:text-emerald-400"
+                          : "text-foreground",
+                      )}
+                    >
+                      {isIncome ? "+ " : "- "}
+                      {formatCurrency(tx.amount, "BRL")}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
-
-        {/* Rows */}
-        {transactions.map((tx, index) => {
-          const isSelected = selected.has(index);
-          const isIncome = tx.type === "INCOME";
-          const formattedDate = new Date(tx.date).toLocaleDateString("pt-BR", {
-            day: "2-digit",
-            month: "2-digit",
-          });
-
-          return (
-            <button
-              type="button"
-              key={`${tx.date}-${tx.amount}-${tx.description}-${index}`}
-              onClick={() => onToggleItem(index)}
-              className={cn(
-                "flex w-full min-w-[540px] items-center gap-3 border-b border-border px-3 py-2.5 text-left transition-colors last:border-b-0",
-                isSelected
-                  ? "bg-background hover:bg-muted/30"
-                  : "bg-muted/10 opacity-60 hover:opacity-80",
-              )}
-            >
-              {/* Checkbox */}
-              <span
-                className={cn(
-                  "flex size-4 shrink-0 items-center justify-center rounded border transition-colors",
-                  isSelected
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "border-muted-foreground/30",
-                )}
-              >
-                {isSelected && (
-                  <CheckCircle2 className="size-3" />
-                )}
-              </span>
-
-              {/* Data */}
-              <span className="w-20 text-sm tabular-nums text-muted-foreground">
-                {formattedDate}
-              </span>
-
-              {/* Descrição */}
-              <span className="flex-1 truncate text-sm text-foreground">
-                {tx.description}
-              </span>
-
-              {/* Tipo */}
-              <span className="w-20 text-center">
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "text-[10px]",
-                    isIncome
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
-                      : "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-950/40 dark:text-red-400",
-                  )}
-                >
-                  {isIncome ? "Receita" : "Despesa"}
-                </Badge>
-              </span>
-
-              {/* Valor */}
-              <span
-                className={cn(
-                  "w-28 text-right text-sm font-semibold tabular-nums",
-                  isIncome
-                    ? "text-emerald-700 dark:text-emerald-400"
-                    : "text-foreground",
-                )}
-              >
-                {isIncome ? "+ " : "- "}
-                {formatCurrency(tx.amount, "BRL")}
-              </span>
-            </button>
-          );
-        })}
       </div>
     </div>
   );
