@@ -373,19 +373,34 @@ function UploadDropzone({
         <p className="mb-2 text-xs font-medium text-muted-foreground">
           O que esperamos encontrar no arquivo:
         </p>
-        <div className="grid grid-cols-3 gap-2 text-center text-xs">
-          <div className="rounded-md border border-border bg-background px-2 py-1.5">
-            <span className="font-medium text-foreground">Data</span>
-            <span className="ml-1 text-muted-foreground">(Obrigatório)</span>
-          </div>
-          <div className="rounded-md border border-border bg-background px-2 py-1.5">
-            <span className="font-medium text-foreground">Descrição</span>
-            <span className="ml-1 text-muted-foreground">(Opcional)</span>
-          </div>
-          <div className="rounded-md border border-border bg-background px-2 py-1.5">
-            <span className="font-medium text-foreground">Valor</span>
-            <span className="ml-1 text-muted-foreground">(Obrigatório)</span>
-          </div>
+        <div className="overflow-hidden rounded-md border border-border text-xs">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border bg-muted/60">
+                <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">
+                  Data <span className="font-normal opacity-70">(obrigatório)</span>
+                </th>
+                <th className="px-3 py-1.5 text-left font-medium text-muted-foreground">
+                  Descrição <span className="font-normal opacity-70">(opcional)</span>
+                </th>
+                <th className="px-3 py-1.5 text-right font-medium text-muted-foreground">
+                  Valor <span className="font-normal opacity-70">(obrigatório)</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="text-muted-foreground/80">
+              <tr className="border-b border-border/50">
+                <td className="px-3 py-1.5 tabular-nums">01/04/2026</td>
+                <td className="px-3 py-1.5">Supermercado XYZ</td>
+                <td className="px-3 py-1.5 text-right tabular-nums">-250,50</td>
+              </tr>
+              <tr>
+                <td className="px-3 py-1.5 tabular-nums">05/04/2026</td>
+                <td className="px-3 py-1.5">Salário</td>
+                <td className="px-3 py-1.5 text-right tabular-nums">5.000,00</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
