@@ -7,17 +7,20 @@ const NUBANK_HEADERS = [
   'data,titulo,valor', // PT-BR sem acento
 ];
 
-const INTER_HEADERS = ['data lançamento', 'data lancamento'];
+const INTER_KEYWORDS = ['data lançamento', 'data lancamento'];
 
-function getFirstLine(content: string): string {
-  const newlineIndex = content.indexOf('\n');
-  const line =
-    newlineIndex === -1 ? content : content.substring(0, newlineIndex);
+const MAX_HEADER_SCAN_LINES = 15;
+
+function normalizeLine(line: string): string {
   return line
     .trim()
     .toLowerCase()
     .replace(/["']/g, '')
     .replace(/\s*;\s*/g, ';');
+}
+
+function getLines(content: string, max: number): string[] {
+  return content.split(/\r?\n/, max);
 }
 
 export function detectFormat(filename: string, content: string): ImportFormat {
@@ -28,19 +31,35 @@ export function detectFormat(filename: string, content: string): ImportFormat {
   }
 
   if (ext === 'csv') {
-    const firstLine = getFirstLine(content);
+    const rawLines = getLines(content, MAX_HEADER_SCAN_LINES);
 
-    // Verifica headers do Inter (usa ; como delimitador)
-    for (const header of INTER_HEADERS) {
-      if (firstLine.includes(header)) {
+    // Escaneia as primeiras linhas procurando padrões de cada banco.
+    // Extratos do Inter frequentemente têm 5-6 linhas de metadados antes
+    // do cabeçalho real.
+    for (const raw of rawLines) {
+      const line = normalizeLine(raw);
+      if (!line) continue;
+
+      for (const keyword of INTER_KEYWORDS) {
+        if (line.includes(keyword)) {
+          return 'INTER_CSV';
+        }
+      }
+
+      // Heurística: linha com ";" contendo "data" e "valor" (ou "historico")
+      if (
+        line.includes(';') &&
+        line.includes('data') &&
+        (line.includes('valor') || line.includes('historico') || line.includes('histórico'))
+      ) {
         return 'INTER_CSV';
       }
     }
 
-    // Verifica headers do Nubank (usa , como delimitador)
-    const commaFirstLine = firstLine.replace(/\s*,\s*/g, ',');
+    // Nubank: header na 1ª linha, delimitador vírgula
+    const firstLine = normalizeLine(rawLines[0] ?? '').replace(/\s*,\s*/g, ',');
     for (const header of NUBANK_HEADERS) {
-      if (commaFirstLine.startsWith(header)) {
+      if (firstLine.startsWith(header)) {
         return 'NUBANK_CSV';
       }
     }
