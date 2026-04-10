@@ -2,6 +2,7 @@ import { MonthRangePicker } from "@components/shared/month-range-picker";
 import { Button } from "@components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { CreateTransactionDialog } from "@features/transactions/components/create-transaction-dialog";
+import { ImportTransactionsDialog } from "@features/transactions/components/import-transactions-dialog";
 import { InternalTransactionTable } from "@features/transactions/components/internal-transaction-table";
 import { TransactionTable } from "@features/transactions/components/transaction-table";
 import {
@@ -25,7 +26,7 @@ import { getMonthRange } from "@lib/date";
 import { setPageMeta } from "@lib/seo";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Plus } from "lucide-react";
+import { Plus, Upload } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
 
@@ -71,6 +72,7 @@ function TransactionsPage() {
 	const { start, end } = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
 	const [createOpen, setCreateOpen] = useState(false);
+	const [importOpen, setImportOpen] = useState(false);
 	const [editingTransaction, setEditingTransaction] =
 		useState<Transaction | null>(null);
 	const [activeTab, setActiveTab] = useState("transactions");
@@ -138,27 +140,45 @@ function TransactionsPage() {
 					</p>
 				</div>
 				<div className="flex flex-col-reverse gap-3 md:flex-row md:items-start">
-					<MonthRangePicker
-						startDate={startDate}
-						endDate={endDate}
-						onChange={handleDateChange}
-					/>
-					<Button
-						variant="accent"
-						onClick={() => setCreateOpen(true)}
-						size={isMobile ? "lg" : "default"}
-						className="w-full shrink-0 md:w-auto"
-					>
-						<Plus className="size-4" />
-						Nova transação
-					</Button>
+					<div className="flex gap-2">
+						<Button
+							variant="outline"
+							onClick={() => setImportOpen(true)}
+							size={isMobile ? "lg" : "default"}
+							className="w-full shrink-0 md:w-auto"
+						>
+							<Upload className="size-4" />
+							Importar
+						</Button>
+						<Button
+							variant="accent"
+							onClick={() => setCreateOpen(true)}
+							size={isMobile ? "lg" : "default"}
+							className="w-full shrink-0 md:w-auto"
+						>
+							<Plus className="size-4" />
+							Nova transação
+						</Button>
+					</div>
 				</div>
 			</div>
 
 			<Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-				<TabsList variant="line">
-					<TabsTrigger value="transactions">Transações</TabsTrigger>
-					<TabsTrigger value="internal">Movimentações Internas</TabsTrigger>
+				<TabsList variant="line" className="w-full">
+					<span className="w-fit">
+						<TabsTrigger value="transactions">Transações</TabsTrigger>
+						<TabsTrigger value="internal">Movimentações Internas</TabsTrigger>
+					</span>
+
+					<div className="flex w-full flex-1 justify-end	">
+						<MonthRangePicker
+							startDate={startDate}
+							endDate={endDate}
+							onChange={handleDateChange}
+						/>
+					</div>
+
+
 				</TabsList>
 
 				<TabsContent value="transactions" className="mt-4">
@@ -186,6 +206,8 @@ function TransactionsPage() {
 			</Tabs>
 
 			<CreateTransactionDialog open={createOpen} onOpenChange={setCreateOpen} />
+
+			<ImportTransactionsDialog open={importOpen} onOpenChange={setImportOpen} />
 
 			<UpdateTransactionDialog
 				transaction={editingTransaction}
