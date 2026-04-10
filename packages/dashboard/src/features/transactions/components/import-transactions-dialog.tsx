@@ -208,9 +208,7 @@ export function ImportTransactionsDialog({
 
   return (
     <ResponsiveDialog open={open} onOpenChange={handleClose}>
-      <ResponsiveDialogContent
-        className={cn(step === "preview" && "sm:max-w-2xl")}
-      >
+      <ResponsiveDialogContent className="sm:max-w-3xl">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>Importar transações</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
@@ -343,7 +341,7 @@ function UploadDropzone({
         role="button"
         tabIndex={0}
         className={cn(
-          "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-6 py-16 text-center transition-colors",
+          "flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed px-6 py-12 text-center transition-colors",
           dragOver
             ? "border-primary bg-primary/5"
             : "border-border hover:border-primary/40 hover:bg-muted/50",
@@ -439,9 +437,9 @@ function PreviewTable({
         </Badge>
       </div>
 
-      <div className="max-h-80 overflow-y-auto rounded-lg border border-border">
+      <div className="max-h-[60vh] overflow-y-auto overflow-x-auto rounded-lg border border-border">
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-border bg-muted/80 px-3 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground backdrop-blur-sm">
+        <div className="sticky top-0 z-10 flex min-w-[540px] items-center gap-3 border-b border-border bg-muted/80 px-3 py-2 text-xs font-medium uppercase tracking-wider text-muted-foreground backdrop-blur-sm">
           <button
             type="button"
             onClick={onToggleAll}
@@ -478,7 +476,7 @@ function PreviewTable({
               key={`${tx.date}-${tx.amount}-${tx.description}-${index}`}
               onClick={() => onToggleItem(index)}
               className={cn(
-                "flex w-full items-center gap-3 border-b border-border px-3 py-2.5 text-left transition-colors last:border-b-0",
+                "flex w-full min-w-[540px] items-center gap-3 border-b border-border px-3 py-2.5 text-left transition-colors last:border-b-0",
                 isSelected
                   ? "bg-background hover:bg-muted/30"
                   : "bg-muted/10 opacity-60 hover:opacity-80",
