@@ -4294,6 +4294,463 @@
         }
       }
     },
+    "/transactions/import/preview": {
+      "post": {
+        "summary": "Preview de importação de extrato",
+        "tags": [
+          "transactions"
+        ],
+        "description": "Recebe um arquivo bancário (OFX, CSV Nubank ou CSV Inter) e retorna as transações parseadas para revisão. Não salva nada no banco.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "format": {
+                      "type": "string",
+                      "enum": [
+                        "OFX",
+                        "NUBANK_CSV",
+                        "INTER_CSV"
+                      ],
+                      "description": "Formato detectado do arquivo"
+                    },
+                    "transactions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "date": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
+                            "description": "Data da transação (ISO 8601)"
+                          },
+                          "amount": {
+                            "type": "number",
+                            "description": "Valor absoluto em BRL (float, sempre positivo)"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Descrição original da transação"
+                          },
+                          "type": {
+                            "type": "string",
+                            "enum": [
+                              "INCOME",
+                              "EXPENSE"
+                            ],
+                            "description": "Tipo inferido pelo sinal do valor"
+                          }
+                        },
+                        "required": [
+                          "date",
+                          "amount",
+                          "description",
+                          "type"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Transações parseadas do arquivo"
+                    },
+                    "count": {
+                      "type": "number",
+                      "description": "Total de transações encontradas"
+                    }
+                  },
+                  "required": [
+                    "format",
+                    "transactions",
+                    "count"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Formato não reconhecido, arquivo vazio ou erro de parsing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Formato não reconhecido, arquivo vazio ou erro de parsing"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/import/confirm": {
+      "post": {
+        "summary": "Confirmar importação de transações",
+        "tags": [
+          "transactions"
+        ],
+        "description": "Recebe as transações aprovadas pelo usuário e as salva no Caixa de Entrada (INBOX) do workspace. Transações duplicadas (mesma data, valor e descrição) são automaticamente ignoradas.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "transactions": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "date": {
+                          "description": "Data da transação"
+                        },
+                        "amount": {
+                          "type": "number",
+                          "minimum": 0,
+                          "exclusiveMinimum": true,
+                          "description": "Valor absoluto da transação"
+                        },
+                        "description": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Descrição da transação"
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "INCOME",
+                            "EXPENSE"
+                          ],
+                          "description": "Tipo da transação: INCOME ou EXPENSE"
+                        }
+                      },
+                      "required": [
+                        "date",
+                        "amount",
+                        "description",
+                        "type"
+                      ]
+                    },
+                    "description": "Transações aprovadas pelo usuário"
+                  }
+                },
+                "required": [
+                  "transactions"
+                ]
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "imported": {
+                      "type": "number",
+                      "description": "Transações efetivamente importadas"
+                    },
+                    "duplicates": {
+                      "type": "number",
+                      "description": "Transações ignoradas por duplicidade"
+                    },
+                    "total": {
+                      "type": "number",
+                      "description": "Total recebido no request"
+                    }
+                  },
+                  "required": [
+                    "imported",
+                    "duplicates",
+                    "total"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Caixa de Entrada (INBOX) não encontrado no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Caixa de Entrada (INBOX) não encontrado no workspace"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
