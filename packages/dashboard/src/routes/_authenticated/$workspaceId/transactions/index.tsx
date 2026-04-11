@@ -1,8 +1,14 @@
+import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { CreateTransactionDialog } from "@features/transactions/components/create-transaction-dialog";
 import { ImportTransactionsDialog } from "@features/transactions/components/import-transactions-dialog";
 import { InternalTransactionTable } from "@features/transactions/components/internal-transaction-table";
+import {
+	type TransactionFilters,
+	TransactionFiltersDialog,
+} from "@features/transactions/components/transaction-filters-dialog";
+import { TransactionPagination } from "@features/transactions/components/transaction-pagination";
 import { TransactionTable } from "@features/transactions/components/transaction-table";
 import {
 	InternalTransactionsTableSkeleton,
@@ -21,17 +27,29 @@ import {
 } from "@finza/api-client/hooks";
 import { useIsMobile } from "@hooks/use-mobile";
 import { getWorkspaceQueryOptions } from "@lib/api-client/workspace-queries";
-import { getMonthRange } from "@lib/date";
 import { setPageMeta } from "@lib/seo";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Upload } from "lucide-react";
-import { useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Plus, SlidersHorizontal, Upload } from "lucide-react";
+import { useMemo, useState } from "react";
 import { z } from "zod";
+
+const DEFAULT_LIMIT = 20;
 
 const searchSchema = z.object({
 	start: z.string().optional(),
 	end: z.string().optional(),
+	bucketId: z.string().optional(),
+	type: z.enum(["INCOME", "EXPENSE"]).optional(),
+	isPaid: z.enum(["true", "false"]).optional(),
+	page: z.coerce.number().int().positive().optional().default(1),
+	limit: z.coerce
+		.number()
+		.int()
+		.positive()
+		.max(100)
+		.optional()
+		.default(DEFAULT_LIMIT),
 });
 
 export const Route = createFileRoute(
@@ -48,17 +66,32 @@ export const Route = createFileRoute(
 	loaderDeps: ({ search }) => ({
 		start: search.start,
 		end: search.end,
+		bucketId: search.bucketId,
+		type: search.type,
+		isPaid: search.isPaid,
+		page: search.page,
+		limit: search.limit,
 	}),
 	loader: ({ context, deps }) => {
-		const defaults = getMonthRange();
-		const startDate = deps.start ?? defaults.startDate;
-		const endDate = deps.end ?? defaults.endDate;
+		const isPaidBool =
+			deps.isPaid === undefined ? undefined : deps.isPaid === "true";
 		return Promise.all([
 			context.queryClient.ensureQueryData(
-				getTransactionsQueryOptions({ startDate, endDate }),
+				getTransactionsQueryOptions({
+					startDate: deps.start,
+					endDate: deps.end,
+					bucketId: deps.bucketId,
+					type: deps.type,
+					isPaid: isPaidBool,
+					page: deps.page,
+					limit: deps.limit,
+				}),
 			),
 			context.queryClient.ensureQueryData(
-				getTransactionsInternalQueryOptions({ startDate, endDate }),
+				getTransactionsInternalQueryOptions({
+					startDate: deps.start,
+					endDate: deps.end,
+				}),
 			),
 		]);
 	},
@@ -68,37 +101,94 @@ export const Route = createFileRoute(
 
 function TransactionsPage() {
 	const { workspaceId } = Route.useParams();
-	const { start, end } = Route.useSearch();
+	const search = Route.useSearch();
+	const navigate = useNavigate({ from: Route.fullPath });
 	const [createOpen, setCreateOpen] = useState(false);
 	const [importOpen, setImportOpen] = useState(false);
+	const [filtersOpen, setFiltersOpen] = useState(false);
 	const [editingTransaction, setEditingTransaction] =
 		useState<Transaction | null>(null);
 	const [activeTab, setActiveTab] = useState("transactions");
 	const isMobile = useIsMobile();
 
-	const defaults = getMonthRange();
-	const startDate = start ?? defaults.startDate;
-	const endDate = end ?? defaults.endDate;
+	const page = search.page ?? 1;
+	const limit = search.limit ?? DEFAULT_LIMIT;
 
 	const { data: workspace } = useQuery(getWorkspaceQueryOptions(workspaceId));
 	const currency = workspace?.currency ?? "BRL";
+
+	const isPaidBool =
+		search.isPaid === undefined ? undefined : search.isPaid === "true";
 
 	const {
 		data: transactionsData,
 		isLoading,
 		isError,
 		refetch,
-	} = useGetTransactions({ startDate, endDate });
+	} = useGetTransactions({
+		startDate: search.start,
+		endDate: search.end,
+		bucketId: search.bucketId,
+		type: search.type,
+		isPaid: isPaidBool,
+		page,
+		limit,
+	});
 
 	const { data: internalData, isLoading: isLoadingInternal } =
-		useGetTransactionsInternal({ startDate, endDate });
+		useGetTransactionsInternal({
+			startDate: search.start,
+			endDate: search.end,
+		});
 
 	const transactions = transactionsData?.data ?? [];
 	const internalTransactions = internalData?.data ?? [];
+	const total = transactionsData?.total ?? 0;
+
+	const activeFilterCount = useMemo(() => {
+		let count = 0;
+		if (search.start || search.end) count++;
+		if (search.bucketId) count++;
+		if (search.type) count++;
+		if (search.isPaid !== undefined) count++;
+		return count;
+	}, [search.start, search.end, search.bucketId, search.type, search.isPaid]);
+
+	function handleApplyFilters(filters: TransactionFilters) {
+		navigate({
+			search: {
+				start: filters.start,
+				end: filters.end,
+				bucketId: filters.bucketId,
+				type: filters.type,
+				isPaid: filters.isPaid,
+				page: 1,
+				limit,
+			},
+			replace: true,
+			resetScroll: false,
+		});
+	}
+
+	function handlePageChange(newPage: number) {
+		navigate({
+			search: (prev) => ({ ...prev, page: newPage }),
+			replace: true,
+			resetScroll: false,
+		});
+	}
+
+	function handleLimitChange(newLimit: number) {
+		navigate({
+			search: (prev) => ({ ...prev, limit: newLimit, page: 1 }),
+			replace: true,
+			resetScroll: false,
+		});
+	}
 
 	if (isError) {
 		return (
-			<div className="shell-container px-4 py-8 md:px-0">
+			<div className="shell-container py-8">
 				<div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-destructive/50 bg-destructive/5 py-16 text-center">
 					<p className="text-sm font-medium text-destructive">
 						Erro ao carregar as transações
@@ -118,8 +208,16 @@ function TransactionsPage() {
 		);
 	}
 
+	const filtersKey = JSON.stringify({
+		start: search.start,
+		end: search.end,
+		bucketId: search.bucketId,
+		type: search.type,
+		isPaid: search.isPaid,
+	});
+
 	return (
-		<div className="shell-container px-4 py-8">
+		<div className="shell-container py-8">
 			<div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-4">
 				<div className="space-y-1">
 					<h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -130,7 +228,24 @@ function TransactionsPage() {
 					</p>
 				</div>
 				<div className="flex flex-col-reverse gap-3 md:flex-row md:items-start">
-					<div className="flex flex-col md:flex-row gap-2">
+					<div className="flex gap-2">
+						<Button
+							variant="outline"
+							onClick={() => setFiltersOpen(true)}
+							size={isMobile ? "lg" : "default"}
+							className="relative w-full shrink-0 md:w-auto"
+						>
+							<SlidersHorizontal className="size-4" />
+							Filtros
+							{activeFilterCount > 0 && (
+								<Badge
+									variant="default"
+									className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full p-0 text-[10px]"
+								>
+									{activeFilterCount}
+								</Badge>
+							)}
+						</Button>
 						<Button
 							variant="outline"
 							onClick={() => setImportOpen(true)}
@@ -154,28 +269,33 @@ function TransactionsPage() {
 			</div>
 
 			<Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-				<div className="flex flex-col-reverse gap-3 md:flex-row md:items-center md:justify-between">
-					<TabsList variant="line">
+				<TabsList variant="line">
+					<span className="w-fit">
 						<TabsTrigger value="transactions">Transações</TabsTrigger>
 						<TabsTrigger value="internal">Movimentações Internas</TabsTrigger>
-					</TabsList>
-
-					{/* <MonthRangePicker
-						startDate={startDate}
-						endDate={endDate}
-						onChange={handleDateChange}
-					/> */}
-				</div>
+					</span>
+				</TabsList>
 
 				<TabsContent value="transactions" className="mt-4">
 					{isLoading ? (
 						<TransactionsTableSkeleton />
 					) : (
-						<TransactionTable
-							transactions={transactions}
-							currency={currency}
-							onEdit={setEditingTransaction}
-						/>
+						<>
+							<TransactionTable
+								transactions={transactions}
+								currency={currency}
+								onEdit={setEditingTransaction}
+							/>
+							{transactions.length > 0 && (
+								<TransactionPagination
+									page={page}
+									limit={limit}
+									total={total}
+									onPageChange={handlePageChange}
+									onLimitChange={handleLimitChange}
+								/>
+							)}
+						</>
 					)}
 				</TabsContent>
 
@@ -201,6 +321,20 @@ function TransactionsPage() {
 				onOpenChange={(open) => {
 					if (!open) setEditingTransaction(null);
 				}}
+			/>
+
+			<TransactionFiltersDialog
+				key={filtersKey}
+				open={filtersOpen}
+				onOpenChange={setFiltersOpen}
+				filters={{
+					start: search.start,
+					end: search.end,
+					bucketId: search.bucketId,
+					type: search.type,
+					isPaid: search.isPaid,
+				}}
+				onApply={handleApplyFilters}
 			/>
 		</div>
 	);
