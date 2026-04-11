@@ -160,22 +160,27 @@ export const internalTransactionTypeSchema = z.enum([
 const internalTransactionEntrySchema = z.object({
   id: z
     .string()
-    .describe('ID da entrada (transfer_pair_id para pares, transaction id para solo)'),
+    .describe(
+      'ID da entrada (transfer_pair_id para pares, transaction id para solo)',
+    ),
   internal_type: internalTransactionTypeSchema.describe(
     'Tipo da transação interna',
   ),
-  date: z
-    .string()
-    .datetime()
-    .describe('Data da transação interna (ISO 8601)'),
+  date: z.string().datetime().describe('Data da transação interna (ISO 8601)'),
   amount: z.number().describe('Valor da transação'),
   description: z.string().nullable().describe('Descrição da transação'),
   transfer_pair_id: z
     .string()
     .nullable()
     .describe('ID do par (null para transações solo como BALANCE_ADJUSTMENT)'),
-  from_bucket_name: z.string().nullable().describe('Nome do caixa de origem (null para solo)'),
-  to_bucket_name: z.string().nullable().describe('Nome do caixa de destino (null para solo)'),
+  from_bucket_name: z
+    .string()
+    .nullable()
+    .describe('Nome do caixa de origem (null para solo)'),
+  to_bucket_name: z
+    .string()
+    .nullable()
+    .describe('Nome do caixa de destino (null para solo)'),
 });
 
 export const listInternalTransactionsResponseSchema = z.object({
@@ -183,7 +188,9 @@ export const listInternalTransactionsResponseSchema = z.object({
     .array(internalTransactionEntrySchema)
     .describe('Lista de transações internas'),
   meta: z.object({
-    total: z.number().describe('Total de entradas que correspondem aos filtros'),
+    total: z
+      .number()
+      .describe('Total de entradas que correspondem aos filtros'),
     page: z.number().describe('Página atual'),
     limit: z.number().describe('Itens por página'),
   }),
@@ -331,7 +338,9 @@ export const importConfirmBodySchema = z.object({
   balanceAdjustment: z
     .number()
     .optional()
-    .describe('Saldo alvo para ajuste. Se fornecido, cria transação de ajuste.'),
+    .describe(
+      'Saldo alvo para ajuste. Se fornecido, cria transação de ajuste.',
+    ),
 });
 
 export const importConfirmResponseSchema = z.object({
