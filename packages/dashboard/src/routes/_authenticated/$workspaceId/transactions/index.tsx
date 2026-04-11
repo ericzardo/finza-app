@@ -108,7 +108,7 @@ function TransactionsPage() {
 
 	if (isError) {
 		return (
-			<div className="shell-container py-8">
+			<div className="shell-container px-4 py-8 md:px-0">
 				<div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-destructive/50 bg-destructive/5 py-16 text-center">
 					<p className="text-sm font-medium text-destructive">
 						Erro ao carregar as transações
@@ -129,7 +129,7 @@ function TransactionsPage() {
 	}
 
 	return (
-		<div className="shell-container py-8">
+		<div className="shell-container px-4 py-8 md:px-0">
 			<div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-4">
 				<div className="space-y-1">
 					<h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -164,22 +164,18 @@ function TransactionsPage() {
 			</div>
 
 			<Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-				<TabsList variant="line" className="w-full">
-					<span className="w-fit">
+				<div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+					<TabsList variant="line">
 						<TabsTrigger value="transactions">Transações</TabsTrigger>
 						<TabsTrigger value="internal">Movimentações Internas</TabsTrigger>
-					</span>
+					</TabsList>
 
-					<div className="flex w-full flex-1 justify-end	">
-						<MonthRangePicker
-							startDate={startDate}
-							endDate={endDate}
-							onChange={handleDateChange}
-						/>
-					</div>
-
-
-				</TabsList>
+					<MonthRangePicker
+						startDate={startDate}
+						endDate={endDate}
+						onChange={handleDateChange}
+					/>
+				</div>
 
 				<TabsContent value="transactions" className="mt-4">
 					{isLoading ? (

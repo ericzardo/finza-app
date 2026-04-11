@@ -63,21 +63,24 @@ function useNavItems(workspaceId: string): NavItem[] {
 export interface SidebarProps {
 	className?: string;
 	onNavigate?: () => void;
+	collapsible?: boolean;
 }
 
 const EXPANDED_WIDTH = 240;
 const COLLAPSED_WIDTH = 64;
 
-export function Sidebar({ className, onNavigate }: SidebarProps) {
+export function Sidebar({ className, onNavigate, collapsible = true }: SidebarProps) {
 	const [collapsed, setCollapsed] = useState(false);
 	const { workspaceId } = useParams({ from: "/_authenticated/$workspaceId" });
 	const navItems = useNavItems(workspaceId);
 	const routerState = useRouterState();
 	const pathname = routerState.location.pathname;
 
+	const isCollapsed = collapsible && collapsed;
+
 	return (
 		<motion.aside
-			animate={{ width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH }}
+			animate={{ width: collapsible ? (isCollapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH) : "100%" }}
 			transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
 			className={twMerge(
 				"relative hidden h-screen shrink-0 flex-col border-r border-border/50 bg-card md:flex",
@@ -88,7 +91,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
 			<div className="flex h-14 items-center overflow-hidden border-b border-border/50 px-3">
 				<Link to="/dashboard" className="flex shrink-0 items-center">
 					<AnimatePresence initial={false} mode="wait">
-						{collapsed ? (
+						{isCollapsed ? (
 							<motion.img
 								key="favicon"
 								src="/favicon.svg"
@@ -127,7 +130,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
 						<Link
 							key={item.path}
 							to={item.path}
-							title={collapsed ? item.label : undefined}
+							title={isCollapsed ? item.label : undefined}
 							className={twMerge(
 								"group flex h-9 items-center gap-3 rounded-lg px-2.5 text-sm transition-colors duration-150",
 								isActive
@@ -146,7 +149,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
 							</span>
 
 							<AnimatePresence initial={false}>
-								{!collapsed && (
+								{!isCollapsed && (
 									<motion.span
 										key="label"
 										initial={{ opacity: 0, x: -4 }}
@@ -165,15 +168,16 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
 			</nav>
 
 			{/* Toggle button */}
+			{collapsible && (
 			<div className="border-t border-border/50 px-2 py-3">
 				<button
 					type="button"
 					onClick={() => setCollapsed((prev) => !prev)}
 					className="flex h-9 w-full items-center gap-3 rounded-lg px-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground cursor-pointer"
-					title={collapsed ? "Expandir sidebar" : "Recolher sidebar"}
+					title={isCollapsed ? "Expandir sidebar" : "Recolher sidebar"}
 				>
 					<span className="flex shrink-0 items-center justify-center">
-						{collapsed ? (
+						{isCollapsed ? (
 							<ChevronRight className="size-5" />
 						) : (
 							<ChevronLeft className="size-5" />
@@ -181,7 +185,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
 					</span>
 
 					<AnimatePresence initial={false}>
-						{!collapsed && (
+						{!isCollapsed && (
 							<motion.span
 								key="toggle-label"
 								initial={{ opacity: 0, x: -4 }}
@@ -196,6 +200,7 @@ export function Sidebar({ className, onNavigate }: SidebarProps) {
 					</AnimatePresence>
 				</button>
 			</div>
+			)}
 		</motion.aside>
 	);
 }

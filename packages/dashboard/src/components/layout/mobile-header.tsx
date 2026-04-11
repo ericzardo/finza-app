@@ -41,7 +41,7 @@ export function MobileHeader() {
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0">
               <SheetTitle className="sr-only">Navegação</SheetTitle>
-              <Sidebar className="flex! h-full w-full border-r-0" onNavigate={() => setOpen(false)} />
+              <Sidebar className="flex! h-full w-full border-r-0" onNavigate={() => setOpen(false)} collapsible={false} />
             </SheetContent>
           </Sheet>
 
