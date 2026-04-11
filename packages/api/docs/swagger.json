@@ -1680,6 +1680,10 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "totalBalance": {
+                      "type": "number",
+                      "description": "Patrimônio total all-time (receitas pagas − despesas pagas, sem filtro de período)"
+                    },
                     "currentBalance": {
                       "type": "number",
                       "description": "Saldo atual (receitas pagas − despesas pagas no período)"
@@ -1735,6 +1739,7 @@
                     }
                   },
                   "required": [
+                    "totalBalance",
                     "currentBalance",
                     "maxBalance",
                     "totalInvested",
@@ -3019,9 +3024,10 @@
                       "type": "boolean",
                       "description": "Status de pagamento"
                     },
-                    "is_internal": {
-                      "type": "boolean",
-                      "description": "Se verdadeiro, é uma transferência interna automática (Cascata)"
+                    "internal_type": {
+                      "nullable": true,
+                      "description": "Tipo da transação interna (CASCADE, DISTRIBUTION, BALANCE_ADJUSTMENT). Null se não interna.",
+                      "type": "string"
                     },
                     "transfer_pair_id": {
                       "nullable": true,
@@ -3063,7 +3069,7 @@
                     "description",
                     "date",
                     "is_paid",
-                    "is_internal",
+                    "internal_type",
                     "transfer_pair_id",
                     "bucket_id",
                     "bank_account_id",
@@ -3358,8 +3364,9 @@
                           "is_paid": {
                             "type": "boolean"
                           },
-                          "is_internal": {
-                            "type": "boolean"
+                          "internal_type": {
+                            "nullable": true,
+                            "type": "string"
                           },
                           "transfer_pair_id": {
                             "nullable": true,
@@ -3395,7 +3402,7 @@
                           "description",
                           "date",
                           "is_paid",
-                          "is_internal",
+                          "internal_type",
                           "transfer_pair_id",
                           "bucket_id",
                           "bank_account_id",
@@ -4078,9 +4085,10 @@
                       "type": "boolean",
                       "description": "Status de pagamento"
                     },
-                    "is_internal": {
-                      "type": "boolean",
-                      "description": "Se verdadeiro, é uma transferência interna automática (Cascata)"
+                    "internal_type": {
+                      "nullable": true,
+                      "description": "Tipo da transação interna (CASCADE, DISTRIBUTION, BALANCE_ADJUSTMENT). Null se não interna.",
+                      "type": "string"
                     },
                     "transfer_pair_id": {
                       "nullable": true,
@@ -4122,7 +4130,7 @@
                     "description",
                     "date",
                     "is_paid",
-                    "is_internal",
+                    "internal_type",
                     "transfer_pair_id",
                     "bucket_id",
                     "bank_account_id",
@@ -4364,12 +4372,18 @@
                     "count": {
                       "type": "number",
                       "description": "Total de transações encontradas"
+                    },
+                    "extractedBalance": {
+                      "nullable": true,
+                      "description": "Saldo extraído dos metadados do arquivo (null se indisponível)",
+                      "type": "number"
                     }
                   },
                   "required": [
                     "format",
                     "transactions",
-                    "count"
+                    "count",
+                    "extractedBalance"
                   ],
                   "additionalProperties": false
                 }
@@ -4547,6 +4561,10 @@
                       ]
                     },
                     "description": "Transações aprovadas pelo usuário"
+                  },
+                  "balanceAdjustment": {
+                    "description": "Saldo alvo para ajuste. Se fornecido, cria transação de ajuste.",
+                    "type": "number"
                   }
                 },
                 "required": [

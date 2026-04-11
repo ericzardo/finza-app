@@ -31,7 +31,7 @@ export function createPostTransactions201(
 			description: faker.string.alpha(),
 			date: faker.date.anytime().toISOString(),
 			is_paid: faker.datatype.boolean(),
-			is_internal: faker.datatype.boolean(),
+			internal_type: faker.string.alpha(),
 			transfer_pair_id: faker.string.alpha(),
 			bucket_id: faker.string.alpha(),
 			bank_account_id: faker.string.alpha(),

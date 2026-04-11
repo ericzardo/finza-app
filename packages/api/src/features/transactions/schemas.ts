@@ -293,6 +293,10 @@ export const importPreviewResponseSchema = z.object({
     .array(previewTransactionSchema)
     .describe('Transações parseadas do arquivo'),
   count: z.number().describe('Total de transações encontradas'),
+  extractedBalance: z
+    .number()
+    .nullable()
+    .describe('Saldo extraído dos metadados do arquivo (null se indisponível)'),
 });
 
 // --- POST /transactions/import/confirm ---
@@ -317,6 +321,10 @@ export const importConfirmBodySchema = z.object({
     .array(importConfirmItemSchema)
     .min(1, 'Envie ao menos uma transação')
     .describe('Transações aprovadas pelo usuário'),
+  balanceAdjustment: z
+    .number()
+    .optional()
+    .describe('Saldo alvo para ajuste. Se fornecido, cria transação de ajuste.'),
 });
 
 export const importConfirmResponseSchema = z.object({

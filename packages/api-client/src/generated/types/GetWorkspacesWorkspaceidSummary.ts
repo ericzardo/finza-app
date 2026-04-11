@@ -27,6 +27,11 @@ export type GetWorkspacesWorkspaceidSummaryQueryParams = {
  */
 export type GetWorkspacesWorkspaceidSummary200 = {
 	/**
+	 * @description Patrimônio total all-time (receitas pagas − despesas pagas, sem filtro de período)
+	 * @type number
+	 */
+	totalBalance: number;
+	/**
 	 * @description Saldo atual (receitas pagas − despesas pagas no período)
 	 * @type number
 	 */

@@ -1,5 +1,5 @@
 import { parse as parseOFX } from 'ofx-js';
-import type { PreviewTransaction } from './types';
+import type { ParseResult, PreviewTransaction } from './types';
 
 interface OFXTransaction {
   TRNTYPE: string;
@@ -41,7 +41,7 @@ function parseOFXDate(raw: string): string {
   return new Date(`${year}-${month}-${day}T12:00:00.000Z`).toISOString();
 }
 
-export async function parseOfx(content: string): Promise<PreviewTransaction[]> {
+export async function parseOfx(content: string): Promise<ParseResult> {
   const ofxData = (await parseOFX(content)) as unknown as OFXParsedData;
 
   const statementResponse =
@@ -57,15 +57,15 @@ export async function parseOfx(content: string): Promise<PreviewTransaction[]> {
   const rawTransactions = statementResponse.BANKTRANLIST?.STMTTRN;
 
   if (!rawTransactions) {
-    return [];
+    return { transactions: [], extractedBalance: null };
   }
 
   // ofx-js pode retornar um único objeto ou um array
-  const transactions: OFXTransaction[] = Array.isArray(rawTransactions)
+  const ofxTransactions: OFXTransaction[] = Array.isArray(rawTransactions)
     ? rawTransactions
     : [rawTransactions];
 
-  return transactions.map((trn) => {
+  const transactions: PreviewTransaction[] = ofxTransactions.map((trn) => {
     const rawAmount = Number.parseFloat(trn.TRNAMT);
     const amount = Math.abs(rawAmount);
     const type: 'INCOME' | 'EXPENSE' = rawAmount >= 0 ? 'INCOME' : 'EXPENSE';
@@ -74,4 +74,6 @@ export async function parseOfx(content: string): Promise<PreviewTransaction[]> {
 
     return { date, amount, description, type };
   });
+
+  return { transactions, extractedBalance: null };
 }

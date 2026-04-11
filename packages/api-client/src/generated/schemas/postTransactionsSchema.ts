@@ -16,11 +16,13 @@ export const postTransactions201Schema = z.object({
 	description: z.string().describe("Descrição da transação"),
 	date: z.iso.datetime().describe("Data da transação (ISO 8601)"),
 	is_paid: z.boolean().describe("Status de pagamento"),
-	is_internal: z
-		.boolean()
-		.describe(
-			"Se verdadeiro, é uma transferência interna automática (Cascata)",
-		),
+	internal_type: z.nullable(
+		z
+			.string()
+			.describe(
+				"Tipo da transação interna (CASCADE, DISTRIBUTION, BALANCE_ADJUSTMENT). Null se não interna.",
+			),
+	),
 	transfer_pair_id: z.nullable(
 		z.string().describe("ID que liga o par de transações internas da Cascata"),
 	),

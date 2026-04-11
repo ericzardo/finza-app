@@ -1,5 +1,5 @@
 import { parse } from 'csv-parse/sync';
-import type { PreviewTransaction } from './types';
+import type { ParseResult, PreviewTransaction } from './types';
 
 // Nubank exporta CSVs com headers variados:
 // EN: "Date","Title","Amount"  (conta corrente)
@@ -29,7 +29,7 @@ function normalizeHeaders(headers: string[]): string[] {
   });
 }
 
-export function parseNubankCsv(content: string): PreviewTransaction[] {
+export function parseNubankCsv(content: string): ParseResult {
   const records = parse(content, {
     columns: (headers: string[]) => normalizeHeaders(headers),
     skip_empty_lines: true,
@@ -38,7 +38,7 @@ export function parseNubankCsv(content: string): PreviewTransaction[] {
     bom: true,
   }) as Record<string, string>[];
 
-  return records
+  const transactions: PreviewTransaction[] = records
     .filter((row) => row.date && row.amount)
     .map((row) => {
       const rawAmount = Number.parseFloat(row.amount.replace(',', '.'));
@@ -51,4 +51,6 @@ export function parseNubankCsv(content: string): PreviewTransaction[] {
 
       return { date, amount, description, type };
     });
+
+  return { transactions, extractedBalance: null };
 }

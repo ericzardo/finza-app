@@ -40,6 +40,7 @@ export function createGetWorkspacesWorkspaceidSummary200(
 ): GetWorkspacesWorkspaceidSummary200 {
 	return {
 		...{
+			totalBalance: faker.number.float(),
 			currentBalance: faker.number.float(),
 			maxBalance: faker.number.float(),
 			totalInvested: faker.number.float(),

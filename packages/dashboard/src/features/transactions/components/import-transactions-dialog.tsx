@@ -65,6 +65,7 @@ export function ImportTransactionsDialog({
     useState<PostTransactionsImportPreviewMutationResponse | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [dragOver, setDragOver] = useState(false);
+  const [syncBalance, setSyncBalance] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -130,6 +131,7 @@ export function ImportTransactionsDialog({
       setStep("upload");
       setPreviewData(null);
       setSelected(new Set());
+      setSyncBalance(false);
     }, 300);
   }
 
@@ -175,6 +177,9 @@ export function ImportTransactionsDialog({
         description: tx.description,
         type: tx.type,
       })),
+      ...(syncBalance && previewData.extractedBalance != null
+        ? { balanceAdjustment: previewData.extractedBalance }
+        : {}),
     };
 
     setStep("importing");
@@ -246,6 +251,36 @@ export function ImportTransactionsDialog({
               onToggleItem={toggleItem}
               onToggleAll={toggleAll}
             />
+
+            {previewData.extractedBalance != null && (
+              <div className="rounded-lg border border-border bg-muted/30 p-3">
+                <label className="flex cursor-pointer items-start gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSyncBalance((v) => !v)}
+                    className={cn(
+                      "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded border transition-colors",
+                      syncBalance
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-muted-foreground/30 hover:border-primary/50",
+                    )}
+                  >
+                    {syncBalance && <CheckCircle2 className="size-3" />}
+                  </button>
+                  <div className="space-y-0.5">
+                    <span className="text-sm font-medium text-foreground">
+                      Sincronizar saldo com o extrato
+                    </span>
+                    <p className="text-xs text-muted-foreground">
+                      Saldo identificado no extrato:{" "}
+                      <span className="font-medium text-foreground">
+                        {formatCurrency(previewData.extractedBalance, "BRL")}
+                      </span>
+                    </p>
+                  </div>
+                </label>
+              </div>
+            )}
 
             <ResponsiveDialogFooter className="flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted-foreground">
@@ -439,7 +474,7 @@ function PreviewTable({
 
       {/* Negative margins on mobile to negate dialog padding; normal on sm+ */}
       <div className="-mx-4 border-y border-border sm:mx-0 sm:rounded-lg sm:border">
-        <div className="max-h-80 overflow-auto">
+        <div className="max-h-80 overflow-auto" data-lenis-prevent>
           <table className="w-full border-collapse text-sm">
             <thead className="sticky top-0 z-10">
               <tr className="border-b border-border bg-muted text-xs font-medium uppercase tracking-wider text-muted-foreground">
