@@ -19,7 +19,7 @@ import {
 import type { Bucket } from "@features/buckets/types";
 import { useGetBuckets } from "@finza/api-client/hooks";
 import { useIsMobile } from "@hooks/use-mobile";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const ALL_VALUE = "__all__";
 
@@ -28,7 +28,7 @@ export interface TransactionFilters {
 	end?: string;
 	bucketId?: string;
 	type?: "INCOME" | "EXPENSE";
-	isPaid?: boolean;
+	isPaid?: "true" | "false";
 }
 
 export interface TransactionFiltersDialogProps {
@@ -57,22 +57,8 @@ export function TransactionFiltersDialog({
 	const [bucketId, setBucketId] = useState(filters.bucketId ?? ALL_VALUE);
 	const [type, setType] = useState<string>(filters.type ?? ALL_VALUE);
 	const [isPaid, setIsPaid] = useState<string>(
-		filters.isPaid === undefined ? ALL_VALUE : String(filters.isPaid),
+		filters.isPaid ?? ALL_VALUE,
 	);
-
-	useEffect(() => {
-		if (open) {
-			setStart(filters.start ?? "");
-			setEnd(filters.end ?? "");
-			setBucketId(filters.bucketId ?? ALL_VALUE);
-			setType(filters.type ?? ALL_VALUE);
-			setIsPaid(
-				filters.isPaid === undefined
-					? ALL_VALUE
-					: String(filters.isPaid),
-			);
-		}
-	}, [open, filters]);
 
 	function handleApply() {
 		onApply({
@@ -83,7 +69,10 @@ export function TransactionFiltersDialog({
 				type === ALL_VALUE
 					? undefined
 					: (type as "INCOME" | "EXPENSE"),
-			isPaid: isPaid === ALL_VALUE ? undefined : isPaid === "true",
+			isPaid:
+				isPaid === ALL_VALUE
+					? undefined
+					: (isPaid as "true" | "false"),
 		});
 		onOpenChange(false);
 	}

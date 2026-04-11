@@ -41,10 +41,7 @@ const searchSchema = z.object({
 	end: z.string().optional(),
 	bucketId: z.string().optional(),
 	type: z.enum(["INCOME", "EXPENSE"]).optional(),
-	isPaid: z
-		.enum(["true", "false"])
-		.transform((v) => v === "true")
-		.optional(),
+	isPaid: z.enum(["true", "false"]).optional(),
 	page: z.coerce.number().int().positive().optional().default(1),
 	limit: z.coerce
 		.number()
@@ -76,6 +73,8 @@ export const Route = createFileRoute(
 		limit: search.limit,
 	}),
 	loader: ({ context, deps }) => {
+		const isPaidBool =
+			deps.isPaid === undefined ? undefined : deps.isPaid === "true";
 		return Promise.all([
 			context.queryClient.ensureQueryData(
 				getTransactionsQueryOptions({
@@ -83,7 +82,7 @@ export const Route = createFileRoute(
 					endDate: deps.end,
 					bucketId: deps.bucketId,
 					type: deps.type,
-					isPaid: deps.isPaid,
+					isPaid: isPaidBool,
 					page: deps.page,
 					limit: deps.limit,
 				}),
@@ -118,6 +117,9 @@ function TransactionsPage() {
 	const { data: workspace } = useQuery(getWorkspaceQueryOptions(workspaceId));
 	const currency = workspace?.currency ?? "BRL";
 
+	const isPaidBool =
+		search.isPaid === undefined ? undefined : search.isPaid === "true";
+
 	const {
 		data: transactionsData,
 		isLoading,
@@ -128,7 +130,7 @@ function TransactionsPage() {
 		endDate: search.end,
 		bucketId: search.bucketId,
 		type: search.type,
-		isPaid: search.isPaid,
+		isPaid: isPaidBool,
 		page,
 		limit,
 	});
@@ -159,12 +161,7 @@ function TransactionsPage() {
 				end: filters.end,
 				bucketId: filters.bucketId,
 				type: filters.type,
-				isPaid:
-					filters.isPaid === undefined
-						? undefined
-						: filters.isPaid
-							? "true"
-							: "false",
+				isPaid: filters.isPaid,
 				page: 1,
 				limit,
 			},
@@ -210,6 +207,14 @@ function TransactionsPage() {
 			</div>
 		);
 	}
+
+	const filtersKey = JSON.stringify({
+		start: search.start,
+		end: search.end,
+		bucketId: search.bucketId,
+		type: search.type,
+		isPaid: search.isPaid,
+	});
 
 	return (
 		<div className="shell-container py-8">
@@ -319,6 +324,7 @@ function TransactionsPage() {
 			/>
 
 			<TransactionFiltersDialog
+				key={filtersKey}
 				open={filtersOpen}
 				onOpenChange={setFiltersOpen}
 				filters={{
