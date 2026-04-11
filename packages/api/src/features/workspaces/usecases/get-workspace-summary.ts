@@ -1,4 +1,9 @@
-import { type PrismaClient, TransactionType, BucketType } from '@prisma/client';
+import {
+  type PrismaClient,
+  TransactionType,
+  BucketType,
+  InternalType,
+} from '@prisma/client';
 
 export interface BucketDistributionItem {
   bucketId: string;
@@ -28,6 +33,11 @@ function safeNumber(val: unknown): number {
   return Number.isNaN(n) ? 0 : n;
 }
 
+const summaryInternalTypeOr = [
+  { internal_type: null as null },
+  { internal_type: InternalType.BALANCE_ADJUSTMENT },
+];
+
 export async function getWorkspaceSummary(
   db: PrismaClient,
   workspaceId: string,
@@ -49,7 +59,7 @@ export async function getWorkspaceSummary(
     where: {
       workspace_id: workspaceId,
       is_paid: true,
-      internal_type: null,
+      OR: summaryInternalTypeOr,
       canceled_at: null,
       ...dateFilter,
     },
@@ -73,7 +83,7 @@ export async function getWorkspaceSummary(
     where: {
       workspace_id: workspaceId,
       is_paid: true,
-      internal_type: null,
+      OR: summaryInternalTypeOr,
       canceled_at: null,
     },
     _sum: { amount: true },
@@ -104,7 +114,7 @@ export async function getWorkspaceSummary(
         workspace_id: workspaceId,
         bucket_id: { in: investmentBucketIds },
         is_paid: true,
-        internal_type: null,
+        OR: summaryInternalTypeOr,
         canceled_at: null,
         ...dateFilter,
       },
@@ -121,7 +131,7 @@ export async function getWorkspaceSummary(
     where: {
       workspace_id: workspaceId,
       is_paid: false,
-      internal_type: null,
+      OR: summaryInternalTypeOr,
       canceled_at: null,
       date: { lte: today },
     },
@@ -134,7 +144,7 @@ export async function getWorkspaceSummary(
     where: {
       workspace_id: workspaceId,
       is_paid: true,
-      internal_type: null,
+      OR: summaryInternalTypeOr,
       canceled_at: null,
       type: { in: [TransactionType.INCOME, TransactionType.EXPENSE] },
       ...dateFilter,
@@ -165,7 +175,7 @@ export async function getWorkspaceSummary(
     where: {
       workspace_id: workspaceId,
       is_paid: true,
-      internal_type: null,
+      OR: summaryInternalTypeOr,
       canceled_at: null,
       bucket_id: { not: null },
       ...dateFilter,
@@ -179,7 +189,7 @@ export async function getWorkspaceSummary(
       transaction: {
         workspace_id: workspaceId,
         is_paid: true,
-        internal_type: null,
+        OR: summaryInternalTypeOr,
         canceled_at: null,
         ...dateFilter,
       },

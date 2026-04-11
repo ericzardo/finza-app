@@ -33,27 +33,37 @@ export const getTransactionsInternal200Schema = z.object({
 	data: z
 		.array(
 			z.object({
-				transfer_pair_id: z
+				id: z
 					.string()
-					.describe("ID que liga o par de transações internas"),
-				date: z.iso
-					.datetime()
-					.describe("Data da transferência interna (ISO 8601)"),
-				amount: z.number().describe("Valor transferido entre caixas"),
-				from_bucket_name: z
-					.string()
-					.describe("Nome do caixa de origem (débito)"),
-				to_bucket_name: z
-					.string()
-					.describe("Nome do caixa de destino (crédito)"),
-				reason: z
-					.enum(["CASCADE_INSUFFICIENT_BALANCE"])
-					.describe("Motivo da transferência interna"),
+					.describe(
+						"ID da entrada (transfer_pair_id para pares, transaction id para solo)",
+					),
+				internal_type: z
+					.enum(["CASCADE", "DISTRIBUTION", "BALANCE_ADJUSTMENT"])
+					.describe("Tipo da transação interna"),
+				date: z.iso.datetime().describe("Data da transação interna (ISO 8601)"),
+				amount: z.number().describe("Valor da transação"),
+				description: z.nullable(z.string().describe("Descrição da transação")),
+				transfer_pair_id: z.nullable(
+					z
+						.string()
+						.describe(
+							"ID do par (null para transações solo como BALANCE_ADJUSTMENT)",
+						),
+				),
+				from_bucket_name: z.nullable(
+					z.string().describe("Nome do caixa de origem (null para solo)"),
+				),
+				to_bucket_name: z.nullable(
+					z.string().describe("Nome do caixa de destino (null para solo)"),
+				),
 			}),
 		)
-		.describe("Lista de pares de transferências internas"),
+		.describe("Lista de transações internas"),
 	meta: z.object({
-		total: z.number().describe("Total de pares que correspondem aos filtros"),
+		total: z
+			.number()
+			.describe("Total de entradas que correspondem aos filtros"),
 		page: z.number().describe("Página atual"),
 		limit: z.number().describe("Itens por página"),
 	}),

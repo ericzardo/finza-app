@@ -4,12 +4,14 @@ import { cn } from "@lib/utils";
 import { ArrowLeftRight } from "lucide-react";
 
 interface InternalTransaction {
-  transfer_pair_id: string;
+  id: string;
+  internal_type: string;
   date: string;
   amount: number;
-  from_bucket_name: string;
-  to_bucket_name: string;
-  reason: string;
+  description: string | null;
+  transfer_pair_id: string | null;
+  from_bucket_name: string | null;
+  to_bucket_name: string | null;
 }
 
 interface InternalTransactionTableProps {
@@ -40,20 +42,31 @@ export function InternalTransactionTable({
       {/* Desktop header */}
       <div className="hidden items-center gap-4 border-b border-border bg-muted/50 px-4 py-2.5 text-xs font-medium uppercase tracking-wider text-muted-foreground md:flex">
         <span className="w-20">Data</span>
-        <span className="flex-1">De</span>
-        <span className="flex-1">Para</span>
+        <span className="flex-1">Descrição</span>
         <span className="w-28 text-right">Valor</span>
       </div>
 
       {transactions.map((tx) => (
         <InternalTransactionRow
-          key={tx.transfer_pair_id}
+          key={tx.id}
           transaction={tx}
           currency={currency}
         />
       ))}
     </div>
   );
+}
+
+function getTransactionLabel(tx: InternalTransaction): string {
+  if (tx.from_bucket_name && tx.to_bucket_name) {
+    return `${tx.from_bucket_name} → ${tx.to_bucket_name}`;
+  }
+  if (tx.description) {
+    return tx.to_bucket_name
+      ? `${tx.description} → ${tx.to_bucket_name}`
+      : tx.description;
+  }
+  return tx.to_bucket_name ?? 'Movimentação interna';
 }
 
 function InternalTransactionRow({
@@ -67,6 +80,8 @@ function InternalTransactionRow({
     day: "2-digit",
     month: "2-digit",
   });
+
+  const label = getTransactionLabel(tx);
 
   return (
     <div
@@ -82,9 +97,7 @@ function InternalTransactionRow({
             {formattedDate}
           </span>
           <span className="truncate text-sm text-foreground">
-            {tx.from_bucket_name}
-            <span className="mx-1.5 text-muted-foreground">→</span>
-            {tx.to_bucket_name}
+            {label}
           </span>
         </div>
         <Sensitive className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
@@ -97,10 +110,7 @@ function InternalTransactionRow({
         {formattedDate}
       </span>
       <span className="hidden flex-1 truncate text-sm text-foreground md:block">
-        {tx.from_bucket_name}
-      </span>
-      <span className="hidden flex-1 truncate text-sm text-foreground md:block">
-        {tx.to_bucket_name}
+        {label}
       </span>
       <Sensitive className="hidden w-28 text-right text-sm font-semibold tabular-nums text-foreground md:block">
         {formatCurrency(tx.amount, currency)}
