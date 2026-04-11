@@ -6,8 +6,8 @@ import { ImportTransactionsDialog } from "@features/transactions/components/impo
 import { InternalTransactionTable } from "@features/transactions/components/internal-transaction-table";
 import {
 	type TransactionFilters,
-	TransactionFiltersDrawer,
-} from "@features/transactions/components/transaction-filters-drawer";
+	TransactionFiltersDialog,
+} from "@features/transactions/components/transaction-filters-dialog";
 import { TransactionPagination } from "@features/transactions/components/transaction-pagination";
 import { TransactionTable } from "@features/transactions/components/transaction-table";
 import {
@@ -27,7 +27,6 @@ import {
 } from "@finza/api-client/hooks";
 import { useIsMobile } from "@hooks/use-mobile";
 import { getWorkspaceQueryOptions } from "@lib/api-client/workspace-queries";
-import { getMonthRange } from "@lib/date";
 import { setPageMeta } from "@lib/seo";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -77,14 +76,11 @@ export const Route = createFileRoute(
 		limit: search.limit,
 	}),
 	loader: ({ context, deps }) => {
-		const defaults = getMonthRange();
-		const startDate = deps.start ?? defaults.startDate;
-		const endDate = deps.end ?? defaults.endDate;
 		return Promise.all([
 			context.queryClient.ensureQueryData(
 				getTransactionsQueryOptions({
-					startDate,
-					endDate,
+					startDate: deps.start,
+					endDate: deps.end,
 					bucketId: deps.bucketId,
 					type: deps.type,
 					isPaid: deps.isPaid,
@@ -93,7 +89,10 @@ export const Route = createFileRoute(
 				}),
 			),
 			context.queryClient.ensureQueryData(
-				getTransactionsInternalQueryOptions({ startDate, endDate }),
+				getTransactionsInternalQueryOptions({
+					startDate: deps.start,
+					endDate: deps.end,
+				}),
 			),
 		]);
 	},
@@ -113,9 +112,6 @@ function TransactionsPage() {
 	const [activeTab, setActiveTab] = useState("transactions");
 	const isMobile = useIsMobile();
 
-	const defaults = getMonthRange();
-	const startDate = search.start ?? defaults.startDate;
-	const endDate = search.end ?? defaults.endDate;
 	const page = search.page ?? 1;
 	const limit = search.limit ?? DEFAULT_LIMIT;
 
@@ -128,8 +124,8 @@ function TransactionsPage() {
 		isError,
 		refetch,
 	} = useGetTransactions({
-		startDate,
-		endDate,
+		startDate: search.start,
+		endDate: search.end,
 		bucketId: search.bucketId,
 		type: search.type,
 		isPaid: search.isPaid,
@@ -138,7 +134,10 @@ function TransactionsPage() {
 	});
 
 	const { data: internalData, isLoading: isLoadingInternal } =
-		useGetTransactionsInternal({ startDate, endDate });
+		useGetTransactionsInternal({
+			startDate: search.start,
+			endDate: search.end,
+		});
 
 	const transactions = transactionsData?.data ?? [];
 	const internalTransactions = internalData?.data ?? [];
@@ -265,7 +264,7 @@ function TransactionsPage() {
 			</div>
 
 			<Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-				<TabsList variant="line" className="w-full">
+				<TabsList variant="line">
 					<span className="w-fit">
 						<TabsTrigger value="transactions">Transações</TabsTrigger>
 						<TabsTrigger value="internal">Movimentações Internas</TabsTrigger>
@@ -319,7 +318,7 @@ function TransactionsPage() {
 				}}
 			/>
 
-			<TransactionFiltersDrawer
+			<TransactionFiltersDialog
 				open={filtersOpen}
 				onOpenChange={setFiltersOpen}
 				filters={{
