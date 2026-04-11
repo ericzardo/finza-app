@@ -5,6 +5,7 @@ import { parseNubankCsv } from '@features/transactions/import/parse-nubank-csv';
 import { parseOfx } from '@features/transactions/import/parse-ofx';
 import type {
   ImportFormat,
+  ParseResult,
   PreviewTransaction,
 } from '@features/transactions/import/types';
 
@@ -17,6 +18,7 @@ interface PreviewImportResult {
   format: ImportFormat;
   transactions: PreviewTransaction[];
   count: number;
+  extractedBalance: number | null;
 }
 
 export async function previewImport(
@@ -46,17 +48,17 @@ export async function previewImport(
     );
   }
 
-  let transactions: PreviewTransaction[];
+  let result: ParseResult;
   try {
     switch (format) {
       case 'OFX':
-        transactions = await parseOfx(content);
+        result = await parseOfx(content);
         break;
       case 'NUBANK_CSV':
-        transactions = parseNubankCsv(content);
+        result = parseNubankCsv(content);
         break;
       case 'INTER_CSV':
-        transactions = parseInterCsv(content);
+        result = parseInterCsv(content);
         break;
     }
   } catch (error) {
@@ -67,7 +69,7 @@ export async function previewImport(
     );
   }
 
-  if (transactions.length === 0) {
+  if (result.transactions.length === 0) {
     throw new AppError(
       ErrorCode.BAD_REQUEST,
       400,
@@ -77,7 +79,8 @@ export async function previewImport(
 
   return {
     format,
-    transactions,
-    count: transactions.length,
+    transactions: result.transactions,
+    count: result.transactions.length,
+    extractedBalance: result.extractedBalance,
   };
 }

@@ -60,10 +60,10 @@ export type PatchTransactionsTransactionid200 = {
 	 */
 	is_paid: boolean;
 	/**
-	 * @description Se verdadeiro, é uma transferência interna automática (Cascata)
-	 * @type boolean
+	 * @description Tipo da transação interna (CASCADE, DISTRIBUTION, BALANCE_ADJUSTMENT). Null se não interna.
+	 * @type string
 	 */
-	is_internal: boolean;
+	internal_type: string | null;
 	/**
 	 * @description ID que liga o par de transações internas da Cascata
 	 * @type string

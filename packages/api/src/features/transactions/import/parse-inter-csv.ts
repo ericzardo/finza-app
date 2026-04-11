@@ -1,10 +1,10 @@
 import { parse } from 'csv-parse/sync';
-import type { PreviewTransaction } from './types';
+import type { ParseResult, PreviewTransaction } from './types';
 
 // Banco Inter exporta CSV com delimitador ";" e headers como:
 // "Data Lançamento";"Histórico";"Descrição";"Valor";"Saldo"
 // Extratos reais frequentemente possuem 5-6 linhas de metadados antes do header
-// (ex: "Extrato Conta Corrente", "Período: ...", "Saldo anterior: ...").
+// (ex: "Extrato Conta Corrente", "Período: ...", "Saldo ;1.037,40").
 
 const HEADER_MAP: Record<string, string> = {
   'data lançamento': 'date',
@@ -89,9 +89,32 @@ function buildDescription(row: Record<string, string>): string {
   return parts.length > 0 ? parts.join(' - ') : 'Sem descrição';
 }
 
-export function parseInterCsv(content: string): PreviewTransaction[] {
+function extractBalanceFromMetadata(
+  lines: string[],
+  headerIndex: number,
+): number | null {
+  for (let i = 0; i < headerIndex; i++) {
+    const line = lines[i].trim();
+    if (!/^saldo\s*;/i.test(line)) continue;
+
+    const parts = line.split(';');
+    if (parts.length < 2) continue;
+
+    const rawValue = parts[1].trim().replace(/\./g, '').replace(',', '.');
+    const value = Number.parseFloat(rawValue);
+    if (!Number.isNaN(value)) return value;
+  }
+  return null;
+}
+
+export function parseInterCsv(content: string): ParseResult {
   const allLines = content.split(/\r?\n/);
   const headerIndex = findHeaderLineIndex(allLines);
+
+  const extractedBalance = extractBalanceFromMetadata(
+    allLines,
+    headerIndex > 0 ? headerIndex : allLines.length,
+  );
 
   // Se não encontrou header, tenta parsear do início (fallback)
   const csvContent =
@@ -106,7 +129,7 @@ export function parseInterCsv(content: string): PreviewTransaction[] {
     bom: true,
   }) as Record<string, string>[];
 
-  return records
+  const transactions: PreviewTransaction[] = records
     .filter((row) => row.date && row.amount)
     .map((row) => {
       const rawAmount = parseInterAmount(row.amount);
@@ -117,4 +140,6 @@ export function parseInterCsv(content: string): PreviewTransaction[] {
 
       return { date, amount, description, type };
     });
+
+  return { transactions, extractedBalance };
 }

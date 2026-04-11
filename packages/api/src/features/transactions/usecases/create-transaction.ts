@@ -23,7 +23,7 @@ export interface TransactionResult {
   description: string;
   date: string;
   is_paid: boolean;
-  is_internal: boolean;
+  internal_type: string | null;
   transfer_pair_id: string | null;
   bucket_id: string | null;
   bank_account_id: string | null;
@@ -166,7 +166,7 @@ export async function createTransaction(
               description: `Cascata: cobertura de déficit para "${description}"`,
               date,
               is_paid: true,
-              is_internal: true,
+              internal_type: 'CASCADE',
               transfer_pair_id: pairId,
               source_transaction_id: mainTransaction.id,
               bucket_id: inboxBucket.id,
@@ -178,7 +178,7 @@ export async function createTransaction(
               description: `Cascata: cobertura de déficit para "${description}"`,
               date,
               is_paid: true,
-              is_internal: true,
+              internal_type: 'CASCADE',
               transfer_pair_id: pairId,
               source_transaction_id: mainTransaction.id,
               bucket_id: resolvedBucketId,
@@ -199,7 +199,7 @@ export async function createTransaction(
     description: transaction.description,
     date: transaction.date.toISOString(),
     is_paid: transaction.is_paid,
-    is_internal: transaction.is_internal,
+    internal_type: transaction.internal_type,
     transfer_pair_id: transaction.transfer_pair_id,
     bucket_id: transaction.bucket_id,
     bank_account_id: transaction.bank_account_id,

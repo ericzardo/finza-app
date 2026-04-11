@@ -36,7 +36,7 @@ export async function listTransactions(
 
   const where = {
     workspace_id: workspaceId,
-    is_internal: false,
+    internal_type: null,
     ...(startDate || endDate
       ? {
           date: {
@@ -69,7 +69,7 @@ export async function listTransactions(
       description: t.description,
       date: t.date.toISOString(),
       is_paid: t.is_paid,
-      is_internal: t.is_internal,
+      internal_type: t.internal_type,
       transfer_pair_id: t.transfer_pair_id,
       bucket_id: t.bucket_id,
       bank_account_id: t.bank_account_id,

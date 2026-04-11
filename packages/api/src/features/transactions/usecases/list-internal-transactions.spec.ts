@@ -13,12 +13,14 @@ function makeMockInternalPair(
     amount?: number;
     fromBucketName?: string;
     toBucketName?: string;
+    internalType?: string;
   } = {},
 ) {
   const date = opts.date ?? now;
   const amount = opts.amount ?? 100;
   const fromBucket = opts.fromBucketName ?? 'Caixa de Entrada';
   const toBucket = opts.toBucketName ?? 'Investimentos';
+  const internalType = opts.internalType ?? 'CASCADE';
 
   return [
     {
@@ -32,7 +34,7 @@ function makeMockInternalPair(
       description: 'Cascata',
       date,
       is_paid: true,
-      is_internal: true,
+      internal_type: internalType,
       transfer_pair_id: transferPairId,
       bucket_id: 'inbox-id',
       bucket: { name: fromBucket },
@@ -51,7 +53,7 @@ function makeMockInternalPair(
       description: 'Cascata',
       date,
       is_paid: true,
-      is_internal: true,
+      internal_type: internalType,
       transfer_pair_id: transferPairId,
       bucket_id: 'invest-id',
       bucket: { name: toBucket },
@@ -62,13 +64,54 @@ function makeMockInternalPair(
   ];
 }
 
+function makeMockSoloTransaction(
+  id: string,
+  opts: {
+    date?: Date;
+    amount?: number;
+    bucketName?: string;
+    internalType?: string;
+    type?: 'INCOME' | 'EXPENSE';
+    description?: string;
+  } = {},
+) {
+  const date = opts.date ?? now;
+  const amount = opts.amount ?? 500;
+  const bucketName = opts.bucketName ?? 'Caixa de Entrada';
+  const internalType = opts.internalType ?? 'BALANCE_ADJUSTMENT';
+  const type = opts.type ?? 'INCOME';
+  const description = opts.description ?? 'Ajuste de saldo inicial';
+
+  return {
+    id,
+    workspace_id: 'ws-id',
+    type,
+    amount: {
+      toNumber: () => amount,
+      valueOf: () => amount,
+    } as unknown as number,
+    description,
+    date,
+    is_paid: true,
+    internal_type: internalType,
+    transfer_pair_id: null,
+    bucket_id: 'inbox-id',
+    bucket: { name: bucketName },
+    source_transaction_id: null,
+    created_at: date,
+    updated_at: date,
+  };
+}
+
 interface BuildDbOptions {
   pairs?: ReturnType<typeof makeMockInternalPair>[];
+  solos?: ReturnType<typeof makeMockSoloTransaction>[];
 }
 
 function buildDb(opts: BuildDbOptions = {}) {
-  const { pairs = [] } = opts;
-  const allTransactions = pairs.flat();
+  const { pairs = [], solos = [] } = opts;
+  const allPairedTransactions = pairs.flat();
+  const allSoloTransactions = solos;
 
   return {
     transaction: {
@@ -79,28 +122,43 @@ function buildDb(opts: BuildDbOptions = {}) {
         include?: Record<string, unknown>;
         orderBy?: Record<string, unknown>;
       }) => {
-        if (args.distinct) {
-          const seen = new Set<string>();
-          return allTransactions
-            .filter((t) => {
-              if (!t.transfer_pair_id || seen.has(t.transfer_pair_id))
-                return false;
-              seen.add(t.transfer_pair_id);
-              return true;
-            })
-            .map((t) => ({ transfer_pair_id: t.transfer_pair_id }));
+        // Distinct paired query
+        if (args.distinct && args.where && 'transfer_pair_id' in args.where) {
+          const tpFilter = args.where.transfer_pair_id;
+          if (tpFilter && typeof tpFilter === 'object' && 'not' in tpFilter) {
+            const seen = new Set<string>();
+            return allPairedTransactions
+              .filter((t) => {
+                if (!t.transfer_pair_id || seen.has(t.transfer_pair_id))
+                  return false;
+                seen.add(t.transfer_pair_id);
+                return true;
+              })
+              .map((t) => ({
+                transfer_pair_id: t.transfer_pair_id,
+                date: t.date,
+              }));
+          }
         }
 
+        // Solo query (transfer_pair_id: null)
         if (args.where && 'transfer_pair_id' in args.where) {
-          const filter = args.where.transfer_pair_id as { in: string[] };
-          return allTransactions.filter(
-            (t) =>
-              t.transfer_pair_id !== null &&
-              filter.in.includes(t.transfer_pair_id),
-          );
+          const tpFilter = args.where.transfer_pair_id;
+          if (tpFilter === null) {
+            return allSoloTransactions;
+          }
+          // Pair fetch by IDs
+          if (tpFilter && typeof tpFilter === 'object' && 'in' in tpFilter) {
+            const filter = tpFilter as { in: string[] };
+            return allPairedTransactions.filter(
+              (t) =>
+                t.transfer_pair_id !== null &&
+                filter.in.includes(t.transfer_pair_id),
+            );
+          }
         }
 
-        return allTransactions;
+        return [...allPairedTransactions, ...allSoloTransactions];
       },
     },
   } as unknown as PrismaClient;
@@ -108,7 +166,7 @@ function buildDb(opts: BuildDbOptions = {}) {
 
 describe('listInternalTransactions', () => {
   test('retorna lista vazia quando não há transações internas', async () => {
-    const db = buildDb({ pairs: [] });
+    const db = buildDb({ pairs: [], solos: [] });
     const result = await listInternalTransactions(db, {
       workspaceId: 'ws-id',
       page: 1,
@@ -138,7 +196,7 @@ describe('listInternalTransactions', () => {
     expect(result.data[0].amount).toBe(250);
     expect(result.data[0].from_bucket_name).toBe('Caixa de Entrada');
     expect(result.data[0].to_bucket_name).toBe('Investimentos');
-    expect(result.data[0].reason).toBe('CASCADE_INSUFFICIENT_BALANCE');
+    expect(result.data[0].internal_type).toBe('CASCADE');
   });
 
   test('retorna múltiplos pares ordenados', async () => {
@@ -218,5 +276,78 @@ describe('listInternalTransactions', () => {
 
     expect(result.data).toHaveLength(0);
     expect(result.meta.total).toBe(1);
+  });
+
+  test('inclui BALANCE_ADJUSTMENT como entrada solo (sem transfer_pair_id)', async () => {
+    const solo = makeMockSoloTransaction('adj-1', {
+      amount: 1500,
+      bucketName: 'Caixa de Entrada',
+      date: now,
+    });
+    const db = buildDb({ solos: [solo] });
+
+    const result = await listInternalTransactions(db, {
+      workspaceId: 'ws-id',
+      page: 1,
+      limit: 20,
+    });
+
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0].id).toBe('adj-1');
+    expect(result.data[0].internal_type).toBe('BALANCE_ADJUSTMENT');
+    expect(result.data[0].amount).toBe(1500);
+    expect(result.data[0].transfer_pair_id).toBeNull();
+    expect(result.data[0].from_bucket_name).toBeNull();
+    expect(result.data[0].to_bucket_name).toBe('Caixa de Entrada');
+    expect(result.data[0].description).toBe('Ajuste de saldo inicial');
+  });
+
+  test('mistura pares e solos ordenados por data', async () => {
+    const pair = makeMockInternalPair('pair-1', {
+      date: yesterday,
+      amount: 100,
+    });
+    const solo = makeMockSoloTransaction('adj-1', {
+      date: now,
+      amount: 500,
+    });
+    const db = buildDb({ pairs: [pair], solos: [solo] });
+
+    const result = await listInternalTransactions(db, {
+      workspaceId: 'ws-id',
+      page: 1,
+      limit: 20,
+    });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.data[0].internal_type).toBe('BALANCE_ADJUSTMENT');
+    expect(result.data[0].date).toBe(now.toISOString());
+    expect(result.data[1].internal_type).toBe('CASCADE');
+    expect(result.data[1].date).toBe(yesterday.toISOString());
+  });
+
+  test('paginação funciona com mix de pares e solos', async () => {
+    const pair1 = makeMockInternalPair('pair-1', { date: twoDaysAgo });
+    const pair2 = makeMockInternalPair('pair-2', { date: now });
+    const solo = makeMockSoloTransaction('adj-1', { date: yesterday });
+    const db = buildDb({ pairs: [pair2, pair1], solos: [solo] });
+
+    const page1 = await listInternalTransactions(db, {
+      workspaceId: 'ws-id',
+      page: 1,
+      limit: 2,
+    });
+
+    expect(page1.data).toHaveLength(2);
+    expect(page1.meta.total).toBe(3);
+
+    const page2 = await listInternalTransactions(db, {
+      workspaceId: 'ws-id',
+      page: 2,
+      limit: 2,
+    });
+
+    expect(page2.data).toHaveLength(1);
+    expect(page2.meta.total).toBe(3);
   });
 });

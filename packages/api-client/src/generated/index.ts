@@ -99,7 +99,7 @@ export type {
 	GetTransactionsQueryResponse,
 } from "./types/GetTransactions.ts";
 export type {
-	DataReasonEnumKey,
+	DataInternalTypeEnumKey,
 	GetTransactionsInternal200,
 	GetTransactionsInternal400,
 	GetTransactionsInternal400CodeEnumKey,
@@ -947,7 +947,7 @@ export { getTransactions400CodeEnum } from "./types/GetTransactions.ts";
 export { getTransactions401CodeEnum } from "./types/GetTransactions.ts";
 export { getTransactions403CodeEnum } from "./types/GetTransactions.ts";
 export { getTransactionsQueryParamsTypeEnum } from "./types/GetTransactions.ts";
-export { dataReasonEnum } from "./types/GetTransactionsInternal.ts";
+export { dataInternalTypeEnum } from "./types/GetTransactionsInternal.ts";
 export { getTransactionsInternal400CodeEnum } from "./types/GetTransactionsInternal.ts";
 export { getTransactionsInternal401CodeEnum } from "./types/GetTransactionsInternal.ts";
 export { getTransactionsInternal403CodeEnum } from "./types/GetTransactionsInternal.ts";

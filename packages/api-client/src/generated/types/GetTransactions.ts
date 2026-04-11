@@ -98,9 +98,9 @@ export type GetTransactions200 = {
 		 */
 		is_paid: boolean;
 		/**
-		 * @type boolean
+		 * @type string
 		 */
-		is_internal: boolean;
+		internal_type: string | null;
 		/**
 		 * @type string
 		 */

@@ -11,6 +11,7 @@ interface ConfirmImportItem {
 interface ConfirmImportInput {
   workspaceId: string;
   transactions: ConfirmImportItem[];
+  balanceAdjustment?: number;
 }
 
 interface ConfirmImportResult {
@@ -31,7 +32,7 @@ export async function confirmImport(
   db: PrismaClient,
   input: ConfirmImportInput,
 ): Promise<ConfirmImportResult> {
-  const { workspaceId, transactions } = input;
+  const { workspaceId, transactions, balanceAdjustment } = input;
 
   // Passo 1 — Encontrar o INBOX do workspace
   const inboxBucket = await db.bucket.findFirst({
@@ -111,6 +112,34 @@ export async function confirmImport(
           is_paid: true,
         })),
       });
+
+      // Passo 6 — Criar transação de ajuste de saldo se necessário
+      if (balanceAdjustment !== undefined) {
+        const net = newTransactions.reduce((acc, trn) => {
+          return trn.type === 'INCOME' ? acc + trn.amount : acc - trn.amount;
+        }, 0);
+
+        const adjustmentAmount = balanceAdjustment - net;
+
+        if (Math.abs(adjustmentAmount) >= 0.01) {
+          const latestDate = newTransactions.reduce((latest, trn) => {
+            return trn.date > latest ? trn.date : latest;
+          }, newTransactions[0].date);
+
+          await tx.transaction.create({
+            data: {
+              workspace_id: workspaceId,
+              bucket_id: inboxBucket.id,
+              type: adjustmentAmount > 0 ? 'INCOME' : 'EXPENSE',
+              amount: Math.abs(adjustmentAmount),
+              description: 'Ajuste de saldo inicial',
+              internal_type: 'BALANCE_ADJUSTMENT',
+              date: latestDate,
+              is_paid: true,
+            },
+          });
+        }
+      }
     });
   }
 

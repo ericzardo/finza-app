@@ -63,10 +63,11 @@ export const createTransactionResponseSchema = z.object({
   description: z.string().describe('Descrição da transação'),
   date: z.string().datetime().describe('Data da transação (ISO 8601)'),
   is_paid: z.boolean().describe('Status de pagamento'),
-  is_internal: z
-    .boolean()
+  internal_type: z
+    .string()
+    .nullable()
     .describe(
-      'Se verdadeiro, é uma transferência interna automática (Cascata)',
+      'Tipo da transação interna (CASCADE, DISTRIBUTION, BALANCE_ADJUSTMENT). Null se não interna.',
     ),
   transfer_pair_id: z
     .string()
@@ -126,7 +127,7 @@ const transactionItemSchema = z.object({
   description: z.string(),
   date: z.string().datetime(),
   is_paid: z.boolean(),
-  is_internal: z.boolean(),
+  internal_type: z.string().nullable(),
   transfer_pair_id: z.string().nullable(),
   bucket_id: z.string().nullable(),
   bank_account_id: z.string().nullable(),
@@ -150,9 +151,43 @@ export const listTransactionsResponseSchema = z.object({
 
 // --- GET /transactions/internal ---
 
-export const internalTransactionReasonSchema = z.enum([
-  'CASCADE_INSUFFICIENT_BALANCE',
+export const internalTransactionTypeSchema = z.enum([
+  'CASCADE',
+  'DISTRIBUTION',
+  'BALANCE_ADJUSTMENT',
 ]);
+
+const internalTransactionEntrySchema = z.object({
+  id: z
+    .string()
+    .describe('ID da entrada (transfer_pair_id para pares, transaction id para solo)'),
+  internal_type: internalTransactionTypeSchema.describe(
+    'Tipo da transação interna',
+  ),
+  date: z
+    .string()
+    .datetime()
+    .describe('Data da transação interna (ISO 8601)'),
+  amount: z.number().describe('Valor da transação'),
+  description: z.string().nullable().describe('Descrição da transação'),
+  transfer_pair_id: z
+    .string()
+    .nullable()
+    .describe('ID do par (null para transações solo como BALANCE_ADJUSTMENT)'),
+  from_bucket_name: z.string().nullable().describe('Nome do caixa de origem (null para solo)'),
+  to_bucket_name: z.string().nullable().describe('Nome do caixa de destino (null para solo)'),
+});
+
+export const listInternalTransactionsResponseSchema = z.object({
+  data: z
+    .array(internalTransactionEntrySchema)
+    .describe('Lista de transações internas'),
+  meta: z.object({
+    total: z.number().describe('Total de entradas que correspondem aos filtros'),
+    page: z.number().describe('Página atual'),
+    limit: z.number().describe('Itens por página'),
+  }),
+});
 
 export const listInternalTransactionsQuerySchema = z.object({
   startDate: z.coerce
@@ -176,33 +211,6 @@ export const listInternalTransactionsQuerySchema = z.object({
     .max(100, 'O limite máximo por página é 100')
     .default(20)
     .describe('Quantidade de itens por página (máx. 100)'),
-});
-
-const internalTransactionPairSchema = z.object({
-  transfer_pair_id: z
-    .string()
-    .describe('ID que liga o par de transações internas'),
-  date: z
-    .string()
-    .datetime()
-    .describe('Data da transferência interna (ISO 8601)'),
-  amount: z.number().describe('Valor transferido entre caixas'),
-  from_bucket_name: z.string().describe('Nome do caixa de origem (débito)'),
-  to_bucket_name: z.string().describe('Nome do caixa de destino (crédito)'),
-  reason: internalTransactionReasonSchema.describe(
-    'Motivo da transferência interna',
-  ),
-});
-
-export const listInternalTransactionsResponseSchema = z.object({
-  data: z
-    .array(internalTransactionPairSchema)
-    .describe('Lista de pares de transferências internas'),
-  meta: z.object({
-    total: z.number().describe('Total de pares que correspondem aos filtros'),
-    page: z.number().describe('Página atual'),
-    limit: z.number().describe('Itens por página'),
-  }),
 });
 
 // --- PATCH /transactions/:transactionId ---
@@ -256,10 +264,11 @@ export const updateTransactionResponseSchema = z.object({
   description: z.string().describe('Descrição da transação'),
   date: z.string().datetime().describe('Data da transação (ISO 8601)'),
   is_paid: z.boolean().describe('Status de pagamento'),
-  is_internal: z
-    .boolean()
+  internal_type: z
+    .string()
+    .nullable()
     .describe(
-      'Se verdadeiro, é uma transferência interna automática (Cascata)',
+      'Tipo da transação interna (CASCADE, DISTRIBUTION, BALANCE_ADJUSTMENT). Null se não interna.',
     ),
   transfer_pair_id: z
     .string()
@@ -291,6 +300,10 @@ export const importPreviewResponseSchema = z.object({
     .array(previewTransactionSchema)
     .describe('Transações parseadas do arquivo'),
   count: z.number().describe('Total de transações encontradas'),
+  extractedBalance: z
+    .number()
+    .nullable()
+    .describe('Saldo extraído dos metadados do arquivo (null se indisponível)'),
 });
 
 // --- POST /transactions/import/confirm ---
@@ -315,6 +328,10 @@ export const importConfirmBodySchema = z.object({
     .array(importConfirmItemSchema)
     .min(1, 'Envie ao menos uma transação')
     .describe('Transações aprovadas pelo usuário'),
+  balanceAdjustment: z
+    .number()
+    .optional()
+    .describe('Saldo alvo para ajuste. Se fornecido, cria transação de ajuste.'),
 });
 
 export const importConfirmResponseSchema = z.object({

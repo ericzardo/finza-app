@@ -1680,6 +1680,10 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "totalBalance": {
+                      "type": "number",
+                      "description": "Patrimônio total all-time (receitas pagas − despesas pagas, sem filtro de período)"
+                    },
                     "currentBalance": {
                       "type": "number",
                       "description": "Saldo atual (receitas pagas − despesas pagas no período)"
@@ -1735,6 +1739,7 @@
                     }
                   },
                   "required": [
+                    "totalBalance",
                     "currentBalance",
                     "maxBalance",
                     "totalInvested",
@@ -3019,9 +3024,10 @@
                       "type": "boolean",
                       "description": "Status de pagamento"
                     },
-                    "is_internal": {
-                      "type": "boolean",
-                      "description": "Se verdadeiro, é uma transferência interna automática (Cascata)"
+                    "internal_type": {
+                      "nullable": true,
+                      "description": "Tipo da transação interna (CASCADE, DISTRIBUTION, BALANCE_ADJUSTMENT). Null se não interna.",
+                      "type": "string"
                     },
                     "transfer_pair_id": {
                       "nullable": true,
@@ -3063,7 +3069,7 @@
                     "description",
                     "date",
                     "is_paid",
-                    "is_internal",
+                    "internal_type",
                     "transfer_pair_id",
                     "bucket_id",
                     "bank_account_id",
@@ -3358,8 +3364,9 @@
                           "is_paid": {
                             "type": "boolean"
                           },
-                          "is_internal": {
-                            "type": "boolean"
+                          "internal_type": {
+                            "nullable": true,
+                            "type": "string"
                           },
                           "transfer_pair_id": {
                             "nullable": true,
@@ -3395,7 +3402,7 @@
                           "description",
                           "date",
                           "is_paid",
-                          "is_internal",
+                          "internal_type",
                           "transfer_pair_id",
                           "bucket_id",
                           "bank_account_id",
@@ -3616,54 +3623,70 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "transfer_pair_id": {
+                          "id": {
                             "type": "string",
-                            "description": "ID que liga o par de transações internas"
+                            "description": "ID da entrada (transfer_pair_id para pares, transaction id para solo)"
+                          },
+                          "internal_type": {
+                            "type": "string",
+                            "enum": [
+                              "CASCADE",
+                              "DISTRIBUTION",
+                              "BALANCE_ADJUSTMENT"
+                            ],
+                            "description": "Tipo da transação interna"
                           },
                           "date": {
                             "type": "string",
                             "format": "date-time",
                             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
-                            "description": "Data da transferência interna (ISO 8601)"
+                            "description": "Data da transação interna (ISO 8601)"
                           },
                           "amount": {
                             "type": "number",
-                            "description": "Valor transferido entre caixas"
+                            "description": "Valor da transação"
+                          },
+                          "description": {
+                            "nullable": true,
+                            "description": "Descrição da transação",
+                            "type": "string"
+                          },
+                          "transfer_pair_id": {
+                            "nullable": true,
+                            "description": "ID do par (null para transações solo como BALANCE_ADJUSTMENT)",
+                            "type": "string"
                           },
                           "from_bucket_name": {
-                            "type": "string",
-                            "description": "Nome do caixa de origem (débito)"
+                            "nullable": true,
+                            "description": "Nome do caixa de origem (null para solo)",
+                            "type": "string"
                           },
                           "to_bucket_name": {
-                            "type": "string",
-                            "description": "Nome do caixa de destino (crédito)"
-                          },
-                          "reason": {
-                            "type": "string",
-                            "enum": [
-                              "CASCADE_INSUFFICIENT_BALANCE"
-                            ],
-                            "description": "Motivo da transferência interna"
+                            "nullable": true,
+                            "description": "Nome do caixa de destino (null para solo)",
+                            "type": "string"
                           }
                         },
                         "required": [
-                          "transfer_pair_id",
+                          "id",
+                          "internal_type",
                           "date",
                           "amount",
+                          "description",
+                          "transfer_pair_id",
                           "from_bucket_name",
-                          "to_bucket_name",
-                          "reason"
+                          "to_bucket_name"
                         ],
                         "additionalProperties": false
                       },
-                      "description": "Lista de pares de transferências internas"
+                      "description": "Lista de transações internas"
                     },
                     "meta": {
                       "type": "object",
                       "properties": {
                         "total": {
                           "type": "number",
-                          "description": "Total de pares que correspondem aos filtros"
+                          "description": "Total de entradas que correspondem aos filtros"
                         },
                         "page": {
                           "type": "number",
@@ -4078,9 +4101,10 @@
                       "type": "boolean",
                       "description": "Status de pagamento"
                     },
-                    "is_internal": {
-                      "type": "boolean",
-                      "description": "Se verdadeiro, é uma transferência interna automática (Cascata)"
+                    "internal_type": {
+                      "nullable": true,
+                      "description": "Tipo da transação interna (CASCADE, DISTRIBUTION, BALANCE_ADJUSTMENT). Null se não interna.",
+                      "type": "string"
                     },
                     "transfer_pair_id": {
                       "nullable": true,
@@ -4122,7 +4146,7 @@
                     "description",
                     "date",
                     "is_paid",
-                    "is_internal",
+                    "internal_type",
                     "transfer_pair_id",
                     "bucket_id",
                     "bank_account_id",
@@ -4364,12 +4388,18 @@
                     "count": {
                       "type": "number",
                       "description": "Total de transações encontradas"
+                    },
+                    "extractedBalance": {
+                      "nullable": true,
+                      "description": "Saldo extraído dos metadados do arquivo (null se indisponível)",
+                      "type": "number"
                     }
                   },
                   "required": [
                     "format",
                     "transactions",
-                    "count"
+                    "count",
+                    "extractedBalance"
                   ],
                   "additionalProperties": false
                 }
@@ -4547,6 +4577,10 @@
                       ]
                     },
                     "description": "Transações aprovadas pelo usuário"
+                  },
+                  "balanceAdjustment": {
+                    "description": "Saldo alvo para ajuste. Se fornecido, cria transação de ajuste.",
+                    "type": "number"
                   }
                 },
                 "required": [

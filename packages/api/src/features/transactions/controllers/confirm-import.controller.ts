@@ -8,6 +8,7 @@ interface ConfirmImportBody {
     description: string;
     type: 'INCOME' | 'EXPENSE';
   }[];
+  balanceAdjustment?: number;
 }
 
 export async function confirmImportController(
@@ -15,12 +16,13 @@ export async function confirmImportController(
   reply: FastifyReply,
   fastify: FastifyInstance,
 ) {
-  const { transactions } = request.body as ConfirmImportBody;
+  const { transactions, balanceAdjustment } = request.body as ConfirmImportBody;
   const workspaceId = request.workspaceId as string;
 
   const result = await confirmImport(fastify.prisma, {
     workspaceId,
     transactions,
+    balanceAdjustment,
   });
 
   return reply.code(200).send(result);

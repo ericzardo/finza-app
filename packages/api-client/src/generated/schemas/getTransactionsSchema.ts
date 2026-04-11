@@ -55,7 +55,7 @@ export const getTransactions200Schema = z.object({
 				description: z.string(),
 				date: z.iso.datetime(),
 				is_paid: z.boolean(),
-				is_internal: z.boolean(),
+				internal_type: z.nullable(z.string()),
 				transfer_pair_id: z.nullable(z.string()),
 				bucket_id: z.nullable(z.string()),
 				bank_account_id: z.nullable(z.string()),

@@ -28,6 +28,11 @@ export const getWorkspacesWorkspaceidSummaryQueryParamsSchema = z
  * @description Default Response
  */
 export const getWorkspacesWorkspaceidSummary200Schema = z.object({
+	totalBalance: z
+		.number()
+		.describe(
+			"Patrimônio total all-time (receitas pagas − despesas pagas, sem filtro de período)",
+		),
 	currentBalance: z
 		.number()
 		.describe("Saldo atual (receitas pagas − despesas pagas no período)"),
