@@ -9,6 +9,7 @@ export interface BucketDistributionItem {
 }
 
 export interface GetWorkspaceSummaryResult {
+  totalBalance: number;
   currentBalance: number;
   maxBalance: number;
   totalInvested: number;
@@ -48,7 +49,7 @@ export async function getWorkspaceSummary(
     where: {
       workspace_id: workspaceId,
       is_paid: true,
-      is_internal: false,
+      internal_type: null,
       canceled_at: null,
       ...dateFilter,
     },
@@ -66,6 +67,29 @@ export async function getWorkspaceSummary(
 
   const currentBalance = income - expense;
 
+  // totalBalance — all-time balance (no date filter)
+  const totalAggregations = await db.transaction.groupBy({
+    by: ['type'],
+    where: {
+      workspace_id: workspaceId,
+      is_paid: true,
+      internal_type: null,
+      canceled_at: null,
+    },
+    _sum: { amount: true },
+  });
+
+  let totalIncome = 0;
+  let totalExpense = 0;
+
+  for (const agg of totalAggregations) {
+    const amount = safeNumber(agg._sum.amount);
+    if (agg.type === TransactionType.INCOME) totalIncome = amount;
+    else if (agg.type === TransactionType.EXPENSE) totalExpense = amount;
+  }
+
+  const totalBalance = totalIncome - totalExpense;
+
   // totalInvested — sum of transactions in INVESTMENT type buckets
   const investmentBuckets = await db.bucket.findMany({
     where: { workspace_id: workspaceId, type: BucketType.INVESTMENT },
@@ -80,7 +104,7 @@ export async function getWorkspaceSummary(
         workspace_id: workspaceId,
         bucket_id: { in: investmentBucketIds },
         is_paid: true,
-        is_internal: false,
+        internal_type: null,
         canceled_at: null,
         ...dateFilter,
       },
@@ -89,14 +113,17 @@ export async function getWorkspaceSummary(
     totalInvested = safeNumber(investmentAgg._sum.amount);
   }
 
-  // pendingBalance — sum of absolute amounts where is_paid = false
+  // pendingBalance — sum of absolute amounts where is_paid = false, date <= today (no dateFilter)
+  const today = new Date();
+  today.setHours(23, 59, 59, 999);
+
   const pendingAgg = await db.transaction.aggregate({
     where: {
       workspace_id: workspaceId,
       is_paid: false,
-      is_internal: false,
+      internal_type: null,
       canceled_at: null,
-      ...dateFilter,
+      date: { lte: today },
     },
     _sum: { amount: true },
   });
@@ -107,7 +134,7 @@ export async function getWorkspaceSummary(
     where: {
       workspace_id: workspaceId,
       is_paid: true,
-      is_internal: false,
+      internal_type: null,
       canceled_at: null,
       type: { in: [TransactionType.INCOME, TransactionType.EXPENSE] },
       ...dateFilter,
@@ -138,7 +165,7 @@ export async function getWorkspaceSummary(
     where: {
       workspace_id: workspaceId,
       is_paid: true,
-      is_internal: false,
+      internal_type: null,
       canceled_at: null,
       bucket_id: { not: null },
       ...dateFilter,
@@ -152,7 +179,7 @@ export async function getWorkspaceSummary(
       transaction: {
         workspace_id: workspaceId,
         is_paid: true,
-        is_internal: false,
+        internal_type: null,
         canceled_at: null,
         ...dateFilter,
       },
@@ -224,6 +251,7 @@ export async function getWorkspaceSummary(
     .filter((item) => item.amount !== 0);
 
   return {
+    totalBalance,
     currentBalance,
     maxBalance,
     totalInvested,

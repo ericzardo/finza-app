@@ -210,7 +210,7 @@ model Transaction {
   description            String
   date                   DateTime
   is_paid                Boolean             @default(true)
-  is_internal            Boolean             @default(false)
+  internal_type          InternalType?
   transfer_pair_id       String?
   installment_number     Int?
   canceled_at            DateTime?
@@ -257,6 +257,12 @@ enum InvoiceStatus {
   OPEN
   CLOSED
   PAID
+}
+
+enum InternalType {
+  CASCADE
+  DISTRIBUTION
+  BALANCE_ADJUSTMENT
 }
 
 enum TransactionType {

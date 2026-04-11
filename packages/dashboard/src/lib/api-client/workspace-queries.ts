@@ -25,6 +25,7 @@ export function getWorkspaceQueryOptions(workspaceId: string) {
 }
 
 export interface WorkspaceSummary {
+	totalBalance: number;
 	currentBalance: number;
 	maxBalance: number;
 	totalInvested: number;

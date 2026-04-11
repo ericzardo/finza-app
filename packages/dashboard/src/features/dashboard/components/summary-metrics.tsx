@@ -3,19 +3,19 @@ import { Sensitive } from '@features/user/components/sensitive-value'
 import { formatCurrency } from '@lib/utils'
 
 interface SummaryMetricsProps {
-  currentBalance: number
+  totalBalance: number
   totalPending: number
   totalInvested: number
   currency: string
 }
 
 export function SummaryMetrics({
-  currentBalance,
+  totalBalance,
   totalPending,
   totalInvested,
   currency,
 }: SummaryMetricsProps) {
-  const safeBalance = Number.isFinite(currentBalance) ? currentBalance : 0
+  const safeBalance = Number.isFinite(totalBalance) ? totalBalance : 0
   const safePending = Number.isFinite(totalPending) ? totalPending : 0
   const safeInvested = Number.isFinite(totalInvested) ? totalInvested : 0
 
@@ -36,7 +36,7 @@ export function SummaryMetrics({
             {formatCurrency(safeBalance, currency)}
           </Sensitive>
           <p className="mt-1 text-xs text-muted-foreground">
-            Receitas menos despesas pagas
+            Receitas menos despesas pagas (all-time)
           </p>
         </div>
       </div>
@@ -56,7 +56,7 @@ export function SummaryMetrics({
             {formatCurrency(safePending, currency)}
           </Sensitive>
           <p className="mt-1 text-xs text-muted-foreground">
-            Total de transações pendentes no período
+            Total de transações pendentes até hoje
           </p>
         </div>
       </div>
@@ -76,7 +76,7 @@ export function SummaryMetrics({
             {formatCurrency(safeInvested, currency)}
           </Sensitive>
           <p className="mt-1 text-xs text-muted-foreground">
-            Soma dos aportes em investimentos no período
+            Soma dos aportes em investimentos
           </p>
         </div>
       </div>

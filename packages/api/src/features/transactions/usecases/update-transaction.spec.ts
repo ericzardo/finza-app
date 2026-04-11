@@ -13,7 +13,7 @@ function makeMockTransaction(overrides: Partial<Record<string, unknown>> = {}) {
     description: 'Almoço',
     date: now,
     is_paid: true,
-    is_internal: false,
+    internal_type: null,
     transfer_pair_id: null,
     bucket_id: 'bucket-id',
     bank_account_id: null,

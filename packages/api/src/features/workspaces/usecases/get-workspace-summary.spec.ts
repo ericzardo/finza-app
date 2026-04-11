@@ -267,6 +267,7 @@ describe('getWorkspaceSummary', () => {
     const result = await getWorkspaceSummary(db, WS);
 
     expect(result.currentBalance).toBe(0);
+    expect(result.totalBalance).toBe(0);
     expect(result.maxBalance).toBe(0);
     expect(result.totalInvested).toBe(0);
     expect(result.pendingBalance).toBe(0);
@@ -678,6 +679,49 @@ describe('getWorkspaceSummary', () => {
     });
 
     expect(result.currentBalance).toBe(1000); // apenas a transação dentro do intervalo
+    expect(result.totalBalance).toBe(10999); // all-time: 1000 + 9999
+  });
+
+  test('totalBalance é all-time enquanto currentBalance respeita dateFilter', async () => {
+    const inRange = makeDate(5);
+    const outOfRange = makeDate(20);
+
+    const db = buildDb({
+      transactions: [
+        {
+          workspace_id: WS,
+          type: TransactionType.INCOME,
+          amount: 500,
+          is_paid: true,
+          canceled_at: null,
+          date: inRange,
+        },
+        {
+          workspace_id: WS,
+          type: TransactionType.INCOME,
+          amount: 3000,
+          is_paid: true,
+          canceled_at: null,
+          date: outOfRange,
+        },
+        {
+          workspace_id: WS,
+          type: TransactionType.EXPENSE,
+          amount: 200,
+          is_paid: true,
+          canceled_at: null,
+          date: inRange,
+        },
+      ],
+    });
+
+    const result = await getWorkspaceSummary(db, WS, {
+      startDate: makeDate(0),
+      endDate: makeDate(10),
+    });
+
+    expect(result.currentBalance).toBe(300); // 500 - 200 (period only)
+    expect(result.totalBalance).toBe(3300); // 500 + 3000 - 200 (all-time)
   });
 
   test('cenário completo: R$1.000 receita, R$100 despesa Inbox, R$400 despesa Inv', async () => {

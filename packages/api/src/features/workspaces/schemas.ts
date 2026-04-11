@@ -70,6 +70,9 @@ const bucketDistributionItemSchema = z.object({
 });
 
 export const getWorkspaceSummaryResponseSchema = z.object({
+  totalBalance: z
+    .number()
+    .describe('Patrimônio total all-time (receitas pagas − despesas pagas, sem filtro de período)'),
   currentBalance: z
     .number()
     .describe('Saldo atual (receitas pagas − despesas pagas no período)'),

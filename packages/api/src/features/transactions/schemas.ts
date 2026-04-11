@@ -63,10 +63,11 @@ export const createTransactionResponseSchema = z.object({
   description: z.string().describe('Descrição da transação'),
   date: z.string().datetime().describe('Data da transação (ISO 8601)'),
   is_paid: z.boolean().describe('Status de pagamento'),
-  is_internal: z
-    .boolean()
+  internal_type: z
+    .string()
+    .nullable()
     .describe(
-      'Se verdadeiro, é uma transferência interna automática (Cascata)',
+      'Tipo da transação interna (CASCADE, DISTRIBUTION, BALANCE_ADJUSTMENT). Null se não interna.',
     ),
   transfer_pair_id: z
     .string()
@@ -126,7 +127,7 @@ const transactionItemSchema = z.object({
   description: z.string(),
   date: z.string().datetime(),
   is_paid: z.boolean(),
-  is_internal: z.boolean(),
+  internal_type: z.string().nullable(),
   transfer_pair_id: z.string().nullable(),
   bucket_id: z.string().nullable(),
   bank_account_id: z.string().nullable(),
@@ -256,10 +257,11 @@ export const updateTransactionResponseSchema = z.object({
   description: z.string().describe('Descrição da transação'),
   date: z.string().datetime().describe('Data da transação (ISO 8601)'),
   is_paid: z.boolean().describe('Status de pagamento'),
-  is_internal: z
-    .boolean()
+  internal_type: z
+    .string()
+    .nullable()
     .describe(
-      'Se verdadeiro, é uma transferência interna automática (Cascata)',
+      'Tipo da transação interna (CASCADE, DISTRIBUTION, BALANCE_ADJUSTMENT). Null se não interna.',
     ),
   transfer_pair_id: z
     .string()

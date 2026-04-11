@@ -44,7 +44,7 @@ export async function listInternalTransactions(
 
   const baseWhere = {
     workspace_id: workspaceId,
-    is_internal: true,
+    internal_type: { not: null },
     transfer_pair_id: { not: null },
     ...dateFilter,
   };

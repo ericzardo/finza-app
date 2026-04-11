@@ -22,7 +22,7 @@ function makeMockTransaction(overrides: Partial<Record<string, unknown>> = {}) {
     description: 'Almoço',
     date: now,
     is_paid: true,
-    is_internal: false,
+    internal_type: null,
     transfer_pair_id: null,
     bucket_id: 'bucket-id',
     bank_account_id: null,
@@ -241,8 +241,8 @@ describe('createTransaction', () => {
     expect(expense?.bucket_id).toBe('inbox-id');
     expect(income?.bucket_id).toBe('bucket-id');
     expect(expense?.transfer_pair_id).toBe(income?.transfer_pair_id);
-    expect(expense?.is_internal).toBe(true);
-    expect(income?.is_internal).toBe(true);
+    expect(expense?.internal_type).toBe('CASCADE');
+    expect(income?.internal_type).toBe('CASCADE');
     expect(expense?.source_transaction_id).toBe('txn-id');
   });
 
