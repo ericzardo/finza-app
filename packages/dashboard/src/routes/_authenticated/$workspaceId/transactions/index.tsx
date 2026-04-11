@@ -1,4 +1,3 @@
-import { MonthRangePicker } from "@components/shared/month-range-picker";
 import { Button } from "@components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { CreateTransactionDialog } from "@features/transactions/components/create-transaction-dialog";
@@ -25,7 +24,7 @@ import { getWorkspaceQueryOptions } from "@lib/api-client/workspace-queries";
 import { getMonthRange } from "@lib/date";
 import { setPageMeta } from "@lib/seo";
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Plus, Upload } from "lucide-react";
 import { useState } from "react";
 import { z } from "zod";
@@ -70,7 +69,6 @@ export const Route = createFileRoute(
 function TransactionsPage() {
 	const { workspaceId } = Route.useParams();
 	const { start, end } = Route.useSearch();
-	const navigate = useNavigate({ from: Route.fullPath });
 	const [createOpen, setCreateOpen] = useState(false);
 	const [importOpen, setImportOpen] = useState(false);
 	const [editingTransaction, setEditingTransaction] =
@@ -98,14 +96,6 @@ function TransactionsPage() {
 	const transactions = transactionsData?.data ?? [];
 	const internalTransactions = internalData?.data ?? [];
 
-	function handleDateChange(newStart: string, newEnd: string) {
-		navigate({
-			search: { start: newStart, end: newEnd },
-			replace: true,
-			resetScroll: false,
-		});
-	}
-
 	if (isError) {
 		return (
 			<div className="shell-container px-4 py-8 md:px-0">
@@ -129,7 +119,7 @@ function TransactionsPage() {
 	}
 
 	return (
-		<div className="shell-container px-4 py-8 md:px-0">
+		<div className="shell-container px-4 py-8">
 			<div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between md:gap-4">
 				<div className="space-y-1">
 					<h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -140,7 +130,7 @@ function TransactionsPage() {
 					</p>
 				</div>
 				<div className="flex flex-col-reverse gap-3 md:flex-row md:items-start">
-					<div className="flex gap-2">
+					<div className="flex flex-col md:flex-row gap-2">
 						<Button
 							variant="outline"
 							onClick={() => setImportOpen(true)}
@@ -164,17 +154,17 @@ function TransactionsPage() {
 			</div>
 
 			<Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-				<div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+				<div className="flex flex-col-reverse gap-3 md:flex-row md:items-center md:justify-between">
 					<TabsList variant="line">
 						<TabsTrigger value="transactions">Transações</TabsTrigger>
 						<TabsTrigger value="internal">Movimentações Internas</TabsTrigger>
 					</TabsList>
 
-					<MonthRangePicker
+					{/* <MonthRangePicker
 						startDate={startDate}
 						endDate={endDate}
 						onChange={handleDateChange}
-					/>
+					/> */}
 				</div>
 
 				<TabsContent value="transactions" className="mt-4">
