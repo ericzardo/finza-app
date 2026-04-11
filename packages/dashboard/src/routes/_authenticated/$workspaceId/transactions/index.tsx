@@ -1,9 +1,14 @@
-import { MonthRangePicker } from "@components/shared/month-range-picker";
+import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/ui/tabs";
 import { CreateTransactionDialog } from "@features/transactions/components/create-transaction-dialog";
 import { ImportTransactionsDialog } from "@features/transactions/components/import-transactions-dialog";
 import { InternalTransactionTable } from "@features/transactions/components/internal-transaction-table";
+import {
+	type TransactionFilters,
+	TransactionFiltersDrawer,
+} from "@features/transactions/components/transaction-filters-drawer";
+import { TransactionPagination } from "@features/transactions/components/transaction-pagination";
 import { TransactionTable } from "@features/transactions/components/transaction-table";
 import {
 	InternalTransactionsTableSkeleton,
@@ -26,13 +31,29 @@ import { getMonthRange } from "@lib/date";
 import { setPageMeta } from "@lib/seo";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Plus, Upload } from "lucide-react";
-import { useState } from "react";
+import { Plus, SlidersHorizontal, Upload } from "lucide-react";
+import { useMemo, useState } from "react";
 import { z } from "zod";
+
+const DEFAULT_LIMIT = 20;
 
 const searchSchema = z.object({
 	start: z.string().optional(),
 	end: z.string().optional(),
+	bucketId: z.string().optional(),
+	type: z.enum(["INCOME", "EXPENSE"]).optional(),
+	isPaid: z
+		.enum(["true", "false"])
+		.transform((v) => v === "true")
+		.optional(),
+	page: z.coerce.number().int().positive().optional().default(1),
+	limit: z.coerce
+		.number()
+		.int()
+		.positive()
+		.max(100)
+		.optional()
+		.default(DEFAULT_LIMIT),
 });
 
 export const Route = createFileRoute(
@@ -49,6 +70,11 @@ export const Route = createFileRoute(
 	loaderDeps: ({ search }) => ({
 		start: search.start,
 		end: search.end,
+		bucketId: search.bucketId,
+		type: search.type,
+		isPaid: search.isPaid,
+		page: search.page,
+		limit: search.limit,
 	}),
 	loader: ({ context, deps }) => {
 		const defaults = getMonthRange();
@@ -56,7 +82,15 @@ export const Route = createFileRoute(
 		const endDate = deps.end ?? defaults.endDate;
 		return Promise.all([
 			context.queryClient.ensureQueryData(
-				getTransactionsQueryOptions({ startDate, endDate }),
+				getTransactionsQueryOptions({
+					startDate,
+					endDate,
+					bucketId: deps.bucketId,
+					type: deps.type,
+					isPaid: deps.isPaid,
+					page: deps.page,
+					limit: deps.limit,
+				}),
 			),
 			context.queryClient.ensureQueryData(
 				getTransactionsInternalQueryOptions({ startDate, endDate }),
@@ -69,18 +103,21 @@ export const Route = createFileRoute(
 
 function TransactionsPage() {
 	const { workspaceId } = Route.useParams();
-	const { start, end } = Route.useSearch();
+	const search = Route.useSearch();
 	const navigate = useNavigate({ from: Route.fullPath });
 	const [createOpen, setCreateOpen] = useState(false);
 	const [importOpen, setImportOpen] = useState(false);
+	const [filtersOpen, setFiltersOpen] = useState(false);
 	const [editingTransaction, setEditingTransaction] =
 		useState<Transaction | null>(null);
 	const [activeTab, setActiveTab] = useState("transactions");
 	const isMobile = useIsMobile();
 
 	const defaults = getMonthRange();
-	const startDate = start ?? defaults.startDate;
-	const endDate = end ?? defaults.endDate;
+	const startDate = search.start ?? defaults.startDate;
+	const endDate = search.end ?? defaults.endDate;
+	const page = search.page ?? 1;
+	const limit = search.limit ?? DEFAULT_LIMIT;
 
 	const { data: workspace } = useQuery(getWorkspaceQueryOptions(workspaceId));
 	const currency = workspace?.currency ?? "BRL";
@@ -90,17 +127,64 @@ function TransactionsPage() {
 		isLoading,
 		isError,
 		refetch,
-	} = useGetTransactions({ startDate, endDate });
+	} = useGetTransactions({
+		startDate,
+		endDate,
+		bucketId: search.bucketId,
+		type: search.type,
+		isPaid: search.isPaid,
+		page,
+		limit,
+	});
 
 	const { data: internalData, isLoading: isLoadingInternal } =
 		useGetTransactionsInternal({ startDate, endDate });
 
 	const transactions = transactionsData?.data ?? [];
 	const internalTransactions = internalData?.data ?? [];
+	const total = transactionsData?.total ?? 0;
 
-	function handleDateChange(newStart: string, newEnd: string) {
+	const activeFilterCount = useMemo(() => {
+		let count = 0;
+		if (search.start || search.end) count++;
+		if (search.bucketId) count++;
+		if (search.type) count++;
+		if (search.isPaid !== undefined) count++;
+		return count;
+	}, [search.start, search.end, search.bucketId, search.type, search.isPaid]);
+
+	function handleApplyFilters(filters: TransactionFilters) {
 		navigate({
-			search: { start: newStart, end: newEnd },
+			search: {
+				start: filters.start,
+				end: filters.end,
+				bucketId: filters.bucketId,
+				type: filters.type,
+				isPaid:
+					filters.isPaid === undefined
+						? undefined
+						: filters.isPaid
+							? "true"
+							: "false",
+				page: 1,
+				limit,
+			},
+			replace: true,
+			resetScroll: false,
+		});
+	}
+
+	function handlePageChange(newPage: number) {
+		navigate({
+			search: (prev) => ({ ...prev, page: newPage }),
+			replace: true,
+			resetScroll: false,
+		});
+	}
+
+	function handleLimitChange(newLimit: number) {
+		navigate({
+			search: (prev) => ({ ...prev, limit: newLimit, page: 1 }),
 			replace: true,
 			resetScroll: false,
 		});
@@ -143,6 +227,23 @@ function TransactionsPage() {
 					<div className="flex gap-2">
 						<Button
 							variant="outline"
+							onClick={() => setFiltersOpen(true)}
+							size={isMobile ? "lg" : "default"}
+							className="relative w-full shrink-0 md:w-auto"
+						>
+							<SlidersHorizontal className="size-4" />
+							Filtros
+							{activeFilterCount > 0 && (
+								<Badge
+									variant="default"
+									className="absolute -top-2 -right-2 flex size-5 items-center justify-center rounded-full p-0 text-[10px]"
+								>
+									{activeFilterCount}
+								</Badge>
+							)}
+						</Button>
+						<Button
+							variant="outline"
 							onClick={() => setImportOpen(true)}
 							size={isMobile ? "lg" : "default"}
 							className="w-full shrink-0 md:w-auto"
@@ -169,27 +270,28 @@ function TransactionsPage() {
 						<TabsTrigger value="transactions">Transações</TabsTrigger>
 						<TabsTrigger value="internal">Movimentações Internas</TabsTrigger>
 					</span>
-
-					<div className="flex w-full flex-1 justify-end	">
-						<MonthRangePicker
-							startDate={startDate}
-							endDate={endDate}
-							onChange={handleDateChange}
-						/>
-					</div>
-
-
 				</TabsList>
 
 				<TabsContent value="transactions" className="mt-4">
 					{isLoading ? (
 						<TransactionsTableSkeleton />
 					) : (
-						<TransactionTable
-							transactions={transactions}
-							currency={currency}
-							onEdit={setEditingTransaction}
-						/>
+						<>
+							<TransactionTable
+								transactions={transactions}
+								currency={currency}
+								onEdit={setEditingTransaction}
+							/>
+							{transactions.length > 0 && (
+								<TransactionPagination
+									page={page}
+									limit={limit}
+									total={total}
+									onPageChange={handlePageChange}
+									onLimitChange={handleLimitChange}
+								/>
+							)}
+						</>
 					)}
 				</TabsContent>
 
@@ -215,6 +317,19 @@ function TransactionsPage() {
 				onOpenChange={(open) => {
 					if (!open) setEditingTransaction(null);
 				}}
+			/>
+
+			<TransactionFiltersDrawer
+				open={filtersOpen}
+				onOpenChange={setFiltersOpen}
+				filters={{
+					start: search.start,
+					end: search.end,
+					bucketId: search.bucketId,
+					type: search.type,
+					isPaid: search.isPaid,
+				}}
+				onApply={handleApplyFilters}
 			/>
 		</div>
 	);
