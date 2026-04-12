@@ -228,7 +228,7 @@ function TransactionsPage() {
 					</p>
 				</div>
 				<div className="flex flex-col-reverse gap-3 md:flex-row md:items-start">
-					<div className="flex gap-2">
+					<div className="flex flex-col-reverse md:flex-row gap-2">
 						<Button
 							variant="outline"
 							onClick={() => setFiltersOpen(true)}
