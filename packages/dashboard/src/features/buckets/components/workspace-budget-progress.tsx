@@ -1,5 +1,9 @@
-import type { Bucket } from "@features/buckets/types";
+import { Button } from "@components/ui/button";
+import { type Bucket, isInboxBucket } from "@features/buckets/types";
+import { DistributionModal } from "@features/distributions/components/distribution-modal";
 import { formatCurrency } from "@lib/utils";
+import { Wallet } from "lucide-react";
+import { useState } from "react";
 
 interface WorkspaceBudgetProgressProps {
 	buckets: Bucket[];
@@ -29,7 +33,13 @@ export function WorkspaceBudgetProgress({
 	buckets,
 	currency,
 }: WorkspaceBudgetProgressProps) {
+	const [isDistributionModalOpen, setIsDistributionModalOpen] = useState(false);
+
 	if (buckets.length === 0) return null;
+
+	const inboxBucket = buckets.find(isInboxBucket);
+	const inboxAvailableAmount = Math.max(inboxBucket?.current_amount ?? 0, 0);
+	const canDistributeInbox = inboxAvailableAmount > 0;
 
 	const totalBalance = buckets.reduce<number>((acc, b) => {
 		if (b.type === "INVESTMENT") return acc + b.current_invested;
@@ -50,26 +60,48 @@ export function WorkspaceBudgetProgress({
 	const message = getAllocationMessage(allocationPct);
 
 	return (
-		<div className="rounded-lg border border-border bg-card p-4">
-			<div className="mb-3 flex items-center justify-between gap-4">
-				<p className="text-sm text-muted-foreground">
-					<span className="font-semibold text-foreground">
-						{allocationPct}%
-					</span>{" "}
-					do seu capital está alocado com propósito
-				</p>
-				<span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-					{formatCurrency(allocatedBalance, currency)} de{" "}
-					{formatCurrency(totalBalance, currency)}
-				</span>
+		<>
+			<div className="rounded-lg border border-border bg-card p-4">
+				<div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+					<p className="text-sm text-muted-foreground">
+						<span className="font-semibold text-foreground">
+							{allocationPct}%
+						</span>{" "}
+						do seu capital está alocado com propósito
+					</p>
+					<div className="flex flex-col items-start gap-2 md:items-end">
+						<span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+							{formatCurrency(allocatedBalance, currency)} de{" "}
+							{formatCurrency(totalBalance, currency)}
+						</span>
+						{canDistributeInbox && (
+							<Button
+								type="button"
+								size="sm"
+								variant="accent"
+								onClick={() => setIsDistributionModalOpen(true)}
+							>
+								<Wallet className="size-4" />
+								Distribuir saldo
+							</Button>
+						)}
+					</div>
+				</div>
+				<div className="h-1.5 overflow-hidden rounded-full bg-muted">
+					<div
+						className="h-full rounded-full bg-primary transition-all duration-500"
+						style={{ width: `${allocationPct}%` }}
+					/>
+				</div>
+				<p className="mt-2 text-xs text-muted-foreground">{message}</p>
 			</div>
-			<div className="h-1.5 overflow-hidden rounded-full bg-muted">
-				<div
-					className="h-full rounded-full bg-primary transition-all duration-500"
-					style={{ width: `${allocationPct}%` }}
+			{canDistributeInbox && (
+				<DistributionModal
+					isOpen={isDistributionModalOpen}
+					onClose={() => setIsDistributionModalOpen(false)}
+					availableAmount={inboxAvailableAmount}
 				/>
-			</div>
-			<p className="mt-2 text-xs text-muted-foreground">{message}</p>
-		</div>
+			)}
+		</>
 	);
 }
