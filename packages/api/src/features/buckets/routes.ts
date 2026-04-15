@@ -3,12 +3,16 @@ import type { FastifyInstance } from 'fastify';
 import type { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { createBucketController } from './controllers/create-bucket.controller';
 import { deleteBucketController } from './controllers/delete-bucket.controller';
+import { distributeInboxBalanceController } from './controllers/distribute-inbox-balance.controller';
 import { listBucketsController } from './controllers/list-buckets.controller';
 import { updateBucketController } from './controllers/update-bucket.controller';
 import {
   createBucketBodySchema,
   createBucketResponseSchema,
   deleteBucketParamsSchema,
+  distributeInboxBalanceBodySchema,
+  distributeInboxBalanceResponseSchema,
+  inboxDistributionParamsSchema,
   listBucketsQuerySchema,
   listBucketsResponseSchema,
   updateBucketBodySchema,
@@ -17,6 +21,37 @@ import {
 } from './schemas';
 
 export async function bucketsRoutes(fastify: FastifyInstance) {
+  fastify.withTypeProvider<ZodTypeProvider>().post(
+    '/workspaces/:workspaceId/buckets/inbox/distribute',
+    {
+      preHandler: [fastify.authenticate, fastify.validateWorkspace],
+      schema: {
+        tags: ['buckets'],
+        summary: 'Distribuir saldo livre do INBOX',
+        description:
+          'Distribui o saldo livre atual do Caixa de Entrada (INBOX) para caixas de propósito, criando apenas partidas dobradas na tabela de transações.',
+        params: inboxDistributionParamsSchema,
+        body: distributeInboxBalanceBodySchema,
+        response: {
+          201: distributeInboxBalanceResponseSchema,
+          400: appErrorSchema.describe(
+            'Erro de validação, saldo insuficiente no INBOX ou workspaceId divergente do header',
+          ),
+          401: appErrorSchema.describe('Token inválido ou ausente'),
+          403: appErrorSchema.describe('Sem permissão no workspace'),
+          404: appErrorSchema.describe(
+            'Caixa de Entrada (INBOX) ou caixa de propósito não encontrado',
+          ),
+        },
+        consumes: ['application/json'],
+        produces: ['application/json'],
+        security: [{ cookieAuth: [] }],
+      },
+    },
+    (request, reply) =>
+      distributeInboxBalanceController(request, reply, fastify),
+  );
+
   fastify.withTypeProvider<ZodTypeProvider>().post(
     '/buckets',
     {

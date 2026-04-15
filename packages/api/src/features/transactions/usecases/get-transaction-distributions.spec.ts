@@ -37,10 +37,23 @@ function buildDb(
     amount: number;
     transfer_pair_id: string | null;
   }> = [],
+  inboxBalance = 500,
 ) {
   return {
+    bucket: {
+      findFirst: async () => ({ id: 'inbox-id' }),
+    },
     transaction: {
       findFirst: async () => (transactionExists ? mockTransaction : null),
+      findMany: async () => [
+        {
+          type: inboxBalance >= 0 ? 'INCOME' : 'EXPENSE',
+          amount: {
+            toNumber: () => Math.abs(inboxBalance),
+            valueOf: () => Math.abs(inboxBalance),
+          },
+        },
+      ],
     },
     transactionAllocation: {
       findMany: async () =>
@@ -101,6 +114,41 @@ describe('getTransactionDistributions', () => {
     expect(result.allocations).toHaveLength(2);
     expect(result.allocations[0].amount).toBe(200);
     expect(result.allocations[1].amount).toBe(100);
+  });
+
+  test('limita o available pelo saldo real do inbox', async () => {
+    const db = buildDb(
+      true,
+      [
+        {
+          id: 'alloc-1',
+          bucket_id: 'bucket-a',
+          amount: 100,
+          transfer_pair_id: 'pair-1',
+        },
+      ],
+      250,
+    );
+
+    const result = await getTransactionDistributions(db, {
+      transactionId: 'txn-id',
+      workspaceId: 'ws-id',
+    });
+
+    expect(result.total).toBe(500);
+    expect(result.distributed).toBe(100);
+    expect(result.available).toBe(250);
+  });
+
+  test('retorna available zerado quando o inbox está negativo', async () => {
+    const db = buildDb(true, [], -25);
+
+    const result = await getTransactionDistributions(db, {
+      transactionId: 'txn-id',
+      workspaceId: 'ws-id',
+    });
+
+    expect(result.available).toBe(0);
   });
 
   test('lança NOT_FOUND quando transação não existe', async () => {

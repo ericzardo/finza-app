@@ -30,6 +30,8 @@ interface BuildDbOptions {
   transaction?: unknown;
   existingAllocations?: Array<{ amount: number }>;
   bucketExists?: boolean;
+  inboxExists?: boolean;
+  inboxBalance?: number;
 }
 
 function buildDb(opts: BuildDbOptions = {}) {
@@ -37,10 +39,12 @@ function buildDb(opts: BuildDbOptions = {}) {
     transaction = mockTransaction(),
     existingAllocations = [],
     bucketExists = true,
+    inboxExists = true,
+    inboxBalance = 500,
   } = opts;
 
-  let allocationCreateCalls: unknown[] = [];
-  let transactionCreateManyCalls: unknown[] = [];
+  const allocationCreateCalls: unknown[] = [];
+  const transactionCreateManyCalls: unknown[] = [];
 
   const txProxy = {
     transactionAllocation: {
@@ -70,6 +74,15 @@ function buildDb(opts: BuildDbOptions = {}) {
   const db = {
     transaction: {
       findFirst: async () => transaction,
+      findMany: async () => [
+        {
+          type: 'INCOME',
+          amount: {
+            toNumber: () => inboxBalance,
+            valueOf: () => inboxBalance,
+          },
+        },
+      ],
     },
     transactionAllocation: {
       findMany: async () =>
@@ -81,10 +94,19 @@ function buildDb(opts: BuildDbOptions = {}) {
         })),
     },
     bucket: {
-      findFirst: async () =>
-        bucketExists
+      findFirst: async ({
+        where,
+      }: {
+        where: { id?: string; workspace_id?: string; type?: string };
+      }) => {
+        if (where.type === 'INBOX') {
+          return inboxExists ? { id: 'inbox-id' } : null;
+        }
+
+        return bucketExists
           ? { id: 'dest-bucket', workspace_id: 'ws-id', type: 'SPENDING' }
-          : null,
+          : null;
+      },
     },
     $transaction: async (fn: (tx: unknown) => Promise<unknown>) => fn(txProxy),
   } as unknown as PrismaClient;
@@ -107,6 +129,39 @@ describe('createDistribution', () => {
     expect(result.available).toBe(300);
     expect(allocationCreateCalls).toHaveLength(1);
     expect(transactionCreateManyCalls).toHaveLength(1);
+  });
+
+  test('usa o menor valor entre saldo da transação e saldo real do inbox', async () => {
+    const { db } = buildDb({
+      existingAllocations: [{ amount: 100 }],
+      inboxBalance: 250,
+    });
+
+    await expect(
+      createDistribution(db, {
+        transactionId: 'txn-id',
+        workspaceId: 'ws-id',
+        distributions: [{ bucketId: 'dest-bucket', amount: 300 }],
+      }),
+    ).rejects.toThrow(
+      'Saldo insuficiente para distribuição. Disponível: 250, solicitado: 300',
+    );
+  });
+
+  test('zera o saldo disponível quando o inbox está negativo', async () => {
+    const { db } = buildDb({
+      inboxBalance: -50,
+    });
+
+    await expect(
+      createDistribution(db, {
+        transactionId: 'txn-id',
+        workspaceId: 'ws-id',
+        distributions: [{ bucketId: 'dest-bucket', amount: 1 }],
+      }),
+    ).rejects.toThrow(
+      'Saldo insuficiente para distribuição. Disponível: 0, solicitado: 1',
+    );
   });
 
   test('lança BAD_REQUEST quando soma ultrapassa saldo disponível', async () => {
@@ -134,7 +189,9 @@ describe('createDistribution', () => {
         workspaceId: 'ws-id',
         distributions: [{ bucketId: 'dest-bucket', amount: 100 }],
       }),
-    ).rejects.toThrow('Apenas transações do tipo INCOME podem ser distribuídas');
+    ).rejects.toThrow(
+      'Apenas transações do tipo INCOME podem ser distribuídas',
+    );
   });
 
   test('lança BAD_REQUEST quando transação não está no INBOX', async () => {
@@ -165,6 +222,18 @@ describe('createDistribution', () => {
         distributions: [{ bucketId: 'bucket-inexistente', amount: 100 }],
       }),
     ).rejects.toThrow('Caixa de propósito não encontrado');
+  });
+
+  test('lança NOT_FOUND quando o inbox do workspace não existe', async () => {
+    const { db } = buildDb({ inboxExists: false });
+
+    await expect(
+      createDistribution(db, {
+        transactionId: 'txn-id',
+        workspaceId: 'ws-id',
+        distributions: [{ bucketId: 'dest-bucket', amount: 100 }],
+      }),
+    ).rejects.toThrow('Caixa de Entrada (INBOX) não encontrado no workspace');
   });
 
   test('lança NOT_FOUND quando transação não existe', async () => {

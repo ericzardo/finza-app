@@ -183,8 +183,8 @@ export async function getWorkspaceSummary(
     _sum: { amount: true },
   });
 
-  // TransactionSplits — need transaction type to determine sign
-  const splitRows = await db.transactionSplit.findMany({
+  // TransactionAllocations — need transaction type to determine sign
+  const splitRows = await db.transactionAllocation.findMany({
     where: {
       transaction: {
         workspace_id: workspaceId,

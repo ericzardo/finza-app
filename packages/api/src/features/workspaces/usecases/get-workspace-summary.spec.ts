@@ -211,7 +211,7 @@ function buildDb(options: BuildDbOptions = {}) {
       },
     },
 
-    transactionSplit: {
+    transactionAllocation: {
       findMany: async (args: {
         where: {
           transaction: {

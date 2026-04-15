@@ -4,7 +4,11 @@ import { ErrorCode } from '@errors/app-error';
 import { setupTestServer } from '@utils/test-setup';
 import type { FastifyInstance } from 'fastify';
 import jwt from 'jsonwebtoken';
-import { bucketItemSchema, listBucketsResponseSchema } from './schemas';
+import {
+  bucketItemSchema,
+  distributeInboxBalanceResponseSchema,
+  listBucketsResponseSchema,
+} from './schemas';
 
 const COOKIE_NAME = 'finza_token';
 
@@ -271,7 +275,8 @@ describe('GET /buckets', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.json()).toEqual([]);
+      const body = response.json();
+      expect(body).toEqual([]);
     } finally {
       await server.close();
     }
@@ -474,6 +479,182 @@ describe('PATCH /buckets/:bucketId', () => {
 
       expect(response.statusCode).toBe(403);
       expect(response.json().code).toBe(ErrorCode.FORBIDDEN);
+    } finally {
+      await server.close();
+    }
+  });
+});
+
+describe('POST /workspaces/:workspaceId/buckets/inbox/distribute', () => {
+  test('distribui o saldo livre do inbox com partidas dobradas', async () => {
+    const server = await setupTestServer();
+
+    try {
+      const user = await createTestUser(server);
+      const { workspace, inbox } = await createTestWorkspace(server, user.id);
+      const lazer = await createTestBucket(server, workspace.id, 'Lazer');
+      const reserva = await createTestBucket(server, workspace.id, 'Reserva');
+
+      await server.prisma.transaction.create({
+        data: {
+          workspace_id: workspace.id,
+          bucket_id: inbox.id,
+          type: 'INCOME',
+          amount: 500,
+          description: 'Saldo inicial',
+          date: new Date('2026-01-10T00:00:00.000Z'),
+          is_paid: true,
+        },
+      });
+
+      const response = await server.inject({
+        method: 'POST',
+        url: `/workspaces/${workspace.id}/buckets/inbox/distribute`,
+        cookies: buildAuthCookie(user),
+        headers: { 'x-workspace-id': workspace.id },
+        payload: [
+          { bucket_id: lazer.id, amount: 120 },
+          { bucket_id: reserva.id, amount: 80 },
+        ],
+      });
+
+      expect(response.statusCode).toBe(201);
+
+      const body = response.json();
+      const parsed = distributeInboxBalanceResponseSchema.safeParse(body);
+      if (!parsed.success) {
+        throw new Error(
+          `Resposta não corresponde ao schema: ${JSON.stringify(parsed.error)}`,
+        );
+      }
+
+      expect(parsed.data.distributions).toHaveLength(2);
+      expect(parsed.data.available).toBe(300);
+
+      const internalTransactions = await server.prisma.transaction.findMany({
+        where: {
+          workspace_id: workspace.id,
+          internal_type: 'DISTRIBUTION',
+        },
+        orderBy: [{ bucket_id: 'asc' }, { type: 'asc' }],
+      });
+
+      expect(internalTransactions).toHaveLength(4);
+      const inboxExpenses = internalTransactions.filter(
+        (transaction) =>
+          transaction.bucket_id === inbox.id && transaction.type === 'EXPENSE',
+      );
+      const destinationIncomes = internalTransactions.filter(
+        (transaction) =>
+          transaction.bucket_id !== inbox.id && transaction.type === 'INCOME',
+      );
+
+      expect(inboxExpenses).toHaveLength(2);
+      expect(destinationIncomes).toHaveLength(2);
+    } finally {
+      await server.close();
+    }
+  });
+
+  test('retorna 400 quando a URL diverge do x-workspace-id', async () => {
+    const server = await setupTestServer();
+
+    try {
+      const user = await createTestUser(server);
+      const { workspace } = await createTestWorkspace(server, user.id);
+      const otherWorkspace = await server.prisma.workspace.create({
+        data: { name: 'Other Workspace', currency: 'BRL' },
+      });
+      await server.prisma.workspaceMember.create({
+        data: {
+          workspace_id: otherWorkspace.id,
+          user_id: user.id,
+          role: 'OWNER',
+          accepted_at: new Date(),
+        },
+      });
+
+      const bucket = await createTestBucket(server, workspace.id, 'Lazer');
+
+      const response = await server.inject({
+        method: 'POST',
+        url: `/workspaces/${otherWorkspace.id}/buckets/inbox/distribute`,
+        cookies: buildAuthCookie(user),
+        headers: { 'x-workspace-id': workspace.id },
+        payload: [{ bucket_id: bucket.id, amount: 10 }],
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json().code).toBe(ErrorCode.BAD_REQUEST);
+    } finally {
+      await server.close();
+    }
+  });
+
+  test('retorna 400 quando a soma ultrapassa o saldo do inbox', async () => {
+    const server = await setupTestServer();
+
+    try {
+      const user = await createTestUser(server);
+      const { workspace, inbox } = await createTestWorkspace(server, user.id);
+      const bucket = await createTestBucket(server, workspace.id, 'Lazer');
+
+      await server.prisma.transaction.create({
+        data: {
+          workspace_id: workspace.id,
+          bucket_id: inbox.id,
+          type: 'INCOME',
+          amount: 100,
+          description: 'Saldo inicial',
+          date: new Date('2026-01-10T00:00:00.000Z'),
+          is_paid: true,
+        },
+      });
+
+      const response = await server.inject({
+        method: 'POST',
+        url: `/workspaces/${workspace.id}/buckets/inbox/distribute`,
+        cookies: buildAuthCookie(user),
+        headers: { 'x-workspace-id': workspace.id },
+        payload: [{ bucket_id: bucket.id, amount: 150 }],
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json().code).toBe(ErrorCode.BAD_REQUEST);
+    } finally {
+      await server.close();
+    }
+  });
+
+  test('retorna 400 quando o inbox é enviado como destino', async () => {
+    const server = await setupTestServer();
+
+    try {
+      const user = await createTestUser(server);
+      const { workspace, inbox } = await createTestWorkspace(server, user.id);
+
+      await server.prisma.transaction.create({
+        data: {
+          workspace_id: workspace.id,
+          bucket_id: inbox.id,
+          type: 'INCOME',
+          amount: 100,
+          description: 'Saldo inicial',
+          date: new Date('2026-01-10T00:00:00.000Z'),
+          is_paid: true,
+        },
+      });
+
+      const response = await server.inject({
+        method: 'POST',
+        url: `/workspaces/${workspace.id}/buckets/inbox/distribute`,
+        cookies: buildAuthCookie(user),
+        headers: { 'x-workspace-id': workspace.id },
+        payload: [{ bucket_id: inbox.id, amount: 50 }],
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json().code).toBe(ErrorCode.BAD_REQUEST);
     } finally {
       await server.close();
     }

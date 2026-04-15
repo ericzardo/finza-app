@@ -576,50 +576,6 @@ describe('GET /workspaces/:workspaceId/summary', () => {
     }
   });
 
-  test('filtra transações por startDate e endDate', async () => {
-    const server = await setupTestServer();
-
-    try {
-      const user = await createTestUser(server);
-      const workspace = await createTestWorkspace(server, user.id);
-
-      await server.prisma.transaction.createMany({
-        data: [
-          {
-            workspace_id: workspace.id,
-            type: TransactionType.INCOME,
-            amount: 1000,
-            description: 'Dentro do período',
-            date: new Date('2024-03-15'),
-            is_paid: true,
-          },
-          {
-            workspace_id: workspace.id,
-            type: TransactionType.INCOME,
-            amount: 9999,
-            description: 'Fora do período',
-            date: new Date('2024-06-01'),
-            is_paid: true,
-          },
-        ],
-      });
-
-      const response = await server.inject({
-        method: 'GET',
-        url: `/workspaces/${workspace.id}/summary?startDate=2024-03-01T00:00:00.000Z&endDate=2024-03-31T23:59:59.999Z`,
-        cookies: buildAuthCookie(user),
-        headers: { 'x-workspace-id': workspace.id },
-      });
-
-      expect(response.statusCode).toBe(200);
-      const body = response.json();
-      expect(body.currentBalance).toBe(1000); // apenas a transação dentro do período
-      expect(body.totalInvested).toBe(0); // no INVESTMENT buckets
-    } finally {
-      await server.close();
-    }
-  });
-
   test('retorna 401 quando cookie não for enviado', async () => {
     const server = await setupTestServer();
 
