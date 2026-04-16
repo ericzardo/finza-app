@@ -9,7 +9,6 @@ import type {
 	GetWorkspacesWorkspaceidSummary401,
 	GetWorkspacesWorkspaceidSummary403,
 	GetWorkspacesWorkspaceidSummaryPathParams,
-	GetWorkspacesWorkspaceidSummaryQueryParams,
 	GetWorkspacesWorkspaceidSummaryQueryResponse,
 } from "../types/GetWorkspacesWorkspaceidSummary.ts";
 import { faker } from "@faker-js/faker";
@@ -19,15 +18,6 @@ export function createGetWorkspacesWorkspaceidSummaryPathParams(
 ): GetWorkspacesWorkspaceidSummaryPathParams {
 	return {
 		...{ workspaceId: faker.string.alpha() },
-		...(data || {}),
-	};
-}
-
-export function createGetWorkspacesWorkspaceidSummaryQueryParams(
-	data?: Partial<GetWorkspacesWorkspaceidSummaryQueryParams>,
-): GetWorkspacesWorkspaceidSummaryQueryParams {
-	return {
-		...{ startDate: undefined, endDate: undefined },
 		...(data || {}),
 	};
 }

@@ -1641,22 +1641,8 @@
         "tags": [
           "workspaces"
         ],
-        "description": "Retorna o consolidado financeiro do workspace. Todos os dados são filtráveis por startDate e endDate opcionais.",
+        "description": "Retorna o consolidado financeiro all-time do workspace, refletindo o estado atual dos buckets e do patrimônio global.",
         "parameters": [
-          {
-            "schema": {},
-            "in": "query",
-            "name": "startDate",
-            "required": false,
-            "description": "Data de início do período (Aceita YYYY-MM-DD ou ISO 8601)"
-          },
-          {
-            "schema": {},
-            "in": "query",
-            "name": "endDate",
-            "required": false,
-            "description": "Data de fim do período (Aceita YYYY-MM-DD ou ISO 8601)"
-          },
           {
             "schema": {
               "type": "string"
@@ -1682,23 +1668,23 @@
                   "properties": {
                     "totalBalance": {
                       "type": "number",
-                      "description": "Patrimônio total all-time (receitas pagas − despesas pagas, sem filtro de período)"
+                      "description": "Patrimônio total all-time (receitas pagas − despesas pagas, excluindo transferências internas)"
                     },
                     "currentBalance": {
                       "type": "number",
-                      "description": "Saldo atual (receitas pagas − despesas pagas no período)"
+                      "description": "Saldo atual all-time do workspace (equivalente ao patrimônio global vigente)"
                     },
                     "maxBalance": {
                       "type": "number",
-                      "description": "Maior saldo histórico atingido"
+                      "description": "Maior saldo histórico all-time atingido"
                     },
                     "totalInvested": {
                       "type": "number",
-                      "description": "Soma das transações em buckets do tipo INVESTMENT no período"
+                      "description": "Saldo total all-time alocado em buckets do tipo INVESTMENT"
                     },
                     "pendingBalance": {
                       "type": "number",
-                      "description": "Soma do valor absoluto de todas as transações com is_paid = false no período"
+                      "description": "Soma all-time do valor absoluto de todas as transações com is_paid = false vencidas até hoje"
                     },
                     "distribution": {
                       "type": "array",
@@ -1719,7 +1705,7 @@
                           },
                           "amount": {
                             "type": "number",
-                            "description": "Saldo real do caixa no período (receitas − despesas)"
+                            "description": "Saldo real all-time do caixa (receitas + entradas internas − despesas − saídas internas)"
                           },
                           "percentage": {
                             "type": "number",
@@ -1735,7 +1721,7 @@
                         ],
                         "additionalProperties": false
                       },
-                      "description": "Distribuição de saldo por caixas de propósitos"
+                      "description": "Distribuição all-time do saldo atual por caixas de propósitos"
                     }
                   },
                   "required": [
@@ -2563,9 +2549,13 @@
                             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                             "description": "Data de criação"
                           },
+                          "current_amount": {
+                            "type": "number",
+                            "description": "Saldo real atual no caixa de investimento"
+                          },
                           "current_invested": {
                             "type": "number",
-                            "description": "Montante total aportado historicamente"
+                            "description": "Montante total aportado historicamente neste caixa"
                           },
                           "period_target": {
                             "type": "number",
@@ -2573,7 +2563,7 @@
                           },
                           "period_invested": {
                             "type": "number",
-                            "description": "Quanto já foi aportado neste caixa no período"
+                            "description": "Quanto já entrou neste caixa no período"
                           }
                         },
                         "required": [
@@ -2584,6 +2574,7 @@
                           "allocation_percentage",
                           "is_default",
                           "created_at",
+                          "current_amount",
                           "current_invested",
                           "period_target",
                           "period_invested"

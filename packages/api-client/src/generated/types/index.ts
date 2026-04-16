@@ -145,7 +145,6 @@ export type {
 	GetWorkspacesWorkspaceidSummary403CodeEnumKey,
 	GetWorkspacesWorkspaceidSummaryPathParams,
 	GetWorkspacesWorkspaceidSummaryQuery,
-	GetWorkspacesWorkspaceidSummaryQueryParams,
 	GetWorkspacesWorkspaceidSummaryQueryResponse,
 } from "./GetWorkspacesWorkspaceidSummary.ts";
 export type {

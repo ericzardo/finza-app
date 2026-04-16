@@ -42,13 +42,11 @@ export function WorkspaceBudgetProgress({
 	const canDistributeInbox = inboxAvailableAmount > 0;
 
 	const totalBalance = buckets.reduce<number>((acc, b) => {
-		if (b.type === "INVESTMENT") return acc + b.current_invested;
 		return acc + b.current_amount;
 	}, 0);
 
 	const allocatedBalance = buckets.reduce<number>((acc, b) => {
 		if (b.type === "INBOX") return acc;
-		if (b.type === "INVESTMENT") return acc + b.current_invested;
 		return acc + b.current_amount;
 	}, 0);
 

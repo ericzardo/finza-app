@@ -493,7 +493,14 @@ describe('POST /workspaces/:workspaceId/buckets/inbox/distribute', () => {
       const user = await createTestUser(server);
       const { workspace, inbox } = await createTestWorkspace(server, user.id);
       const lazer = await createTestBucket(server, workspace.id, 'Lazer');
-      const reserva = await createTestBucket(server, workspace.id, 'Reserva');
+      const reserva = await server.prisma.bucket.create({
+        data: {
+          workspace_id: workspace.id,
+          name: 'Reserva',
+          type: 'INVESTMENT',
+          allocation_percentage: 10,
+        },
+      });
 
       await server.prisma.transaction.create({
         data: {
@@ -551,6 +558,46 @@ describe('POST /workspaces/:workspaceId/buckets/inbox/distribute', () => {
 
       expect(inboxExpenses).toHaveLength(2);
       expect(destinationIncomes).toHaveLength(2);
+
+      const bucketsResponse = await server.inject({
+        method: 'GET',
+        url: '/buckets',
+        cookies: buildAuthCookie(user),
+        headers: { 'x-workspace-id': workspace.id },
+      });
+
+      expect(bucketsResponse.statusCode).toBe(200);
+
+      const parsedBuckets = listBucketsResponseSchema.safeParse(
+        bucketsResponse.json(),
+      );
+      if (!parsedBuckets.success) {
+        throw new Error(
+          `Resposta de buckets inválida: ${JSON.stringify(parsedBuckets.error)}`,
+        );
+      }
+
+      const inboxBucket = parsedBuckets.data.find((bucket) => bucket.id === inbox.id);
+      const lazerBucket = parsedBuckets.data.find((bucket) => bucket.id === lazer.id);
+      const reservaBucket = parsedBuckets.data.find(
+        (bucket) => bucket.id === reserva.id,
+      );
+
+      expect(inboxBucket?.type).toBe('INBOX');
+      if (inboxBucket?.type === 'INBOX') {
+        expect(inboxBucket.current_amount).toBe(300);
+      }
+
+      expect(lazerBucket?.type).toBe('SPENDING');
+      if (lazerBucket?.type === 'SPENDING') {
+        expect(lazerBucket.current_amount).toBe(120);
+      }
+
+      expect(reservaBucket?.type).toBe('INVESTMENT');
+      if (reservaBucket?.type === 'INVESTMENT') {
+        expect(reservaBucket.current_amount).toBe(80);
+        expect(reservaBucket.current_invested).toBe(80);
+      }
     } finally {
       await server.close();
     }

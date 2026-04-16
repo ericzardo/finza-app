@@ -88,7 +88,6 @@ export {
 	getWorkspacesWorkspaceidSummary401Schema,
 	getWorkspacesWorkspaceidSummary403Schema,
 	getWorkspacesWorkspaceidSummaryPathParamsSchema,
-	getWorkspacesWorkspaceidSummaryQueryParamsSchema,
 	getWorkspacesWorkspaceidSummaryQueryResponseSchema,
 } from "./getWorkspacesWorkspaceidSummarySchema.ts";
 export {

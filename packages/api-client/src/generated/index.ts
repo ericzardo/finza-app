@@ -173,7 +173,6 @@ export type {
 	GetWorkspacesWorkspaceidSummary403CodeEnumKey,
 	GetWorkspacesWorkspaceidSummaryPathParams,
 	GetWorkspacesWorkspaceidSummaryQuery,
-	GetWorkspacesWorkspaceidSummaryQueryParams,
 	GetWorkspacesWorkspaceidSummaryQueryResponse,
 } from "./types/GetWorkspacesWorkspaceidSummary.ts";
 export type {
@@ -573,7 +572,6 @@ export {
 	createGetWorkspacesWorkspaceidSummary401,
 	createGetWorkspacesWorkspaceidSummary403,
 	createGetWorkspacesWorkspaceidSummaryPathParams,
-	createGetWorkspacesWorkspaceidSummaryQueryParams,
 	createGetWorkspacesWorkspaceidSummaryQueryResponse,
 } from "./mocks/createGetWorkspacesWorkspaceidSummary.ts";
 export {
@@ -977,7 +975,6 @@ export {
 	getWorkspacesWorkspaceidSummary401Schema,
 	getWorkspacesWorkspaceidSummary403Schema,
 	getWorkspacesWorkspaceidSummaryPathParamsSchema,
-	getWorkspacesWorkspaceidSummaryQueryParamsSchema,
 	getWorkspacesWorkspaceidSummaryQueryResponseSchema,
 } from "./schemas/getWorkspacesWorkspaceidSummarySchema.ts";
 export {

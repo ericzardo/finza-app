@@ -96,9 +96,12 @@ const spendingBucketSchema = bucketItemSchema.extend({
 
 const investmentBucketSchema = bucketItemSchema.extend({
   type: z.literal('INVESTMENT'),
+  current_amount: z
+    .number()
+    .describe('Saldo real atual no caixa de investimento'),
   current_invested: z
     .number()
-    .describe('Montante total aportado historicamente'),
+    .describe('Montante total aportado historicamente neste caixa'),
   period_target: z
     .number()
     .describe(
@@ -106,7 +109,7 @@ const investmentBucketSchema = bucketItemSchema.extend({
     ),
   period_invested: z
     .number()
-    .describe('Quanto já foi aportado neste caixa no período'),
+    .describe('Quanto já entrou neste caixa no período'),
 });
 
 export const listBucketsResponseSchema = z.array(

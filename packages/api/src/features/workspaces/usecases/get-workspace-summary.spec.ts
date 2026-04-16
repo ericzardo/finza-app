@@ -1,776 +1,855 @@
-import { describe, expect, test } from 'bun:test';
-import { TransactionType, BucketType, type PrismaClient } from '@prisma/client';
-import { getWorkspaceSummary } from './get-workspace-summary';
+import { describe, expect, test } from "bun:test";
+import {
+	type BucketType,
+	type PrismaClient,
+	TransactionType,
+} from "@prisma/client";
+import { getWorkspaceSummary } from "./get-workspace-summary";
 
 type GroupByTypeArgs = {
-  by: ['type'];
-  where: {
-    workspace_id: string;
-    is_paid: boolean;
-    canceled_at: null;
-    date?: unknown;
-  };
-  _sum: { amount: boolean };
+	by: ["type"];
+	where: {
+		workspace_id: string;
+		is_paid: boolean;
+		canceled_at: null;
+		OR?: Array<{ internal_type: string | null }>;
+		date?: unknown;
+	};
+	_sum: { amount: boolean };
 };
 
 type GroupByBucketTypeArgs = {
-  by: ['bucket_id', 'type'];
-  where: {
-    workspace_id: string;
-    is_paid: boolean;
-    canceled_at: null;
-    bucket_id: { not: null };
-    date?: unknown;
-  };
-  _sum: { amount: boolean };
+	by: ["bucket_id", "type"];
+	where: {
+		workspace_id: string;
+		is_paid: boolean;
+		canceled_at: null;
+		OR?: Array<{ internal_type: string | null }>;
+		bucket_id: { not: null };
+		date?: unknown;
+	};
+	_sum: { amount: boolean };
 };
 
 type GroupByArgs = GroupByTypeArgs | GroupByBucketTypeArgs;
 
 type FindManyArgs = {
-  where: {
-    workspace_id: string;
-    is_paid: boolean;
-    canceled_at: null;
-    type: { in: TransactionType[] };
-    date?: unknown;
-  };
-  select: { type: boolean; amount: boolean; date: boolean };
-  orderBy: { date: 'asc' };
+	where: {
+		workspace_id: string;
+		is_paid: boolean;
+		canceled_at: null;
+		OR?: Array<{ internal_type: string | null }>;
+		type: { in: TransactionType[] };
+		date?: unknown;
+	};
+	select: { type: boolean; amount: boolean; date: boolean };
+	orderBy: { date: "asc" };
 };
 
 type BucketFindManyArgs = {
-  where: { workspace_id: string; type?: unknown };
-  select: { id: boolean; name?: boolean; type?: boolean };
+	where: { workspace_id: string; type?: unknown };
+	select: { id: boolean; name?: boolean; type?: boolean };
 };
 
 type AggregateArgs = {
-  where: {
-    workspace_id: string;
-    is_paid?: boolean;
-    canceled_at?: null;
-    bucket_id?: { in: string[] };
-    date?: unknown;
-  };
-  _sum: { amount: boolean };
+	where: {
+		workspace_id: string;
+		is_paid?: boolean;
+		canceled_at?: null;
+		OR?: Array<{ internal_type: string | null }>;
+		bucket_id?: { in: string[] };
+		date?: unknown;
+	};
+	_sum: { amount: boolean };
 };
 
 type TransactionRow = {
-  workspace_id: string;
-  type: TransactionType;
-  amount: number;
-  is_paid: boolean;
-  canceled_at: null;
-  date: Date;
-  bucket_id?: string | null;
+	workspace_id: string;
+	type: TransactionType;
+	amount: number;
+	is_paid: boolean;
+	canceled_at: null;
+	date: Date;
+	bucket_id?: string | null;
+	internal_type?: string | null;
 };
 
 type SplitRow = {
-  bucket_id: string;
-  amount: number;
-  transaction: {
-    workspace_id: string;
-    is_paid: boolean;
-    canceled_at: null;
-    type: TransactionType;
-    date: Date;
-  };
+	bucket_id: string;
+	amount: number;
+	transaction: {
+		workspace_id: string;
+		is_paid: boolean;
+		canceled_at: null;
+		internal_type?: string | null;
+		type: TransactionType;
+		date: Date;
+	};
 };
 
 type BucketRow = { id: string; name: string; type: string };
 
 interface BuildDbOptions {
-  transactions?: TransactionRow[];
-  splits?: SplitRow[];
-  buckets?: BucketRow[];
+	transactions?: TransactionRow[];
+	splits?: SplitRow[];
+	buckets?: BucketRow[];
 }
 
 function buildDb(options: BuildDbOptions = {}) {
-  const { transactions = [], splits = [], buckets = [] } = options;
+	const { transactions = [], splits = [], buckets = [] } = options;
 
-  const applyDateFilter = (txDate: Date, dateFilter?: unknown) => {
-    if (!dateFilter) return true;
-    const df = dateFilter as { gte?: Date; lte?: Date };
-    if (df.gte && txDate < df.gte) return false;
-    if (df.lte && txDate > df.lte) return false;
-    return true;
-  };
+	const applyDateFilter = (txDate: Date, dateFilter?: unknown) => {
+		if (!dateFilter) return true;
+		const df = dateFilter as { gte?: Date; lte?: Date };
+		if (df.gte && txDate < df.gte) return false;
+		if (df.lte && txDate > df.lte) return false;
+		return true;
+	};
 
-  const db = {
-    transaction: {
-      groupBy: async (args: GroupByArgs) => {
-        const isByBucketType =
-          args.by.length === 2 &&
-          args.by[0] === 'bucket_id' &&
-          args.by[1] === 'type';
+	const matchesInternalTypeFilter = (
+		internalType: string | null | undefined,
+		filter?: Array<{ internal_type: string | null }>,
+	) => {
+		if (!filter?.length) return true;
+		const normalizedInternalType = internalType ?? null;
 
-        if (isByBucketType) {
-          const w = args.where as GroupByBucketTypeArgs['where'];
-          const groups: Record<string, number> = {};
-          for (const tx of transactions) {
-            if (
-              tx.workspace_id !== w.workspace_id ||
-              tx.is_paid !== w.is_paid ||
-              tx.canceled_at !== null ||
-              !tx.bucket_id
-            )
-              continue;
-            if (!applyDateFilter(tx.date, w.date)) continue;
-            const key = `${tx.bucket_id}::${tx.type}`;
-            groups[key] = (groups[key] ?? 0) + tx.amount;
-          }
-          return Object.entries(groups).map(([key, amount]) => {
-            const [bucket_id, type] = key.split('::');
-            return {
-              bucket_id,
-              type: type as TransactionType,
-              _sum: { amount },
-            };
-          });
-        }
+		return filter.some(
+			(entry) => entry.internal_type === normalizedInternalType,
+		);
+	};
 
-        // group by type
-        const w = args.where as GroupByTypeArgs['where'];
-        const groups: Record<string, number> = {};
-        for (const tx of transactions) {
-          if (
-            tx.workspace_id !== w.workspace_id ||
-            tx.is_paid !== w.is_paid ||
-            tx.canceled_at !== null
-          )
-            continue;
-          if (!applyDateFilter(tx.date, w.date)) continue;
-          groups[tx.type] = (groups[tx.type] ?? 0) + tx.amount;
-        }
-        return Object.entries(groups).map(([type, amount]) => ({
-          type: type as TransactionType,
-          _sum: { amount },
-        }));
-      },
+	const db = {
+		transaction: {
+			groupBy: async (args: GroupByArgs) => {
+				const isByBucketType =
+					args.by.length === 2 &&
+					args.by[0] === "bucket_id" &&
+					args.by[1] === "type";
 
-      findMany: async (args: FindManyArgs) => {
-        const allowedTypes = args.where.type.in;
-        const dateFilter = args.where.date as
-          | { gte?: Date; lte?: Date }
-          | undefined;
+				if (isByBucketType) {
+					const w = args.where as GroupByBucketTypeArgs["where"];
+					const groups: Record<string, number> = {};
+					for (const tx of transactions) {
+						if (
+							tx.workspace_id !== w.workspace_id ||
+							tx.is_paid !== w.is_paid ||
+							tx.canceled_at !== null ||
+							!tx.bucket_id
+						)
+							continue;
+						if (!matchesInternalTypeFilter(tx.internal_type, w.OR)) continue;
+						if (!applyDateFilter(tx.date, w.date)) continue;
+						const key = `${tx.bucket_id}::${tx.type}`;
+						groups[key] = (groups[key] ?? 0) + tx.amount;
+					}
+					return Object.entries(groups).map(([key, amount]) => {
+						const [bucket_id, type] = key.split("::");
+						return {
+							bucket_id,
+							type: type as TransactionType,
+							_sum: { amount },
+						};
+					});
+				}
 
-        return transactions
-          .filter((tx) => {
-            if (
-              tx.workspace_id !== args.where.workspace_id ||
-              tx.is_paid !== args.where.is_paid ||
-              tx.canceled_at !== null
-            )
-              return false;
+				// group by type
+				const w = args.where as GroupByTypeArgs["where"];
+				const groups: Record<string, number> = {};
+				for (const tx of transactions) {
+					if (
+						tx.workspace_id !== w.workspace_id ||
+						tx.is_paid !== w.is_paid ||
+						tx.canceled_at !== null
+					)
+						continue;
+					if (!matchesInternalTypeFilter(tx.internal_type, w.OR)) continue;
+					if (!applyDateFilter(tx.date, w.date)) continue;
+					groups[tx.type] = (groups[tx.type] ?? 0) + tx.amount;
+				}
+				return Object.entries(groups).map(([type, amount]) => ({
+					type: type as TransactionType,
+					_sum: { amount },
+				}));
+			},
 
-            if (!allowedTypes.includes(tx.type)) return false;
+			findMany: async (args: FindManyArgs) => {
+				const allowedTypes = args.where.type.in;
+				const dateFilter = args.where.date as
+					| { gte?: Date; lte?: Date }
+					| undefined;
 
-            if (dateFilter) {
-              if (dateFilter.gte && tx.date < dateFilter.gte) return false;
-              if (dateFilter.lte && tx.date > dateFilter.lte) return false;
-            }
+				return transactions
+					.filter((tx) => {
+						if (
+							tx.workspace_id !== args.where.workspace_id ||
+							tx.is_paid !== args.where.is_paid ||
+							tx.canceled_at !== null
+						)
+							return false;
 
-            return true;
-          })
-          .sort((a, b) => a.date.getTime() - b.date.getTime())
-          .map((tx) => ({ type: tx.type, amount: tx.amount, date: tx.date }));
-      },
+						if (
+							!matchesInternalTypeFilter(
+								tx.internal_type,
+								args.where.OR as
+									| Array<{ internal_type: string | null }>
+									| undefined,
+							)
+						)
+							return false;
 
-      aggregate: async (args: AggregateArgs) => {
-        let total = 0;
-        for (const tx of transactions) {
-          if (tx.workspace_id !== args.where.workspace_id) continue;
-          if (tx.canceled_at !== null) continue;
+						if (!allowedTypes.includes(tx.type)) return false;
 
-          if (
-            args.where.is_paid !== undefined &&
-            tx.is_paid !== args.where.is_paid
-          )
-            continue;
+						if (dateFilter) {
+							if (dateFilter.gte && tx.date < dateFilter.gte) return false;
+							if (dateFilter.lte && tx.date > dateFilter.lte) return false;
+						}
 
-          if (args.where.bucket_id) {
-            const allowedIds = (args.where.bucket_id as { in: string[] }).in;
-            if (!tx.bucket_id || !allowedIds.includes(tx.bucket_id)) continue;
-          }
+						return true;
+					})
+					.sort((a, b) => a.date.getTime() - b.date.getTime())
+					.map((tx) => ({ type: tx.type, amount: tx.amount, date: tx.date }));
+			},
 
-          if (!applyDateFilter(tx.date, args.where.date)) continue;
+			aggregate: async (args: AggregateArgs) => {
+				let total = 0;
+				for (const tx of transactions) {
+					if (tx.workspace_id !== args.where.workspace_id) continue;
+					if (tx.canceled_at !== null) continue;
 
-          total += tx.amount;
-        }
-        return { _sum: { amount: total === 0 ? null : total } };
-      },
-    },
+					if (
+						args.where.is_paid !== undefined &&
+						tx.is_paid !== args.where.is_paid
+					)
+						continue;
+					if (!matchesInternalTypeFilter(tx.internal_type, args.where.OR))
+						continue;
 
-    bucket: {
-      findMany: async (args: BucketFindManyArgs) => {
-        if (args.where.type) {
-          const targetType = args.where.type as BucketType;
-          return buckets.filter((b) => b.type === targetType);
-        }
-        return buckets;
-      },
-    },
+					if (args.where.bucket_id) {
+						const allowedIds = (args.where.bucket_id as { in: string[] }).in;
+						if (!tx.bucket_id || !allowedIds.includes(tx.bucket_id)) continue;
+					}
 
-    transactionAllocation: {
-      findMany: async (args: {
-        where: {
-          transaction: {
-            workspace_id: string;
-            is_paid: boolean;
-            canceled_at: null;
-            date?: unknown;
-          };
-        };
-        select: unknown;
-      }) => {
-        const tw = args.where.transaction;
-        return splits
-          .filter((split) => {
-            if (
-              split.transaction.workspace_id !== tw.workspace_id ||
-              split.transaction.is_paid !== tw.is_paid ||
-              split.transaction.canceled_at !== null
-            )
-              return false;
+					if (!applyDateFilter(tx.date, args.where.date)) continue;
 
-            if (tw.date) {
-              const df = tw.date as { gte?: Date; lte?: Date };
-              if (df.gte && split.transaction.date < df.gte) return false;
-              if (df.lte && split.transaction.date > df.lte) return false;
-            }
+					total += tx.amount;
+				}
+				return { _sum: { amount: total === 0 ? null : total } };
+			},
+		},
 
-            return true;
-          })
-          .map((split) => ({
-            bucket_id: split.bucket_id,
-            amount: split.amount,
-            transaction: { type: split.transaction.type },
-          }));
-      },
-    },
-  } as unknown as PrismaClient;
+		bucket: {
+			findMany: async (args: BucketFindManyArgs) => {
+				if (args.where.type) {
+					const targetType = args.where.type as BucketType;
+					return buckets.filter((b) => b.type === targetType);
+				}
+				return buckets;
+			},
+		},
 
-  return db;
+		transactionAllocation: {
+			findMany: async (args: {
+				where: {
+					transaction: {
+						workspace_id: string;
+						is_paid: boolean;
+						canceled_at: null;
+						OR?: Array<{ internal_type: string | null }>;
+						date?: unknown;
+					};
+				};
+				select: unknown;
+			}) => {
+				const tw = args.where.transaction;
+				return splits
+					.filter((split) => {
+						if (
+							split.transaction.workspace_id !== tw.workspace_id ||
+							split.transaction.is_paid !== tw.is_paid ||
+							split.transaction.canceled_at !== null
+						)
+							return false;
+						if (
+							!matchesInternalTypeFilter(
+								split.transaction.internal_type,
+								tw.OR as Array<{ internal_type: string | null }> | undefined,
+							)
+						)
+							return false;
+
+						if (tw.date) {
+							const df = tw.date as { gte?: Date; lte?: Date };
+							if (df.gte && split.transaction.date < df.gte) return false;
+							if (df.lte && split.transaction.date > df.lte) return false;
+						}
+
+						return true;
+					})
+					.map((split) => ({
+						bucket_id: split.bucket_id,
+						amount: split.amount,
+						transaction: { type: split.transaction.type },
+					}));
+			},
+		},
+	} as unknown as PrismaClient;
+
+	return db;
 }
 
-const WS = 'ws-1';
-const BASE_DATE = new Date('2024-01-15T00:00:00Z');
+const WS = "ws-1";
+const BASE_DATE = new Date("2024-01-15T00:00:00Z");
 
 function makeDate(offset: number) {
-  return new Date(BASE_DATE.getTime() + offset * 24 * 60 * 60 * 1000);
+	return new Date(BASE_DATE.getTime() + offset * 24 * 60 * 60 * 1000);
 }
 
-describe('getWorkspaceSummary', () => {
-  test('workspace vazio retorna tudo zerado e distribuição vazia', async () => {
-    const db = buildDb();
+describe("getWorkspaceSummary", () => {
+	test("workspace vazio retorna tudo zerado e distribuição vazia", async () => {
+		const db = buildDb();
 
-    const result = await getWorkspaceSummary(db, WS);
+		const result = await getWorkspaceSummary(db, WS);
 
-    expect(result.currentBalance).toBe(0);
-    expect(result.totalBalance).toBe(0);
-    expect(result.maxBalance).toBe(0);
-    expect(result.totalInvested).toBe(0);
-    expect(result.pendingBalance).toBe(0);
-    expect(result.distribution).toEqual([]);
-  });
+		expect(result.currentBalance).toBe(0);
+		expect(result.totalBalance).toBe(0);
+		expect(result.maxBalance).toBe(0);
+		expect(result.totalInvested).toBe(0);
+		expect(result.pendingBalance).toBe(0);
+		expect(result.distribution).toEqual([]);
+	});
 
-  test('calcula currentBalance corretamente (receitas - despesas pagas)', async () => {
-    const db = buildDb({
-      transactions: [
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 1000,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(0),
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.EXPENSE,
-          amount: 300,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(1),
-        },
-      ],
-    });
+	test("calcula currentBalance corretamente (receitas - despesas pagas)", async () => {
+		const db = buildDb({
+			transactions: [
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 1000,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(0),
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.EXPENSE,
+					amount: 300,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(1),
+				},
+			],
+		});
 
-    const result = await getWorkspaceSummary(db, WS);
+		const result = await getWorkspaceSummary(db, WS);
 
-    expect(result.currentBalance).toBe(700); // 1000 - 300
-  });
+		expect(result.currentBalance).toBe(700); // 1000 - 300
+	});
 
-  test('calcula totalInvested como soma de transações em buckets INVESTMENT', async () => {
-    const db = buildDb({
-      buckets: [
-        { id: 'inbox', name: 'Caixa de Entrada', type: 'INBOX' },
-        { id: 'inv', name: 'Investimentos', type: 'INVESTMENT' },
-      ],
-      transactions: [
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 1000,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(0),
-          bucket_id: 'inbox',
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.EXPENSE,
-          amount: 400,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(1),
-          bucket_id: 'inv',
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.EXPENSE,
-          amount: 100,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(1),
-          bucket_id: 'inbox',
-        },
-      ],
-    });
+	test("exclui distribuições internas do patrimônio global, mas as inclui na distribuição por bucket", async () => {
+		const db = buildDb({
+			buckets: [
+				{ id: "inbox", name: "Caixa de Entrada", type: "INBOX" },
+				{ id: "bucket-1", name: "Lazer", type: "SPENDING" },
+			],
+			transactions: [
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 1000,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(0),
+					bucket_id: "inbox",
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.EXPENSE,
+					amount: 300,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(1),
+					bucket_id: "inbox",
+					internal_type: "DISTRIBUTION",
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 300,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(1),
+					bucket_id: "bucket-1",
+					internal_type: "DISTRIBUTION",
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 50,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(2),
+					internal_type: "BALANCE_ADJUSTMENT",
+				},
+			],
+		});
 
-    const result = await getWorkspaceSummary(db, WS);
+		const result = await getWorkspaceSummary(db, WS);
 
-    expect(result.totalInvested).toBe(400); // only the INVESTMENT bucket transaction
-    expect(result.currentBalance).toBe(500); // 1000 - 400 - 100
-  });
+		expect(result.currentBalance).toBe(1050);
+		expect(result.totalBalance).toBe(1050);
+		expect(result.distribution).toHaveLength(2);
 
-  test('totalInvested é 0 quando não há buckets INVESTMENT', async () => {
-    const db = buildDb({
-      transactions: [
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 1000,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(0),
-        },
-      ],
-    });
+		const inbox = result.distribution.find((item) => item.bucketId === "inbox");
+		expect(inbox?.amount).toBe(700);
 
-    const result = await getWorkspaceSummary(db, WS);
+		const lazer = result.distribution.find(
+			(item) => item.bucketId === "bucket-1",
+		);
+		expect(lazer?.amount).toBe(300);
+	});
 
-    expect(result.totalInvested).toBe(0);
-  });
+	test("calcula totalInvested all-time incluindo distribuições internas em buckets INVESTMENT", async () => {
+		const db = buildDb({
+			buckets: [
+				{ id: "inbox", name: "Caixa de Entrada", type: "INBOX" },
+				{ id: "inv", name: "Investimentos", type: "INVESTMENT" },
+			],
+			transactions: [
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 1000,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(0),
+					bucket_id: "inbox",
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.EXPENSE,
+					amount: 400,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(1),
+					bucket_id: "inbox",
+					internal_type: "DISTRIBUTION",
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 400,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(1),
+					bucket_id: "inv",
+					internal_type: "DISTRIBUTION",
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.EXPENSE,
+					amount: 100,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(1),
+					bucket_id: "inbox",
+				},
+			],
+		});
 
-  test('calcula pendingBalance como soma das transações não pagas', async () => {
-    const db = buildDb({
-      transactions: [
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 500,
-          is_paid: false,
-          canceled_at: null,
-          date: makeDate(0),
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.EXPENSE,
-          amount: 200,
-          is_paid: false,
-          canceled_at: null,
-          date: makeDate(1),
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 1000,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(0),
-        },
-      ],
-    });
+		const result = await getWorkspaceSummary(db, WS);
 
-    const result = await getWorkspaceSummary(db, WS);
+		expect(result.totalInvested).toBe(400);
+		expect(result.currentBalance).toBe(900); // 1000 - 100 (distribution interna não altera o patrimônio global)
+		expect(result.totalBalance).toBe(900);
+	});
 
-    expect(result.pendingBalance).toBe(700); // 500 + 200 (absolute sum of unpaid)
-    expect(result.currentBalance).toBe(1000); // only paid
-  });
+	test("totalInvested é 0 quando não há buckets INVESTMENT", async () => {
+		const db = buildDb({
+			transactions: [
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 1000,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(0),
+				},
+			],
+		});
 
-  test('pendingBalance retorna 0 quando não há transações pendentes (aggregate null)', async () => {
-    const db = buildDb({
-      transactions: [
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 1000,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(0),
-        },
-      ],
-    });
+		const result = await getWorkspaceSummary(db, WS);
 
-    const result = await getWorkspaceSummary(db, WS);
+		expect(result.totalInvested).toBe(0);
+	});
 
-    expect(result.pendingBalance).toBe(0);
-    expect(result.currentBalance).toBe(1000);
-  });
+	test("calcula pendingBalance como soma das transações não pagas", async () => {
+		const db = buildDb({
+			transactions: [
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 500,
+					is_paid: false,
+					canceled_at: null,
+					date: makeDate(0),
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.EXPENSE,
+					amount: 200,
+					is_paid: false,
+					canceled_at: null,
+					date: makeDate(1),
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 1000,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(0),
+				},
+			],
+		});
 
-  test('ignora transações não pagas no currentBalance', async () => {
-    const db = buildDb({
-      transactions: [
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 500,
-          is_paid: false,
-          canceled_at: null,
-          date: makeDate(0),
-        },
-      ],
-    });
+		const result = await getWorkspaceSummary(db, WS);
 
-    const result = await getWorkspaceSummary(db, WS);
+		expect(result.pendingBalance).toBe(700); // 500 + 200 (absolute sum of unpaid)
+		expect(result.currentBalance).toBe(1000); // only paid
+	});
 
-    expect(result.currentBalance).toBe(0);
-    expect(result.maxBalance).toBe(0);
-  });
+	test("pendingBalance retorna 0 quando não há transações pendentes (aggregate null)", async () => {
+		const db = buildDb({
+			transactions: [
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 1000,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(0),
+				},
+			],
+		});
 
-  test('calcula maxBalance como pico histórico do saldo corrente', async () => {
-    const db = buildDb({
-      transactions: [
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 1000,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(0),
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.EXPENSE,
-          amount: 800,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(1),
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 200,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(2),
-        },
-      ],
-    });
+		const result = await getWorkspaceSummary(db, WS);
 
-    const result = await getWorkspaceSummary(db, WS);
+		expect(result.pendingBalance).toBe(0);
+		expect(result.currentBalance).toBe(1000);
+	});
 
-    expect(result.maxBalance).toBe(1000); // pico após o primeiro INCOME
-    expect(result.currentBalance).toBe(400); // 1000 - 800 + 200
-  });
+	test("ignora transações não pagas no currentBalance", async () => {
+		const db = buildDb({
+			transactions: [
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 500,
+					is_paid: false,
+					canceled_at: null,
+					date: makeDate(0),
+				},
+			],
+		});
 
-  test('calcula distribution respeitando sinal (income - expense por bucket)', async () => {
-    const db = buildDb({
-      buckets: [
-        { id: 'inbox', name: 'Caixa de Entrada', type: 'INBOX' },
-        { id: 'inv', name: 'Investimentos', type: 'INVESTMENT' },
-      ],
-      transactions: [
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 1000,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(0),
-          bucket_id: 'inbox',
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.EXPENSE,
-          amount: 100,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(1),
-          bucket_id: 'inbox',
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.EXPENSE,
-          amount: 400,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(1),
-          bucket_id: 'inv',
-        },
-      ],
-    });
+		const result = await getWorkspaceSummary(db, WS);
 
-    const result = await getWorkspaceSummary(db, WS);
+		expect(result.currentBalance).toBe(0);
+		expect(result.maxBalance).toBe(0);
+	});
 
-    // Inbox: 1000 income - 100 expense = 900
-    const inbox = result.distribution.find((d) => d.bucketId === 'inbox');
-    expect(inbox).toBeDefined();
-    expect(inbox!.amount).toBe(900);
+	test("calcula maxBalance como pico histórico do saldo corrente", async () => {
+		const db = buildDb({
+			transactions: [
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 1000,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(0),
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.EXPENSE,
+					amount: 800,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(1),
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 200,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(2),
+				},
+			],
+		});
 
-    // Investment: 0 income - 400 expense = 400 (treated as positive contribution)
-    const inv = result.distribution.find((d) => d.bucketId === 'inv');
-    expect(inv).toBeDefined();
-    expect(inv!.amount).toBe(400);
-  });
+		const result = await getWorkspaceSummary(db, WS);
 
-  test('calcula distribution com transaction splits respeitando sinal', async () => {
-    const db = buildDb({
-      buckets: [
-        { id: 'b1', name: 'Lazer', type: 'SPENDING' },
-        { id: 'b2', name: 'Educação', type: 'SPENDING' },
-      ],
-      splits: [
-        {
-          bucket_id: 'b1',
-          amount: 300,
-          transaction: {
-            workspace_id: WS,
-            is_paid: true,
-            canceled_at: null,
-            type: TransactionType.INCOME,
-            date: makeDate(0),
-          },
-        },
-        {
-          bucket_id: 'b2',
-          amount: 200,
-          transaction: {
-            workspace_id: WS,
-            is_paid: true,
-            canceled_at: null,
-            type: TransactionType.EXPENSE,
-            date: makeDate(0),
-          },
-        },
-      ],
-    });
+		expect(result.maxBalance).toBe(1000); // pico após o primeiro INCOME
+		expect(result.currentBalance).toBe(400); // 1000 - 800 + 200
+	});
 
-    const result = await getWorkspaceSummary(db, WS);
+	test("calcula distribution respeitando sinal (income - expense por bucket)", async () => {
+		const db = buildDb({
+			buckets: [
+				{ id: "inbox", name: "Caixa de Entrada", type: "INBOX" },
+				{ id: "inv", name: "Investimentos", type: "INVESTMENT" },
+			],
+			transactions: [
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 1000,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(0),
+					bucket_id: "inbox",
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.EXPENSE,
+					amount: 100,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(1),
+					bucket_id: "inbox",
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.EXPENSE,
+					amount: 400,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(1),
+					bucket_id: "inv",
+				},
+			],
+		});
 
-    const lazer = result.distribution.find((d) => d.bucketId === 'b1');
-    expect(lazer!.amount).toBe(300); // income split
+		const result = await getWorkspaceSummary(db, WS);
 
-    const educacao = result.distribution.find((d) => d.bucketId === 'b2');
-    expect(educacao!.amount).toBe(-200); // expense split
-  });
+		// Inbox: 1000 income - 100 expense = 900
+		const inbox = result.distribution.find((d) => d.bucketId === "inbox");
+		expect(inbox).toBeDefined();
+		expect(inbox?.amount).toBe(900);
 
-  test('combina transações diretas e splits no mesmo bucket', async () => {
-    const db = buildDb({
-      buckets: [{ id: 'b1', name: 'Lazer', type: 'SPENDING' }],
-      transactions: [
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 500,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(0),
-          bucket_id: 'b1',
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.EXPENSE,
-          amount: 200,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(0),
-          bucket_id: 'b1',
-        },
-      ],
-      splits: [
-        {
-          bucket_id: 'b1',
-          amount: 150,
-          transaction: {
-            workspace_id: WS,
-            is_paid: true,
-            canceled_at: null,
-            type: TransactionType.EXPENSE,
-            date: makeDate(0),
-          },
-        },
-      ],
-    });
+		// Investment: 0 income - 400 expense = 400 (treated as positive contribution)
+		const inv = result.distribution.find((d) => d.bucketId === "inv");
+		expect(inv).toBeDefined();
+		expect(inv?.amount).toBe(400);
+	});
 
-    const result = await getWorkspaceSummary(db, WS);
+	test("calcula distribution com transaction splits respeitando sinal", async () => {
+		const db = buildDb({
+			buckets: [
+				{ id: "b1", name: "Lazer", type: "SPENDING" },
+				{ id: "b2", name: "Educação", type: "SPENDING" },
+			],
+			splits: [
+				{
+					bucket_id: "b1",
+					amount: 300,
+					transaction: {
+						workspace_id: WS,
+						is_paid: true,
+						canceled_at: null,
+						type: TransactionType.INCOME,
+						date: makeDate(0),
+					},
+				},
+				{
+					bucket_id: "b2",
+					amount: 200,
+					transaction: {
+						workspace_id: WS,
+						is_paid: true,
+						canceled_at: null,
+						type: TransactionType.EXPENSE,
+						date: makeDate(0),
+					},
+				},
+			],
+		});
 
-    expect(result.distribution).toHaveLength(1);
-    // 500 (income) - 200 (expense direct) - 150 (expense split) = 150
-    expect(result.distribution[0].amount).toBe(150);
-    expect(result.distribution[0].percentage).toBe(100);
-  });
+		const result = await getWorkspaceSummary(db, WS);
 
-  test('omite buckets sem movimentação (amount = 0)', async () => {
-    const db = buildDb({
-      buckets: [
-        { id: 'b1', name: 'Ativo', type: 'SPENDING' },
-        { id: 'b2', name: 'Inativo', type: 'SPENDING' },
-      ],
-      transactions: [
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 500,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(0),
-          bucket_id: 'b1',
-        },
-      ],
-    });
+		const lazer = result.distribution.find((d) => d.bucketId === "b1");
+		expect(lazer?.amount).toBe(300); // income split
 
-    const result = await getWorkspaceSummary(db, WS);
+		const educacao = result.distribution.find((d) => d.bucketId === "b2");
+		expect(educacao?.amount).toBe(-200); // expense split
+	});
 
-    expect(result.distribution).toHaveLength(1);
-    expect(result.distribution[0].bucketId).toBe('b1');
-  });
+	test("combina transações diretas e splits no mesmo bucket", async () => {
+		const db = buildDb({
+			buckets: [{ id: "b1", name: "Lazer", type: "SPENDING" }],
+			transactions: [
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 500,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(0),
+					bucket_id: "b1",
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.EXPENSE,
+					amount: 200,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(0),
+					bucket_id: "b1",
+				},
+			],
+			splits: [
+				{
+					bucket_id: "b1",
+					amount: 150,
+					transaction: {
+						workspace_id: WS,
+						is_paid: true,
+						canceled_at: null,
+						type: TransactionType.EXPENSE,
+						date: makeDate(0),
+					},
+				},
+			],
+		});
 
-  test('retorna percentuais zerados quando totalDistributed é 0', async () => {
-    const db = buildDb({
-      buckets: [{ id: 'b1', name: 'Lazer', type: 'SPENDING' }],
-    });
+		const result = await getWorkspaceSummary(db, WS);
 
-    const result = await getWorkspaceSummary(db, WS);
+		expect(result.distribution).toHaveLength(1);
+		// 500 (income) - 200 (expense direct) - 150 (expense split) = 150
+		expect(result.distribution[0].amount).toBe(150);
+		expect(result.distribution[0].percentage).toBe(100);
+	});
 
-    // Nenhuma transação → nenhum bucket com amount != 0 → distribution vazia
-    expect(result.distribution).toEqual([]);
-  });
+	test("omite buckets sem movimentação (amount = 0)", async () => {
+		const db = buildDb({
+			buckets: [
+				{ id: "b1", name: "Ativo", type: "SPENDING" },
+				{ id: "b2", name: "Inativo", type: "SPENDING" },
+			],
+			transactions: [
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 500,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(0),
+					bucket_id: "b1",
+				},
+			],
+		});
 
-  test('aplica filtro de startDate e endDate', async () => {
-    const inRange = makeDate(5);
-    const outOfRange = makeDate(20);
+		const result = await getWorkspaceSummary(db, WS);
 
-    const db = buildDb({
-      transactions: [
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 1000,
-          is_paid: true,
-          canceled_at: null,
-          date: inRange,
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 9999,
-          is_paid: true,
-          canceled_at: null,
-          date: outOfRange,
-        },
-      ],
-    });
+		expect(result.distribution).toHaveLength(1);
+		expect(result.distribution[0].bucketId).toBe("b1");
+	});
 
-    const result = await getWorkspaceSummary(db, WS, {
-      startDate: makeDate(0),
-      endDate: makeDate(10),
-    });
+	test("retorna percentuais zerados quando totalDistributed é 0", async () => {
+		const db = buildDb({
+			buckets: [{ id: "b1", name: "Lazer", type: "SPENDING" }],
+		});
 
-    expect(result.currentBalance).toBe(1000); // apenas a transação dentro do intervalo
-    expect(result.totalBalance).toBe(10999); // all-time: 1000 + 9999
-  });
+		const result = await getWorkspaceSummary(db, WS);
 
-  test('totalBalance é all-time enquanto currentBalance respeita dateFilter', async () => {
-    const inRange = makeDate(5);
-    const outOfRange = makeDate(20);
+		// Nenhuma transação → nenhum bucket com amount != 0 → distribution vazia
+		expect(result.distribution).toEqual([]);
+	});
 
-    const db = buildDb({
-      transactions: [
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 500,
-          is_paid: true,
-          canceled_at: null,
-          date: inRange,
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 3000,
-          is_paid: true,
-          canceled_at: null,
-          date: outOfRange,
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.EXPENSE,
-          amount: 200,
-          is_paid: true,
-          canceled_at: null,
-          date: inRange,
-        },
-      ],
-    });
+	test("currentBalance e totalBalance refletem o patrimônio global all-time", async () => {
+		const db = buildDb({
+			transactions: [
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 500,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(5),
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 3000,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(20),
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.EXPENSE,
+					amount: 200,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(5),
+				},
+			],
+		});
 
-    const result = await getWorkspaceSummary(db, WS, {
-      startDate: makeDate(0),
-      endDate: makeDate(10),
-    });
+		const result = await getWorkspaceSummary(db, WS);
 
-    expect(result.currentBalance).toBe(300); // 500 - 200 (period only)
-    expect(result.totalBalance).toBe(3300); // 500 + 3000 - 200 (all-time)
-  });
+		expect(result.currentBalance).toBe(3300);
+		expect(result.totalBalance).toBe(3300);
+	});
 
-  test('cenário completo: R$1.000 receita, R$100 despesa Inbox, R$400 despesa Inv', async () => {
-    const db = buildDb({
-      buckets: [
-        { id: 'inbox', name: 'Caixa de Entrada', type: 'INBOX' },
-        { id: 'inv', name: 'Investimentos', type: 'INVESTMENT' },
-      ],
-      transactions: [
-        {
-          workspace_id: WS,
-          type: TransactionType.INCOME,
-          amount: 1000,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(0),
-          bucket_id: 'inbox',
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.EXPENSE,
-          amount: 100,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(1),
-          bucket_id: 'inbox',
-        },
-        {
-          workspace_id: WS,
-          type: TransactionType.EXPENSE,
-          amount: 400,
-          is_paid: true,
-          canceled_at: null,
-          date: makeDate(1),
-          bucket_id: 'inv',
-        },
-      ],
-    });
+	test("cenário completo: R$1.000 receita, R$100 despesa Inbox, R$400 despesa Inv", async () => {
+		const db = buildDb({
+			buckets: [
+				{ id: "inbox", name: "Caixa de Entrada", type: "INBOX" },
+				{ id: "inv", name: "Investimentos", type: "INVESTMENT" },
+			],
+			transactions: [
+				{
+					workspace_id: WS,
+					type: TransactionType.INCOME,
+					amount: 1000,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(0),
+					bucket_id: "inbox",
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.EXPENSE,
+					amount: 100,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(1),
+					bucket_id: "inbox",
+				},
+				{
+					workspace_id: WS,
+					type: TransactionType.EXPENSE,
+					amount: 400,
+					is_paid: true,
+					canceled_at: null,
+					date: makeDate(1),
+					bucket_id: "inv",
+				},
+			],
+		});
 
-    const result = await getWorkspaceSummary(db, WS);
+		const result = await getWorkspaceSummary(db, WS);
 
-    expect(result.currentBalance).toBe(500); // 1000 - 100 - 400
-    expect(result.totalInvested).toBe(400); // only investment bucket
-    expect(result.pendingBalance).toBe(0);
+		expect(result.currentBalance).toBe(500); // 1000 - 100 - 400
+		expect(result.totalInvested).toBe(400); // only investment bucket
+		expect(result.pendingBalance).toBe(0);
 
-    const inbox = result.distribution.find((d) => d.bucketId === 'inbox');
-    expect(inbox!.amount).toBe(900); // 1000 - 100
+		const inbox = result.distribution.find((d) => d.bucketId === "inbox");
+		expect(inbox?.amount).toBe(900); // 1000 - 100
 
-    const inv = result.distribution.find((d) => d.bucketId === 'inv');
-    expect(inv!.amount).toBe(400); // 0 - 400 (treated as positive contribution)
-  });
+		const inv = result.distribution.find((d) => d.bucketId === "inv");
+		expect(inv?.amount).toBe(400); // 0 - 400 (treated as positive contribution)
+	});
 });

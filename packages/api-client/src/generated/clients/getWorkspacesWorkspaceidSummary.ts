@@ -7,7 +7,6 @@ import fetch from "@client";
 import type {
 	GetWorkspacesWorkspaceidSummaryQueryResponse,
 	GetWorkspacesWorkspaceidSummaryPathParams,
-	GetWorkspacesWorkspaceidSummaryQueryParams,
 	GetWorkspacesWorkspaceidSummary400,
 	GetWorkspacesWorkspaceidSummary401,
 	GetWorkspacesWorkspaceidSummary403,
@@ -25,13 +24,12 @@ function getGetWorkspacesWorkspaceidSummaryUrl(
 }
 
 /**
- * @description Retorna o consolidado financeiro do workspace. Todos os dados são filtráveis por startDate e endDate opcionais.
+ * @description Retorna o consolidado financeiro all-time do workspace, refletindo o estado atual dos buckets e do patrimônio global.
  * @summary Resumo financeiro do workspace
  * {@link /workspaces/:workspaceId/summary}
  */
 export async function getWorkspacesWorkspaceidSummary(
 	workspaceId: GetWorkspacesWorkspaceidSummaryPathParams["workspaceId"],
-	params?: GetWorkspacesWorkspaceidSummaryQueryParams,
 	config: Partial<RequestConfig> & { client?: Client } = {},
 ) {
 	const { client: request = fetch, ...requestConfig } = config;
@@ -47,7 +45,6 @@ export async function getWorkspacesWorkspaceidSummary(
 	>({
 		method: "GET",
 		url: getGetWorkspacesWorkspaceidSummaryUrl(workspaceId).url.toString(),
-		params,
 		...requestConfig,
 	});
 	return res.data;

@@ -17,16 +17,16 @@ import {
 } from "@features/buckets/types";
 import { Sensitive } from "@features/user/components/sensitive-value";
 import {
-	getBucketsQueryKey,
-	getTransactionsInternalQueryKey,
-	getTransactionsQueryKey,
-	getTransactionsTransactionidDistributionsQueryKey,
 	useGetBuckets,
 	usePostTransactionsTransactionidDistribute,
 	usePostWorkspacesWorkspaceidBucketsInboxDistribute,
 } from "@finza/api-client";
 import { useIsMobile } from "@hooks/use-mobile";
 import { getWorkspaceQueryOptions } from "@lib/api-client/workspace-queries";
+import {
+	invalidateDistributionQueries,
+	workspaceSummaryInvalidationQueryKey,
+} from "@lib/query-invalidation";
 import { cn, formatCurrency, getCurrencySymbol } from "@lib/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
@@ -180,28 +180,12 @@ export function DistributionModal({
 	const { mutate: distributeTransaction, isPending: isPendingTransaction } =
 		usePostTransactionsTransactionidDistribute({
 			mutation: {
-				onSuccess: () => {
+				onSuccess: async () => {
 					toast.success("Distribuição da transação concluída.");
-					queryClient.invalidateQueries({
-						queryKey: getTransactionsQueryKey(),
+					await queryClient.invalidateQueries({
+						queryKey: workspaceSummaryInvalidationQueryKey,
 					});
-					queryClient.invalidateQueries({
-						queryKey: getTransactionsInternalQueryKey(),
-					});
-					queryClient.invalidateQueries({
-						queryKey: getBucketsQueryKey(),
-					});
-					queryClient.invalidateQueries({
-						queryKey: [{ url: "/workspaces/:workspaceId/summary" }],
-					});
-					if (transactionId) {
-						queryClient.invalidateQueries({
-							queryKey:
-								getTransactionsTransactionidDistributionsQueryKey(
-									transactionId,
-								),
-						});
-					}
+					await invalidateDistributionQueries(queryClient, { transactionId });
 					onClose();
 				},
 				onError: (error) => {
@@ -216,26 +200,18 @@ export function DistributionModal({
 	const { mutate: distributeInboxBalance, isPending: isPendingInbox } =
 		usePostWorkspacesWorkspaceidBucketsInboxDistribute({
 			mutation: {
-				onSuccess: () => {
-					toast.success("Saldo do INBOX distribuído.");
-					queryClient.invalidateQueries({
-						queryKey: getTransactionsQueryKey(),
+				onSuccess: async () => {
+					toast.success("Saldo do Caixa de Entrada distribuído.");
+					await queryClient.invalidateQueries({
+						queryKey: workspaceSummaryInvalidationQueryKey,
 					});
-					queryClient.invalidateQueries({
-						queryKey: getTransactionsInternalQueryKey(),
-					});
-					queryClient.invalidateQueries({
-						queryKey: getBucketsQueryKey(),
-					});
-					queryClient.invalidateQueries({
-						queryKey: [{ url: "/workspaces/:workspaceId/summary" }],
-					});
+					await invalidateDistributionQueries(queryClient);
 					onClose();
 				},
 				onError: (error) => {
 					const message =
 						error.response?.data?.message ??
-						"Erro ao distribuir saldo do INBOX.";
+						"Erro ao distribuir saldo do Caixa de Entrada.";
 					toast.error(message);
 				},
 			},
@@ -410,7 +386,7 @@ export function DistributionModal({
 														{field.bucketName}
 													</p>
 													<p className="text-xs text-muted-foreground">
-														{bucketTypeLabels[field.bucketType]} · autopilot{" "}
+														{bucketTypeLabels[field.bucketType]} · Padrão:{" "}
 														{formatPercentage(field.allocationPercentage)}%
 													</p>
 												</div>
@@ -515,7 +491,12 @@ export function DistributionModal({
 													)}
 												</div>
 
-												<div className="min-w-28 text-left text-xs text-muted-foreground md:text-right">
+												<div
+													className={cn(
+														"min-w-28 text-left text-xs text-muted-foreground md:text-right transition-opacity duration-200 ease-in-out",
+														!isEnabled && "opacity-50",
+													)}
+												>
 													<p>Equivalente</p>
 													<Sensitive className="font-medium tabular-nums text-foreground">
 														{mirroredValue}
