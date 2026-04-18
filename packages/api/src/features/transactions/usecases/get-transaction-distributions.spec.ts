@@ -45,6 +45,17 @@ function buildDb(
     },
     transaction: {
       findFirst: async () => (transactionExists ? mockTransaction : null),
+      groupBy: async () => {
+        if (inboxBalance > 0) {
+          return [{ type: 'INCOME', _sum: { amount: inboxBalance } }];
+        }
+
+        if (inboxBalance < 0) {
+          return [{ type: 'EXPENSE', _sum: { amount: Math.abs(inboxBalance) } }];
+        }
+
+        return [];
+      },
       findMany: async () => [
         {
           type: inboxBalance >= 0 ? 'INCOME' : 'EXPENSE',

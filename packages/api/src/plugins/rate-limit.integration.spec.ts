@@ -1,9 +1,11 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, setDefaultTimeout, test } from 'bun:test';
 import { ErrorCode } from '@errors/app-error';
 import { setupTestServer } from '@utils/test-setup';
 
 const RATE_LIMIT_ERROR_MESSAGE =
   'Muitas requisições. Por favor, aguarde um momento antes de tentar novamente.';
+
+setDefaultTimeout(30000);
 
 describe('Rate Limit Global — GET /health (limite: 100 req/min)', () => {
   test('101ª requisição deve retornar 429 TOO_MANY_REQUESTS', async () => {

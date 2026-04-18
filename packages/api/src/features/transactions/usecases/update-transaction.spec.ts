@@ -71,6 +71,31 @@ function buildDb(opts: BuildDbOptions = {}) {
         return { count: 0 };
       },
       update: async () => makeMockTransaction(opts.existingTransaction ?? {}),
+      groupBy: async ({ where }: { where: Record<string, unknown> }) => {
+        let filtered = existingTransactions;
+        const excludedId = (where.id as Record<string, unknown> | undefined)?.not;
+
+        if (excludedId) {
+          filtered = existingTransactions.filter(
+            (transaction) =>
+              (transaction as { id?: string }).id !== excludedId,
+          );
+        }
+
+        const grouped = new Map<string, number>();
+
+        for (const transaction of filtered) {
+          grouped.set(
+            transaction.type,
+            (grouped.get(transaction.type) ?? 0) + transaction.amount,
+          );
+        }
+
+        return Array.from(grouped.entries()).map(([type, amount]) => ({
+          type,
+          _sum: { amount },
+        }));
+      },
       findMany: async () =>
         existingTransactions.map((t) => ({
           type: t.type,

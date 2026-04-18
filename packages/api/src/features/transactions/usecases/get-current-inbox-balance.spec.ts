@@ -15,6 +15,21 @@ function buildDb(opts: BuildDbOptions = {}) {
       findFirst: async () => (inboxBucketId ? { id: inboxBucketId } : null),
     },
     transaction: {
+      groupBy: async () => {
+        const grouped = new Map<string, number>();
+
+        for (const transaction of transactions) {
+          grouped.set(
+            transaction.type,
+            (grouped.get(transaction.type) ?? 0) + transaction.amount,
+          );
+        }
+
+        return Array.from(grouped.entries()).map(([type, amount]) => ({
+          type,
+          _sum: { amount },
+        }));
+      },
       findMany: async () =>
         transactions.map((transaction) => ({
           type: transaction.type,

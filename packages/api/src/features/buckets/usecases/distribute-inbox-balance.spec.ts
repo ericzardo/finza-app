@@ -24,6 +24,21 @@ function buildDb(opts: BuildDbOptions = {}) {
         buckets.filter((bucket) => where.id.in.includes(bucket.id)),
     },
     transaction: {
+      groupBy: async () => {
+        const grouped = new Map<string, number>();
+
+        for (const transaction of inboxTransactions) {
+          grouped.set(
+            transaction.type,
+            (grouped.get(transaction.type) ?? 0) + transaction.amount,
+          );
+        }
+
+        return Array.from(grouped.entries()).map(([type, amount]) => ({
+          type,
+          _sum: { amount },
+        }));
+      },
       findMany: async () =>
         inboxTransactions.map((transaction) => ({
           type: transaction.type,

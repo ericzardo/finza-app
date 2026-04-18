@@ -74,6 +74,17 @@ function buildDb(opts: BuildDbOptions = {}) {
   const db = {
     transaction: {
       findFirst: async () => transaction,
+      groupBy: async () => {
+        if (inboxBalance > 0) {
+          return [{ type: 'INCOME', _sum: { amount: inboxBalance } }];
+        }
+
+        if (inboxBalance < 0) {
+          return [{ type: 'EXPENSE', _sum: { amount: Math.abs(inboxBalance) } }];
+        }
+
+        return [];
+      },
       findMany: async () => [
         {
           type: 'INCOME',
