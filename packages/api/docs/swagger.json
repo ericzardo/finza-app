@@ -1641,22 +1641,8 @@
         "tags": [
           "workspaces"
         ],
-        "description": "Retorna o consolidado financeiro do workspace. Todos os dados são filtráveis por startDate e endDate opcionais.",
+        "description": "Retorna o consolidado financeiro all-time do workspace, refletindo o estado atual dos buckets e do patrimônio global.",
         "parameters": [
-          {
-            "schema": {},
-            "in": "query",
-            "name": "startDate",
-            "required": false,
-            "description": "Data de início do período (Aceita YYYY-MM-DD ou ISO 8601)"
-          },
-          {
-            "schema": {},
-            "in": "query",
-            "name": "endDate",
-            "required": false,
-            "description": "Data de fim do período (Aceita YYYY-MM-DD ou ISO 8601)"
-          },
           {
             "schema": {
               "type": "string"
@@ -1682,23 +1668,23 @@
                   "properties": {
                     "totalBalance": {
                       "type": "number",
-                      "description": "Patrimônio total all-time (receitas pagas − despesas pagas, sem filtro de período)"
+                      "description": "Patrimônio total all-time (receitas pagas − despesas pagas, excluindo transferências internas)"
                     },
                     "currentBalance": {
                       "type": "number",
-                      "description": "Saldo atual (receitas pagas − despesas pagas no período)"
+                      "description": "Saldo atual all-time do workspace (equivalente ao patrimônio global vigente)"
                     },
                     "maxBalance": {
                       "type": "number",
-                      "description": "Maior saldo histórico atingido"
+                      "description": "Maior saldo histórico all-time atingido"
                     },
                     "totalInvested": {
                       "type": "number",
-                      "description": "Soma das transações em buckets do tipo INVESTMENT no período"
+                      "description": "Saldo total all-time alocado em buckets do tipo INVESTMENT"
                     },
                     "pendingBalance": {
                       "type": "number",
-                      "description": "Soma do valor absoluto de todas as transações com is_paid = false no período"
+                      "description": "Soma all-time do valor absoluto de todas as transações com is_paid = false vencidas até hoje"
                     },
                     "distribution": {
                       "type": "array",
@@ -1719,7 +1705,7 @@
                           },
                           "amount": {
                             "type": "number",
-                            "description": "Saldo real do caixa no período (receitas − despesas)"
+                            "description": "Saldo real all-time do caixa (receitas + entradas internas − despesas − saídas internas)"
                           },
                           "percentage": {
                             "type": "number",
@@ -1735,7 +1721,7 @@
                         ],
                         "additionalProperties": false
                       },
-                      "description": "Distribuição de saldo por caixas de propósitos"
+                      "description": "Distribuição all-time do saldo atual por caixas de propósitos"
                     }
                   },
                   "required": [
@@ -1864,6 +1850,269 @@
                   ],
                   "additionalProperties": false,
                   "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workspaces/{workspaceId}/buckets/inbox/distribute": {
+      "post": {
+        "summary": "Distribuir saldo livre do INBOX",
+        "tags": [
+          "buckets"
+        ],
+        "description": "Distribui o saldo livre atual do Caixa de Entrada (INBOX) para caixas de propósito, criando apenas partidas dobradas na tabela de transações.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "bucket_id": {
+                      "type": "string",
+                      "description": "ID do caixa destino"
+                    },
+                    "amount": {
+                      "type": "number",
+                      "minimum": 0,
+                      "exclusiveMinimum": true,
+                      "description": "Valor a distribuir"
+                    }
+                  },
+                  "required": [
+                    "bucket_id",
+                    "amount"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "workspaceId",
+            "required": true,
+            "description": "ID do workspace"
+          }
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "distributions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "bucket_id": {
+                            "type": "string",
+                            "description": "ID do caixa destino"
+                          },
+                          "amount": {
+                            "type": "number",
+                            "minimum": 0,
+                            "exclusiveMinimum": true,
+                            "description": "Valor a distribuir"
+                          },
+                          "transfer_pair_id": {
+                            "type": "string",
+                            "description": "ID que liga o par de partidas dobradas criado"
+                          }
+                        },
+                        "required": [
+                          "bucket_id",
+                          "amount",
+                          "transfer_pair_id"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Distribuições efetivadas no INBOX"
+                    },
+                    "available": {
+                      "type": "number",
+                      "description": "Saldo livre remanescente no INBOX"
+                    }
+                  },
+                  "required": [
+                    "distributions",
+                    "available"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Erro de validação, saldo insuficiente no INBOX ou workspaceId divergente do header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Erro de validação, saldo insuficiente no INBOX ou workspaceId divergente do header"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Caixa de Entrada (INBOX) ou caixa de propósito não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Caixa de Entrada (INBOX) ou caixa de propósito não encontrado"
                 }
               }
             }
@@ -2300,9 +2549,13 @@
                             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$",
                             "description": "Data de criação"
                           },
+                          "current_amount": {
+                            "type": "number",
+                            "description": "Saldo real atual no caixa de investimento"
+                          },
                           "current_invested": {
                             "type": "number",
-                            "description": "Montante total aportado historicamente"
+                            "description": "Montante total aportado historicamente neste caixa"
                           },
                           "period_target": {
                             "type": "number",
@@ -2310,7 +2563,7 @@
                           },
                           "period_invested": {
                             "type": "number",
-                            "description": "Quanto já foi aportado neste caixa no período"
+                            "description": "Quanto já entrou neste caixa no período"
                           }
                         },
                         "required": [
@@ -2321,6 +2574,7 @@
                           "allocation_percentage",
                           "is_default",
                           "created_at",
+                          "current_amount",
                           "current_invested",
                           "period_target",
                           "period_invested"
@@ -3840,7 +4094,7 @@
         "tags": [
           "transactions"
         ],
-        "description": "Remove uma transação do workspace. As divisões (splits) associadas são deletadas automaticamente em cascata. O saldo dos caixas é recalculado dinamicamente.",
+        "description": "Remove uma transação do workspace. As alocações (allocations) associadas são deletadas automaticamente em cascata. O saldo dos caixas é recalculado dinamicamente.",
         "parameters": [
           {
             "schema": {
@@ -4311,6 +4565,677 @@
                   ],
                   "additionalProperties": false,
                   "description": "Transação ou caixa não encontrados"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{transactionId}/distributions": {
+      "get": {
+        "summary": "Listar distribuições de uma transação",
+        "tags": [
+          "transactions"
+        ],
+        "description": "Retorna o total, valor já distribuído, saldo disponível e lista de alocações de uma transação INCOME.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "transactionId",
+            "required": true,
+            "description": "ID da transação a consultar/distribuir"
+          }
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "total": {
+                      "type": "number",
+                      "description": "Valor total da transação"
+                    },
+                    "distributed": {
+                      "type": "number",
+                      "description": "Total já distribuído"
+                    },
+                    "available": {
+                      "type": "number",
+                      "description": "Saldo disponível para distribuição"
+                    },
+                    "allocations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "ID da alocação"
+                          },
+                          "transaction_id": {
+                            "type": "string",
+                            "description": "ID da transação origem"
+                          },
+                          "bucket_id": {
+                            "type": "string",
+                            "description": "ID do caixa destino"
+                          },
+                          "amount": {
+                            "type": "number",
+                            "description": "Valor alocado"
+                          },
+                          "allocation_type": {
+                            "type": "string",
+                            "description": "Tipo da alocação (DISTRIBUTION)"
+                          },
+                          "transfer_pair_id": {
+                            "nullable": true,
+                            "description": "ID do par de transações internas",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "transaction_id",
+                          "bucket_id",
+                          "amount",
+                          "allocation_type",
+                          "transfer_pair_id"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Lista de alocações existentes"
+                    }
+                  },
+                  "required": [
+                    "total",
+                    "distributed",
+                    "available",
+                    "allocations"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transação não encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Transação não encontrada"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{transactionId}/distribute": {
+      "post": {
+        "summary": "Distribuir transação para caixas",
+        "tags": [
+          "transactions"
+        ],
+        "description": "Distribui uma transação INCOME do Caixa de Entrada (INBOX) para caixas de propósito. Cria alocações e pares de transações internas.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "distributions": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "bucketId": {
+                          "type": "string",
+                          "description": "ID do caixa destino"
+                        },
+                        "amount": {
+                          "type": "number",
+                          "minimum": 0,
+                          "exclusiveMinimum": true,
+                          "description": "Valor a distribuir"
+                        }
+                      },
+                      "required": [
+                        "bucketId",
+                        "amount"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "distributions"
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "transactionId",
+            "required": true,
+            "description": "ID da transação a consultar/distribuir"
+          }
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "allocations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "ID da alocação"
+                          },
+                          "transaction_id": {
+                            "type": "string",
+                            "description": "ID da transação origem"
+                          },
+                          "bucket_id": {
+                            "type": "string",
+                            "description": "ID do caixa destino"
+                          },
+                          "amount": {
+                            "type": "number",
+                            "description": "Valor alocado"
+                          },
+                          "allocation_type": {
+                            "type": "string",
+                            "description": "Tipo da alocação (DISTRIBUTION)"
+                          },
+                          "transfer_pair_id": {
+                            "nullable": true,
+                            "description": "ID do par de transações internas",
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "transaction_id",
+                          "bucket_id",
+                          "amount",
+                          "allocation_type",
+                          "transfer_pair_id"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Alocações criadas"
+                    },
+                    "available": {
+                      "type": "number",
+                      "description": "Saldo disponível atualizado"
+                    }
+                  },
+                  "required": [
+                    "allocations",
+                    "available"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Transação não é INCOME, não está no INBOX ou saldo insuficiente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Transação não é INCOME, não está no INBOX ou saldo insuficiente"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Transação ou caixa de propósito não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Transação ou caixa de propósito não encontrado"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transactions/{transactionId}/distributions/{allocationId}": {
+      "delete": {
+        "summary": "Deletar distribuição",
+        "tags": [
+          "transactions"
+        ],
+        "description": "Remove uma alocação e suas transações internas vinculadas. O saldo do caixa é recalculado dinamicamente.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "transactionId",
+            "required": true,
+            "description": "ID da transação origem"
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "allocationId",
+            "required": true,
+            "description": "ID da alocação a ser deletada"
+          }
+        ],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Distribuição deletada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "nullable": true,
+                  "enum": [
+                    null
+                  ],
+                  "description": "Distribuição deletada com sucesso"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token inválido ou ausente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Token inválido ou ausente"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sem permissão no workspace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Sem permissão no workspace"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Alocação não encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "NOT_FOUND",
+                        "UNAUTHORIZED",
+                        "FORBIDDEN",
+                        "BAD_REQUEST",
+                        "CONFLICT",
+                        "INTERNAL_SERVER_ERROR",
+                        "VALIDATION_ERROR",
+                        "HEALTH_CHECK_FAILED",
+                        "TOO_MANY_REQUESTS"
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {}
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Alocação não encontrada"
                 }
               }
             }

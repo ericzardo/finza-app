@@ -33,6 +33,7 @@ export interface SpendingBucketItem extends BucketItem {
 
 export interface InvestmentBucketItem extends BucketItem {
   type: 'INVESTMENT';
+  current_amount: number;
   current_invested: number;
   period_target: number;
   period_invested: number;

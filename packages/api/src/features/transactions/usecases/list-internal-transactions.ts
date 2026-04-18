@@ -112,7 +112,10 @@ export async function listInternalTransactions(
 
   // Fetch full pair data for paged pairs
   const pagedPairIds = pagedItems
-    .filter((item): item is Extract<TimelineItem, { kind: 'pair' }> => item.kind === 'pair')
+    .filter(
+      (item): item is Extract<TimelineItem, { kind: 'pair' }> =>
+        item.kind === 'pair',
+    )
     .map((item) => item.pairId);
 
   let pairTransactions: typeof soloTransactions = [];

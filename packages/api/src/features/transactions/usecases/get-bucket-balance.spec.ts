@@ -7,17 +7,28 @@ function buildDb(
 ) {
   return {
     transaction: {
-      findMany: async ({ where }: { where: Record<string, unknown> }) => {
+      groupBy: async ({ where }: { where: Record<string, unknown> }) => {
         let filtered = transactions;
-        // Simula o filtro excludeTransactionId
         const notFilter = (where.id as Record<string, unknown> | undefined)
           ?.not;
         if (notFilter) {
           filtered = transactions.filter((t) => t.id !== notFilter);
         }
-        return filtered.map((t) => ({
-          type: t.type,
-          amount: { toNumber: () => t.amount, valueOf: () => t.amount },
+
+        const grouped = new Map<string, number>();
+
+        for (const transaction of filtered) {
+          grouped.set(
+            transaction.type,
+            (grouped.get(transaction.type) ?? 0) + transaction.amount,
+          );
+        }
+
+        return Array.from(grouped.entries()).map(([type, amount]) => ({
+          type,
+          _sum: {
+            amount: { toNumber: () => amount, valueOf: () => amount },
+          },
         }));
       },
     },
@@ -65,6 +76,18 @@ describe('getBucketBalance', () => {
     ]);
     const balance = await getBucketBalance(db, 'bucket-id');
     expect(balance).toBe(100);
+  });
+
+  test('inclui distribuições internas no saldo real do bucket', async () => {
+    const db = buildDb([
+      { type: 'INCOME', amount: 300 },
+      { type: 'EXPENSE', amount: 50 },
+      { type: 'INCOME', amount: 120 },
+    ]);
+
+    const balance = await getBucketBalance(db, 'bucket-id');
+
+    expect(balance).toBe(370);
   });
 
   test('exclui transação pelo excludeTransactionId', async () => {

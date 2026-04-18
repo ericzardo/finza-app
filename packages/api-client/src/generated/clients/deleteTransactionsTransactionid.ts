@@ -24,7 +24,7 @@ function getDeleteTransactionsTransactionidUrl(
 }
 
 /**
- * @description Remove uma transação do workspace. As divisões (splits) associadas são deletadas automaticamente em cascata. O saldo dos caixas é recalculado dinamicamente.
+ * @description Remove uma transação do workspace. As alocações (allocations) associadas são deletadas automaticamente em cascata. O saldo dos caixas é recalculado dinamicamente.
  * @summary Deletar transação
  * {@link /transactions/:transactionId}
  */

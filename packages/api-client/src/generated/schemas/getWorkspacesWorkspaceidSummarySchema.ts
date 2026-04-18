@@ -9,21 +9,6 @@ export const getWorkspacesWorkspaceidSummaryPathParamsSchema = z.object({
 	workspaceId: z.string().describe("ID do workspace"),
 });
 
-export const getWorkspacesWorkspaceidSummaryQueryParamsSchema = z
-	.object({
-		startDate: z.optional(
-			z
-				.any()
-				.describe("Data de início do período (Aceita YYYY-MM-DD ou ISO 8601)"),
-		),
-		endDate: z.optional(
-			z
-				.any()
-				.describe("Data de fim do período (Aceita YYYY-MM-DD ou ISO 8601)"),
-		),
-	})
-	.optional();
-
 /**
  * @description Default Response
  */
@@ -31,19 +16,21 @@ export const getWorkspacesWorkspaceidSummary200Schema = z.object({
 	totalBalance: z
 		.number()
 		.describe(
-			"Patrimônio total all-time (receitas pagas − despesas pagas, sem filtro de período)",
+			"Patrimônio total all-time (receitas pagas − despesas pagas, excluindo transferências internas)",
 		),
 	currentBalance: z
 		.number()
-		.describe("Saldo atual (receitas pagas − despesas pagas no período)"),
-	maxBalance: z.number().describe("Maior saldo histórico atingido"),
+		.describe(
+			"Saldo atual all-time do workspace (equivalente ao patrimônio global vigente)",
+		),
+	maxBalance: z.number().describe("Maior saldo histórico all-time atingido"),
 	totalInvested: z
 		.number()
-		.describe("Soma das transações em buckets do tipo INVESTMENT no período"),
+		.describe("Saldo total all-time alocado em buckets do tipo INVESTMENT"),
 	pendingBalance: z
 		.number()
 		.describe(
-			"Soma do valor absoluto de todas as transações com is_paid = false no período",
+			"Soma all-time do valor absoluto de todas as transações com is_paid = false vencidas até hoje",
 		),
 	distribution: z
 		.array(
@@ -53,11 +40,13 @@ export const getWorkspacesWorkspaceidSummary200Schema = z.object({
 				bucketType: z.string().describe("Tipo do caixa"),
 				amount: z
 					.number()
-					.describe("Saldo real do caixa no período (receitas − despesas)"),
+					.describe(
+						"Saldo real all-time do caixa (receitas + entradas internas − despesas − saídas internas)",
+					),
 				percentage: z.number().describe("Percentual do total"),
 			}),
 		)
-		.describe("Distribuição de saldo por caixas de propósitos"),
+		.describe("Distribuição all-time do saldo atual por caixas de propósitos"),
 });
 
 /**

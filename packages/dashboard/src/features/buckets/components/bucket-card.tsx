@@ -121,8 +121,8 @@ function getVariant(type: Bucket["type"]): BucketVariant {
         glow: null,
         subtitle: (b) =>
           `${bucketTypeLabels.INVESTMENT} · ${b.allocation_percentage}% da receita`,
-        mainLabel: "Total Aportado",
-        mainValue: (b, c) => formatCurrency(b.current_invested, c),
+        mainLabel: "Saldo Atual",
+        mainValue: (b, c) => formatCurrency(b.current_amount, c),
         row1Label: "Aportado",
         row1Value: (b, c) => formatCurrency(b.period_invested, c),
         row1Sensitive: true,
