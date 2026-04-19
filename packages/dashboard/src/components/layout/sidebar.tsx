@@ -83,7 +83,7 @@ export function Sidebar({ className, onNavigate, collapsible = true }: SidebarPr
 			animate={{ width: collapsible ? (isCollapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH) : "100%" }}
 			transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
 			className={twMerge(
-				"relative hidden h-screen shrink-0 flex-col border-r border-border/50 bg-card md:flex",
+				"sticky top-0 hidden h-screen shrink-0 flex-col border-r border-border/50 bg-card md:flex",
 				className,
 			)}
 		>

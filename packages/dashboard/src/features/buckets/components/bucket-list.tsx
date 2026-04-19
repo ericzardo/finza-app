@@ -1,6 +1,8 @@
 import { BucketCard } from "@features/buckets/components/bucket-card";
-import type { Bucket } from "@features/buckets/types";
+import { type Bucket, isInboxBucket } from "@features/buckets/types";
+import { DistributionModal } from "@features/distributions/components/distribution-modal";
 import { Inbox } from "lucide-react";
+import { useState } from "react";
 
 interface BucketListProps {
 	buckets: Bucket[];
@@ -8,6 +10,12 @@ interface BucketListProps {
 }
 
 export function BucketList({ buckets, currency }: BucketListProps) {
+	const [isDistributionModalOpen, setIsDistributionModalOpen] = useState(false);
+
+	const inboxBucket = buckets.find(isInboxBucket);
+	const inboxAvailableAmount = Math.max(inboxBucket?.current_amount ?? 0, 0);
+	const canDistributeInbox = inboxAvailableAmount > 0;
+
 	if (buckets.length === 0) {
 		return (
 			<div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-border py-16 text-center">
@@ -23,10 +31,26 @@ export function BucketList({ buckets, currency }: BucketListProps) {
 	}
 
 	return (
-		<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-			{buckets.map((bucket) => (
-				<BucketCard key={bucket.id} bucket={bucket} currency={currency} />
-			))}
-		</div>
+		<>
+			<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				{buckets.map((bucket) => (
+					<BucketCard
+						key={bucket.id}
+						bucket={bucket}
+						currency={currency}
+						{...(isInboxBucket(bucket) && canDistributeInbox
+							? { onDistribute: () => setIsDistributionModalOpen(true) }
+							: {})}
+					/>
+				))}
+			</div>
+			{canDistributeInbox && (
+				<DistributionModal
+					isOpen={isDistributionModalOpen}
+					onClose={() => setIsDistributionModalOpen(false)}
+					availableAmount={inboxAvailableAmount}
+				/>
+			)}
+		</>
 	);
 }

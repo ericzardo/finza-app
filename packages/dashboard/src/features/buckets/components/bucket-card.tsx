@@ -154,9 +154,10 @@ function getVariant(type: Bucket["type"]): BucketVariant {
 interface BucketCardProps {
   bucket: Bucket;
   currency: string;
+  onDistribute?: () => void;
 }
 
-export function BucketCard({ bucket, currency }: BucketCardProps) {
+export function BucketCard({ bucket, currency, onDistribute }: BucketCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
 
@@ -296,31 +297,41 @@ export function BucketCard({ bucket, currency }: BucketCardProps) {
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="space-y-1">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">
-                {variant.progressLabel}
-              </span>
-              <span
-                className={cn(
-                  "text-xs font-medium tabular-nums",
-                  variant.progressTextColor(isHighlight),
-                )}
-              >
-                {pct}%
-              </span>
+          {/* Footer: Progress Bar or Distribute Button */}
+          {bucket.type === "INBOX" && onDistribute ? (
+            <Button
+              type="button"
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+              onClick={onDistribute}
+            >
+              Distribuir Saldo
+            </Button>
+          ) : bucket.type !== "INBOX" ? (
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  {variant.progressLabel}
+                </span>
+                <span
+                  className={cn(
+                    "text-xs font-medium tabular-nums",
+                    variant.progressTextColor(isHighlight),
+                  )}
+                >
+                  {pct}%
+                </span>
+              </div>
+              <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all",
+                    variant.progressColor(isHighlight),
+                  )}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
             </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all",
-                  variant.progressColor(isHighlight),
-                )}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-          </div>
+          ) : null}
         </CardContent>
       </Card>
 
