@@ -6,7 +6,6 @@
 import type {
 	GetWorkspacesWorkspaceidSummaryQueryResponse,
 	GetWorkspacesWorkspaceidSummaryPathParams,
-	GetWorkspacesWorkspaceidSummaryQueryParams,
 	GetWorkspacesWorkspaceidSummary400,
 	GetWorkspacesWorkspaceidSummary401,
 	GetWorkspacesWorkspaceidSummary403,
@@ -23,14 +22,12 @@ import { queryOptions, useQuery } from "@tanstack/react-query";
 
 export const getWorkspacesWorkspaceidSummaryQueryKey = (
 	workspaceId: GetWorkspacesWorkspaceidSummaryPathParams["workspaceId"],
-	params?: GetWorkspacesWorkspaceidSummaryQueryParams,
 ) =>
 	[
 		{
 			url: "/workspaces/:workspaceId/summary",
 			params: { workspaceId: workspaceId },
 		},
-		...(params ? [params] : []),
 	] as const;
 
 export type GetWorkspacesWorkspaceidSummaryQueryKey = ReturnType<
@@ -39,10 +36,9 @@ export type GetWorkspacesWorkspaceidSummaryQueryKey = ReturnType<
 
 export function getWorkspacesWorkspaceidSummaryQueryOptions(
 	workspaceId: GetWorkspacesWorkspaceidSummaryPathParams["workspaceId"],
-	params?: GetWorkspacesWorkspaceidSummaryQueryParams,
 	config: Partial<RequestConfig> & { client?: Client } = {},
 ) {
-	const queryKey = getWorkspacesWorkspaceidSummaryQueryKey(workspaceId, params);
+	const queryKey = getWorkspacesWorkspaceidSummaryQueryKey(workspaceId);
 	return queryOptions<
 		GetWorkspacesWorkspaceidSummaryQueryResponse,
 		ResponseErrorConfig<
@@ -56,7 +52,7 @@ export function getWorkspacesWorkspaceidSummaryQueryOptions(
 		enabled: !!workspaceId,
 		queryKey,
 		queryFn: async ({ signal }) => {
-			return getWorkspacesWorkspaceidSummary(workspaceId, params, {
+			return getWorkspacesWorkspaceidSummary(workspaceId, {
 				...config,
 				signal: config.signal ?? signal,
 			});
@@ -65,7 +61,7 @@ export function getWorkspacesWorkspaceidSummaryQueryOptions(
 }
 
 /**
- * @description Retorna o consolidado financeiro do workspace. Todos os dados são filtráveis por startDate e endDate opcionais.
+ * @description Retorna o consolidado financeiro all-time do workspace, refletindo o estado atual dos buckets e do patrimônio global.
  * @summary Resumo financeiro do workspace
  * {@link /workspaces/:workspaceId/summary}
  */
@@ -75,7 +71,6 @@ export function useGetWorkspacesWorkspaceidSummary<
 	TQueryKey extends QueryKey = GetWorkspacesWorkspaceidSummaryQueryKey,
 >(
 	workspaceId: GetWorkspacesWorkspaceidSummaryPathParams["workspaceId"],
-	params?: GetWorkspacesWorkspaceidSummaryQueryParams,
 	options: {
 		query?: Partial<
 			QueryObserverOptions<
@@ -97,15 +92,11 @@ export function useGetWorkspacesWorkspaceidSummary<
 	const { client: queryClient, ...resolvedOptions } = queryConfig;
 	const queryKey =
 		resolvedOptions?.queryKey ??
-		getWorkspacesWorkspaceidSummaryQueryKey(workspaceId, params);
+		getWorkspacesWorkspaceidSummaryQueryKey(workspaceId);
 
 	const query = useQuery(
 		{
-			...getWorkspacesWorkspaceidSummaryQueryOptions(
-				workspaceId,
-				params,
-				config,
-			),
+			...getWorkspacesWorkspaceidSummaryQueryOptions(workspaceId, config),
 			...resolvedOptions,
 			queryKey,
 		} as unknown as QueryObserverOptions,

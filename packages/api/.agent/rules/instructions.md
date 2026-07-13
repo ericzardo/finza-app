@@ -276,11 +276,11 @@ RESEND_API_KEY // Opcional (e-mail)
 
 ### Modelos principais
 
-`Plan` · `User` · `Token` · `Workspace` · `WorkspaceMember` · `BankAccount` · `CreditCard` · `Bucket` · `Category` · `Transaction` · `Invoice` · `TransactionPattern` · `TransactionSplit`
+`Plan` · `User` · `Token` · `Workspace` · `WorkspaceMember` · `BankAccount` · `CreditCard` · `Bucket` · `Category` · `Transaction` · `Invoice` · `TransactionPattern` · `TransactionAllocation`
 
 ### Enums
 
-`WorkspaceRole (OWNER | EDITOR | VIEWER)` · `InvoiceStatus (OPEN | CLOSED | PAID)` · `TransactionType (INCOME | EXPENSE | TRANSFER)` · `PatternType (INSTALLMENT | RECURRING)` · `BucketType (SPENDING | INVESTMENT | INBOX)` · `TokenType (PASSWORD_RESET | EMAIL_VERIFICATION)`
+`WorkspaceRole (OWNER | EDITOR | VIEWER)` · `InvoiceStatus (OPEN | CLOSED | PAID)` · `TransactionType (INCOME | EXPENSE | TRANSFER)` · `PatternType (INSTALLMENT | RECURRING)` · `BucketType (SPENDING | INVESTMENT | INBOX)` · `AllocationType (SPLIT | DISTRIBUTION)` · `TokenType (PASSWORD_RESET | EMAIL_VERIFICATION)`
 
 ### Workflow de migrations
 

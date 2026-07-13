@@ -71,9 +71,12 @@ export const getBuckets200Schema = z.array(
 				.describe("Percentual de alocação (0-100)"),
 			is_default: z.boolean().describe("Indica se é o caixa padrão (INBOX)"),
 			created_at: z.iso.datetime().describe("Data de criação"),
+			current_amount: z
+				.number()
+				.describe("Saldo real atual no caixa de investimento"),
 			current_invested: z
 				.number()
-				.describe("Montante total aportado historicamente"),
+				.describe("Montante total aportado historicamente neste caixa"),
 			period_target: z
 				.number()
 				.describe(
@@ -81,7 +84,7 @@ export const getBuckets200Schema = z.array(
 				),
 			period_invested: z
 				.number()
-				.describe("Quanto já foi aportado neste caixa no período"),
+				.describe("Quanto já entrou neste caixa no período"),
 		}),
 	]),
 );

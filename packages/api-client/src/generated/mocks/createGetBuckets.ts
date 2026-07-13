@@ -70,6 +70,7 @@ export function createGetBuckets200(data?: GetBuckets200): GetBuckets200 {
 					allocation_percentage: faker.number.float(),
 					is_default: faker.datatype.boolean(),
 					created_at: faker.date.anytime().toISOString(),
+					current_amount: faker.number.float(),
 					current_invested: faker.number.float(),
 					period_target: faker.number.float(),
 					period_invested: faker.number.float(),

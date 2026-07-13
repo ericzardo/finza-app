@@ -22,7 +22,7 @@ function makeMockTransaction(overrides: Partial<Record<string, unknown>> = {}) {
     description: 'Almoço',
     date: now,
     is_paid: true,
-    is_internal: false,
+    internal_type: null,
     transfer_pair_id: null,
     bucket_id: 'bucket-id',
     bank_account_id: null,
@@ -79,6 +79,31 @@ function buildDb(opts: BuildDbOptions = {}) {
     },
     transaction: {
       create: async () => makeMockTransaction(),
+      groupBy: async ({ where }: { where: Record<string, unknown> }) => {
+        let filtered = existingTransactions;
+        const excludedId = (where.id as Record<string, unknown> | undefined)?.not;
+
+        if (excludedId) {
+          filtered = existingTransactions.filter(
+            (transaction) =>
+              (transaction as { id?: string }).id !== excludedId,
+          );
+        }
+
+        const grouped = new Map<string, number>();
+
+        for (const transaction of filtered) {
+          grouped.set(
+            transaction.type,
+            (grouped.get(transaction.type) ?? 0) + transaction.amount,
+          );
+        }
+
+        return Array.from(grouped.entries()).map(([type, amount]) => ({
+          type,
+          _sum: { amount },
+        }));
+      },
       findMany: async () =>
         existingTransactions.map((t) => ({
           type: t.type,
@@ -241,8 +266,8 @@ describe('createTransaction', () => {
     expect(expense?.bucket_id).toBe('inbox-id');
     expect(income?.bucket_id).toBe('bucket-id');
     expect(expense?.transfer_pair_id).toBe(income?.transfer_pair_id);
-    expect(expense?.is_internal).toBe(true);
-    expect(income?.is_internal).toBe(true);
+    expect(expense?.internal_type).toBe('CASCADE');
+    expect(income?.internal_type).toBe('CASCADE');
     expect(expense?.source_transaction_id).toBe('txn-id');
   });
 

@@ -36,16 +36,18 @@ export function createGetTransactionsInternal200(
 	return {
 		...{
 			data: faker.helpers.multiple(() => ({
-				transfer_pair_id: faker.string.alpha(),
-				date: faker.date.anytime().toISOString(),
-				amount: faker.number.float(),
-				from_bucket_name: faker.string.alpha(),
-				to_bucket_name: faker.string.alpha(),
-				reason: faker.helpers.arrayElement<
+				id: faker.string.alpha(),
+				internal_type: faker.helpers.arrayElement<
 					NonNullable<
 						NonNullable<NonNullable<GetTransactionsInternal200>["data"]>[number]
-					>["reason"]
-				>(["CASCADE_INSUFFICIENT_BALANCE"]),
+					>["internal_type"]
+				>(["CASCADE", "DISTRIBUTION", "BALANCE_ADJUSTMENT"]),
+				date: faker.date.anytime().toISOString(),
+				amount: faker.number.float(),
+				description: faker.string.alpha(),
+				transfer_pair_id: faker.string.alpha(),
+				from_bucket_name: faker.string.alpha(),
+				to_bucket_name: faker.string.alpha(),
 			})),
 			meta: {
 				total: faker.number.float(),

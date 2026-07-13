@@ -10,6 +10,35 @@ export const bucketItemSchema = z.object({
   created_at: z.string().datetime().describe('Data de criação'),
 });
 
+export const inboxDistributionParamsSchema = z.object({
+  workspaceId: z.string().describe('ID do workspace'),
+});
+
+const inboxDistributionItemSchema = z.object({
+  bucket_id: z.string().describe('ID do caixa destino'),
+  amount: z
+    .number()
+    .positive('O valor deve ser maior que zero')
+    .describe('Valor a distribuir'),
+});
+
+export const distributeInboxBalanceBodySchema = z
+  .array(inboxDistributionItemSchema)
+  .min(1, 'Envie ao menos uma distribuição');
+
+export const distributeInboxBalanceResponseSchema = z.object({
+  distributions: z
+    .array(
+      inboxDistributionItemSchema.extend({
+        transfer_pair_id: z
+          .string()
+          .describe('ID que liga o par de partidas dobradas criado'),
+      }),
+    )
+    .describe('Distribuições efetivadas no INBOX'),
+  available: z.number().describe('Saldo livre remanescente no INBOX'),
+});
+
 export const listBucketsQuerySchema = z.object({
   startDate: z
     .string()
@@ -67,9 +96,12 @@ const spendingBucketSchema = bucketItemSchema.extend({
 
 const investmentBucketSchema = bucketItemSchema.extend({
   type: z.literal('INVESTMENT'),
+  current_amount: z
+    .number()
+    .describe('Saldo real atual no caixa de investimento'),
   current_invested: z
     .number()
-    .describe('Montante total aportado historicamente'),
+    .describe('Montante total aportado historicamente neste caixa'),
   period_target: z
     .number()
     .describe(
@@ -77,7 +109,7 @@ const investmentBucketSchema = bucketItemSchema.extend({
     ),
   period_invested: z
     .number()
-    .describe('Quanto já foi aportado neste caixa no período'),
+    .describe('Quanto já entrou neste caixa no período'),
 });
 
 export const listBucketsResponseSchema = z.array(

@@ -32,13 +32,11 @@ export function WorkspaceBudgetProgress({
 	if (buckets.length === 0) return null;
 
 	const totalBalance = buckets.reduce<number>((acc, b) => {
-		if (b.type === "INVESTMENT") return acc + b.current_invested;
 		return acc + b.current_amount;
 	}, 0);
 
 	const allocatedBalance = buckets.reduce<number>((acc, b) => {
 		if (b.type === "INBOX") return acc;
-		if (b.type === "INVESTMENT") return acc + b.current_invested;
 		return acc + b.current_amount;
 	}, 0);
 
@@ -51,7 +49,7 @@ export function WorkspaceBudgetProgress({
 
 	return (
 		<div className="rounded-lg border border-border bg-card p-4">
-			<div className="mb-3 flex items-center justify-between gap-4">
+			<div className="mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
 				<p className="text-sm text-muted-foreground">
 					<span className="font-semibold text-foreground">
 						{allocationPct}%

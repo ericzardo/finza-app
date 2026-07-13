@@ -17,16 +17,19 @@
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.2.0",
+    "@fastify/multipart": "^10.0.0",
     "@fastify/rate-limit": "^10.3.0",
     "@fastify/swagger": "^9.7.0",
     "@prisma/client": "7.4.2",
     "@prisma/extension-accelerate": "^3.0.1",
     "@scalar/fastify-api-reference": "^1.49.0",
     "bcrypt": "^6.0.0",
+    "csv-parse": "^6.2.1",
     "fastify": "^5.8.2",
     "fastify-plugin": "^5.1.0",
     "fastify-type-provider-zod": "^6.1.0",
     "jsonwebtoken": "^9.0.3",
+    "ofx-js": "^0.2.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {

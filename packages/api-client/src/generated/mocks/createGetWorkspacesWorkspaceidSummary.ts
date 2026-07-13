@@ -9,7 +9,6 @@ import type {
 	GetWorkspacesWorkspaceidSummary401,
 	GetWorkspacesWorkspaceidSummary403,
 	GetWorkspacesWorkspaceidSummaryPathParams,
-	GetWorkspacesWorkspaceidSummaryQueryParams,
 	GetWorkspacesWorkspaceidSummaryQueryResponse,
 } from "../types/GetWorkspacesWorkspaceidSummary.ts";
 import { faker } from "@faker-js/faker";
@@ -23,15 +22,6 @@ export function createGetWorkspacesWorkspaceidSummaryPathParams(
 	};
 }
 
-export function createGetWorkspacesWorkspaceidSummaryQueryParams(
-	data?: Partial<GetWorkspacesWorkspaceidSummaryQueryParams>,
-): GetWorkspacesWorkspaceidSummaryQueryParams {
-	return {
-		...{ startDate: undefined, endDate: undefined },
-		...(data || {}),
-	};
-}
-
 /**
  * @description Default Response
  */
@@ -40,6 +30,7 @@ export function createGetWorkspacesWorkspaceidSummary200(
 ): GetWorkspacesWorkspaceidSummary200 {
 	return {
 		...{
+			totalBalance: faker.number.float(),
 			currentBalance: faker.number.float(),
 			maxBalance: faker.number.float(),
 			totalInvested: faker.number.float(),

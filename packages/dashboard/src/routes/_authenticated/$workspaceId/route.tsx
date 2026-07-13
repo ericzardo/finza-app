@@ -41,12 +41,12 @@ function WorkspaceLayout() {
 	}, [workspaceId]);
 
 	return (
-		<div className="flex min-h-screen flex-col overflow-hidden bg-background md:flex-row">
+		<div className="flex min-h-screen flex-col bg-background md:flex-row">
 			<Sidebar />
 			<MobileHeader />
 			<div className="flex min-w-0 flex-1 flex-col">
 				<WorkspaceHeader />
-				<main className="flex-1 overflow-y-auto pb-20">
+				<main className="flex-1 pb-20">
 					<Outlet />
 				</main>
 			</div>

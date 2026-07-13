@@ -25,6 +25,7 @@ export function getWorkspaceQueryOptions(workspaceId: string) {
 }
 
 export interface WorkspaceSummary {
+	totalBalance: number;
 	currentBalance: number;
 	maxBalance: number;
 	totalInvested: number;
@@ -38,32 +39,21 @@ export interface WorkspaceSummary {
 	}>;
 }
 
-export const getWorkspaceSummaryQueryKey = (
-	workspaceId: string,
-	params?: { startDate?: string; endDate?: string },
-) =>
+export const getWorkspaceSummaryQueryKey = (workspaceId: string) =>
 	[
 		{
 			url: "/workspaces/:workspaceId/summary",
-			params: { workspaceId, ...params },
+			params: { workspaceId },
 		},
 	] as const;
 
-export function getWorkspaceSummaryQueryOptions(
-	workspaceId: string,
-	params?: { startDate?: string; endDate?: string },
-) {
-	const searchParams = new URLSearchParams();
-	if (params?.startDate) searchParams.set("startDate", params.startDate);
-	if (params?.endDate) searchParams.set("endDate", params.endDate);
-	const qs = searchParams.toString();
-
+export function getWorkspaceSummaryQueryOptions(workspaceId: string) {
 	return queryOptions<WorkspaceSummary>({
-		queryKey: getWorkspaceSummaryQueryKey(workspaceId, params),
+		queryKey: getWorkspaceSummaryQueryKey(workspaceId),
 		queryFn: () =>
 			client<WorkspaceSummary>({
 				method: "GET",
-				url: `/workspaces/${workspaceId}/summary${qs ? `?${qs}` : ""}`,
+				url: `/workspaces/${workspaceId}/summary`,
 				headers: { "x-workspace-id": workspaceId },
 			}).then((res) => res.data),
 	});

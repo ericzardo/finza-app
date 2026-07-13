@@ -28,59 +28,71 @@ export type GetTransactionsInternalQueryParams = {
 	limit?: number;
 };
 
-export const dataReasonEnum = {
-	CASCADE_INSUFFICIENT_BALANCE: "CASCADE_INSUFFICIENT_BALANCE",
+export const dataInternalTypeEnum = {
+	CASCADE: "CASCADE",
+	DISTRIBUTION: "DISTRIBUTION",
+	BALANCE_ADJUSTMENT: "BALANCE_ADJUSTMENT",
 } as const;
 
-export type DataReasonEnumKey =
-	(typeof dataReasonEnum)[keyof typeof dataReasonEnum];
+export type DataInternalTypeEnumKey =
+	(typeof dataInternalTypeEnum)[keyof typeof dataInternalTypeEnum];
 
 /**
  * @description Default Response
  */
 export type GetTransactionsInternal200 = {
 	/**
-	 * @description Lista de pares de transferências internas
+	 * @description Lista de transações internas
 	 * @type array
 	 */
 	data: {
 		/**
-		 * @description ID que liga o par de transações internas
+		 * @description ID da entrada (transfer_pair_id para pares, transaction id para solo)
 		 * @type string
 		 */
-		transfer_pair_id: string;
+		id: string;
 		/**
-		 * @description Data da transferência interna (ISO 8601)
+		 * @description Tipo da transação interna
+		 * @type string
+		 */
+		internal_type: DataInternalTypeEnumKey;
+		/**
+		 * @description Data da transação interna (ISO 8601)
 		 * @type string, date-time
 		 */
 		date: string;
 		/**
-		 * @description Valor transferido entre caixas
+		 * @description Valor da transação
 		 * @type number
 		 */
 		amount: number;
 		/**
-		 * @description Nome do caixa de origem (débito)
+		 * @description Descrição da transação
 		 * @type string
 		 */
-		from_bucket_name: string;
+		description: string | null;
 		/**
-		 * @description Nome do caixa de destino (crédito)
+		 * @description ID do par (null para transações solo como BALANCE_ADJUSTMENT)
 		 * @type string
 		 */
-		to_bucket_name: string;
+		transfer_pair_id: string | null;
 		/**
-		 * @description Motivo da transferência interna
+		 * @description Nome do caixa de origem (null para solo)
 		 * @type string
 		 */
-		reason: DataReasonEnumKey;
+		from_bucket_name: string | null;
+		/**
+		 * @description Nome do caixa de destino (null para solo)
+		 * @type string
+		 */
+		to_bucket_name: string | null;
 	}[];
 	/**
 	 * @type object
 	 */
 	meta: {
 		/**
-		 * @description Total de pares que correspondem aos filtros
+		 * @description Total de entradas que correspondem aos filtros
 		 * @type number
 		 */
 		total: number;

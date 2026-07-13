@@ -11,43 +11,37 @@ export type GetWorkspacesWorkspaceidSummaryPathParams = {
 	workspaceId: string;
 };
 
-export type GetWorkspacesWorkspaceidSummaryQueryParams = {
-	/**
-	 * @description Data de início do período (Aceita YYYY-MM-DD ou ISO 8601)
-	 */
-	startDate?: any;
-	/**
-	 * @description Data de fim do período (Aceita YYYY-MM-DD ou ISO 8601)
-	 */
-	endDate?: any;
-};
-
 /**
  * @description Default Response
  */
 export type GetWorkspacesWorkspaceidSummary200 = {
 	/**
-	 * @description Saldo atual (receitas pagas − despesas pagas no período)
+	 * @description Patrimônio total all-time (receitas pagas − despesas pagas, excluindo transferências internas)
+	 * @type number
+	 */
+	totalBalance: number;
+	/**
+	 * @description Saldo atual all-time do workspace (equivalente ao patrimônio global vigente)
 	 * @type number
 	 */
 	currentBalance: number;
 	/**
-	 * @description Maior saldo histórico atingido
+	 * @description Maior saldo histórico all-time atingido
 	 * @type number
 	 */
 	maxBalance: number;
 	/**
-	 * @description Soma das transações em buckets do tipo INVESTMENT no período
+	 * @description Saldo total all-time alocado em buckets do tipo INVESTMENT
 	 * @type number
 	 */
 	totalInvested: number;
 	/**
-	 * @description Soma do valor absoluto de todas as transações com is_paid = false no período
+	 * @description Soma all-time do valor absoluto de todas as transações com is_paid = false vencidas até hoje
 	 * @type number
 	 */
 	pendingBalance: number;
 	/**
-	 * @description Distribuição de saldo por caixas de propósitos
+	 * @description Distribuição all-time do saldo atual por caixas de propósitos
 	 * @type array
 	 */
 	distribution: {
@@ -67,7 +61,7 @@ export type GetWorkspacesWorkspaceidSummary200 = {
 		 */
 		bucketType: string;
 		/**
-		 * @description Saldo real do caixa no período (receitas − despesas)
+		 * @description Saldo real all-time do caixa (receitas + entradas internas − despesas − saídas internas)
 		 * @type number
 		 */
 		amount: number;
@@ -190,7 +184,6 @@ export type GetWorkspacesWorkspaceidSummaryQueryResponse =
 export type GetWorkspacesWorkspaceidSummaryQuery = {
 	Response: GetWorkspacesWorkspaceidSummary200;
 	PathParams: GetWorkspacesWorkspaceidSummaryPathParams;
-	QueryParams: GetWorkspacesWorkspaceidSummaryQueryParams;
 	Errors:
 		| GetWorkspacesWorkspaceidSummary400
 		| GetWorkspacesWorkspaceidSummary401

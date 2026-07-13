@@ -18,6 +18,6 @@ export async function deleteTransaction(
     throw new AppError(ErrorCode.NOT_FOUND, 404, 'Transação não encontrada');
   }
 
-  // Splits são removidos automaticamente pelo Prisma (onDelete: Cascade)
+  // Allocations são removidas automaticamente pelo Prisma (onDelete: Cascade)
   await db.transaction.delete({ where: { id: transactionId } });
 }

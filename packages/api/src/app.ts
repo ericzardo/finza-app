@@ -1,5 +1,6 @@
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
 import authGuardPlugin from '@hooks/auth-guard';
 import workspaceGuardPlugin from '@hooks/workspace-guard';
 import errorHandlerPlugin from '@plugins/error-handler.plugin';
@@ -45,6 +46,12 @@ export async function build(): Promise<FastifyInstance> {
       sameSite: 'lax' as const,
       path: '/',
       maxAge: 7 * 24 * 60 * 60,
+    },
+  });
+  await fastify.register(multipart, {
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB
+      files: 1,
     },
   });
   await fastify.register(prismaPlugin);

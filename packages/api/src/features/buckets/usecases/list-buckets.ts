@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@prisma/client';
+import { InternalType, type PrismaClient } from '@prisma/client';
 import type {
   BucketWithAggregates,
   InboxBucketItem,
@@ -65,9 +65,7 @@ export async function listBuckets(
           by: ['bucket_id', 'type'],
           where: {
             bucket_id: { in: spendingIds },
-            is_paid: true,
-            is_internal: false,
-            canceled_at: null,
+            ...buildBalanceWhere(),
           },
           _sum: { amount: true },
         })
@@ -79,56 +77,40 @@ export async function listBuckets(
           by: ['bucket_id', 'type'],
           where: {
             bucket_id: { in: spendingIds },
-            is_paid: true,
-            is_internal: false,
-            canceled_at: null,
-            date: dateFilter,
+            ...buildBucketPerformanceWhere(dateFilter),
           },
           _sum: { amount: true },
         })
       : Promise.resolve([]),
 
-    // INVESTMENT: agregação histórica (total aportado = expense)
+    // INVESTMENT: agregação histórica
     investmentIds.length > 0
-      ? db.transaction.aggregate({
+      ? db.transaction.groupBy({
+          by: ['bucket_id', 'type'],
           where: {
             bucket_id: { in: investmentIds },
-            type: 'EXPENSE',
-            is_internal: false,
-            canceled_at: null,
+            ...buildBalanceWhere(),
           },
           _sum: { amount: true },
-          // groupBy individual por bucket
         })
-      : Promise.resolve(null),
+      : Promise.resolve([]),
 
-    // INVESTMENT: agregação do período por bucket
+    // INVESTMENT: agregação do período
     investmentIds.length > 0 && dateFilter
       ? db.transaction.groupBy({
-          by: ['bucket_id'],
+          by: ['bucket_id', 'type'],
           where: {
             bucket_id: { in: investmentIds },
-            type: 'EXPENSE',
-            is_paid: true,
-            is_internal: false,
-            canceled_at: null,
-            date: dateFilter,
+            ...buildBucketPerformanceWhere(dateFilter),
           },
           _sum: { amount: true },
         })
       : Promise.resolve([]),
 
     // Receita total do workspace no período (base para period_target)
-    dateFilter
+      dateFilter
       ? db.transaction.aggregate({
-          where: {
-            workspace_id: workspaceId,
-            type: 'INCOME',
-            is_paid: true,
-            is_internal: false,
-            canceled_at: null,
-            date: dateFilter,
-          },
+          where: buildWorkspaceRevenueWhere(workspaceId, dateFilter),
           _sum: { amount: true },
         })
       : Promise.resolve(null),
@@ -140,8 +122,7 @@ export async function listBuckets(
           by: ['bucket_id', 'type'],
           where: {
             bucket_id: { in: inboxIds },
-            is_paid: true,
-            canceled_at: null,
+            ...buildBalanceWhere(),
           },
           _sum: { amount: true },
         })
@@ -154,30 +135,12 @@ export async function listBuckets(
           by: ['bucket_id', 'type'],
           where: {
             bucket_id: { in: inboxIds },
-            is_paid: true,
-            canceled_at: null,
-            date: dateFilter,
+            ...buildBalanceWhere(dateFilter),
           },
           _sum: { amount: true },
         })
       : Promise.resolve([]),
   ]);
-
-  // Para investment, precisamos agrupar historical por bucket_id também
-  const investmentHistoricalByBucket =
-    investmentIds.length > 0
-      ? await db.transaction.groupBy({
-          by: ['bucket_id'],
-          where: {
-            bucket_id: { in: investmentIds },
-            type: 'EXPENSE',
-            is_paid: true,
-            is_internal: false,
-            canceled_at: null,
-          },
-          _sum: { amount: true },
-        })
-      : [];
 
   const workspaceIncomeInPeriod = workspacePeriodIncome
     ? toNumber(workspacePeriodIncome._sum.amount)
@@ -263,15 +226,29 @@ export async function listBuckets(
     }
 
     // INVESTMENT
-    const historicalRow = investmentHistoricalByBucket.find(
-      (r) => r.bucket_id === bucket.id,
-    );
-    const periodRow = (
-      investmentPeriodAgg as Array<{
+    const historicalRows = (
+      investmentHistoricalAgg as Array<{
         bucket_id: string | null;
+        type: string;
         _sum: { amount: { toNumber(): number } | number | null };
       }>
-    ).find((r) => r.bucket_id === bucket.id);
+    ).filter((r) => r.bucket_id === bucket.id);
+    const periodRows = (
+      investmentPeriodAgg as Array<{
+        bucket_id: string | null;
+        type: string;
+        _sum: { amount: { toNumber(): number } | number | null };
+      }>
+    ).filter((r) => r.bucket_id === bucket.id);
+
+    const historicalTotal = historicalRows.reduce(
+      (sum, row) => sum + toNumber(row._sum.amount),
+      0,
+    );
+    const periodInvested = periodRows.reduce(
+      (sum, row) => sum + toNumber(row._sum.amount),
+      0,
+    );
 
     const allocationPct = base.allocation_percentage / 100;
     const periodTarget = round(workspaceIncomeInPeriod * allocationPct);
@@ -279,11 +256,46 @@ export async function listBuckets(
     return {
       ...base,
       type: 'INVESTMENT',
-      current_invested: round(toNumber(historicalRow?._sum.amount)),
+      current_amount: round(historicalTotal),
+      current_invested: round(historicalTotal),
       period_target: periodTarget,
-      period_invested: round(toNumber(periodRow?._sum.amount)),
+      period_invested: round(periodInvested),
     } satisfies InvestmentBucketItem;
   });
+}
+
+function buildBalanceWhere(date?: { gte?: Date; lte?: Date }) {
+  return {
+    is_paid: true,
+    canceled_at: null,
+    ...(date ? { date } : {}),
+  };
+}
+
+function buildBucketPerformanceWhere(date?: { gte?: Date; lte?: Date }) {
+  return {
+    is_paid: true,
+    canceled_at: null,
+    OR: [
+      { internal_type: null as null },
+      { internal_type: InternalType.DISTRIBUTION },
+    ],
+    ...(date ? { date } : {}),
+  };
+}
+
+function buildWorkspaceRevenueWhere(
+  workspaceId: string,
+  date?: { gte?: Date; lte?: Date },
+) {
+  return {
+    workspace_id: workspaceId,
+    type: 'INCOME' as const,
+    is_paid: true,
+    internal_type: null as null,
+    canceled_at: null,
+    ...(date ? { date } : {}),
+  };
 }
 
 function toNumber(

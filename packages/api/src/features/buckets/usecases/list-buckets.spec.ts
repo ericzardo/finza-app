@@ -30,6 +30,7 @@ function buildDb(
   periodGroupByRows: GroupByRow[] = [],
   investmentHistoricalRows: GroupByRow[] = [],
   workspaceIncomeResult: AggregateResult = { _sum: { amount: null } },
+  investmentPeriodRows: GroupByRow[] = [],
 ) {
   const db = {
     bucket: {
@@ -44,39 +45,29 @@ function buildDb(
         const where = args.where ?? {};
         const bucketIds = (where.bucket_id as { in?: string[] } | undefined)
           ?.in;
+        const isInvestmentRequest =
+          bucketIds?.every((id) =>
+            buckets.some((bucket) => bucket.id === id && bucket.type === 'INVESTMENT'),
+          ) ?? false;
 
-        // INVESTMENT historical (no date filter, type = EXPENSE, no 'type' in by)
-        if (
-          bucketIds &&
-          (where.type as string | undefined) === 'EXPENSE' &&
-          !args.by.includes('type') &&
-          !(where.date as unknown)
-        ) {
+        if (bucketIds && isInvestmentRequest && !where.date) {
           return investmentHistoricalRows.filter(
             (r) => bucketIds.includes(r.bucket_id ?? '') ?? false,
           );
         }
 
-        // INVESTMENT period (date filter, type = EXPENSE, by bucket_id only)
-        if (
-          bucketIds &&
-          (where.type as string | undefined) === 'EXPENSE' &&
-          !args.by.includes('type') &&
-          where.date
-        ) {
-          return periodGroupByRows.filter(
+        if (bucketIds && isInvestmentRequest && where.date) {
+          return investmentPeriodRows.filter(
             (r) => bucketIds.includes(r.bucket_id ?? '') ?? false,
           );
         }
 
-        // SPENDING groupBy (by bucket_id + type, no date filter)
         if (args.by.includes('type') && bucketIds && !where.date) {
           return groupByRows.filter(
             (r) => bucketIds.includes(r.bucket_id ?? '') ?? false,
           );
         }
 
-        // SPENDING period groupBy (by bucket_id + type, with date filter)
         if (args.by.includes('type') && bucketIds && where.date) {
           return periodGroupByRows.filter(
             (r) => bucketIds.includes(r.bucket_id ?? '') ?? false,
@@ -132,7 +123,7 @@ describe('listBuckets', () => {
     }
   });
 
-  test('retorna caixa SPENDING com campos de agregação financeira', async () => {
+  test('retorna caixa SPENDING com saldo e indicadores incluindo distribuições', async () => {
     const now = new Date();
 
     const mockBuckets: MockBucket[] = [
@@ -148,15 +139,15 @@ describe('listBuckets', () => {
       },
     ];
 
-    // Histórico: 1000 income, 600 expense → current_amount = 400
+    // Histórico: 1000 income + 120 distribuídos, 600 expense → current_amount = 520
     const groupByRows: GroupByRow[] = [
-      { bucket_id: 'spending-id', type: 'INCOME', _sum: { amount: 1000 } },
+      { bucket_id: 'spending-id', type: 'INCOME', _sum: { amount: 1120 } },
       { bucket_id: 'spending-id', type: 'EXPENSE', _sum: { amount: 600 } },
     ];
 
-    // Período: 300 income, 250 expense
+    // Período: 300 income + 80 distribuídos, 250 expense
     const periodGroupByRows: GroupByRow[] = [
-      { bucket_id: 'spending-id', type: 'INCOME', _sum: { amount: 300 } },
+      { bucket_id: 'spending-id', type: 'INCOME', _sum: { amount: 380 } },
       { bucket_id: 'spending-id', type: 'EXPENSE', _sum: { amount: 250 } },
     ];
 
@@ -183,8 +174,8 @@ describe('listBuckets', () => {
     const bucket = result[0];
     expect(bucket.type).toBe('SPENDING');
     if (bucket.type === 'SPENDING') {
-      expect(bucket.current_amount).toBe(400);
-      expect(bucket.period_allocated).toBe(300);
+      expect(bucket.current_amount).toBe(520);
+      expect(bucket.period_allocated).toBe(380);
       expect(bucket.period_spent).toBe(250);
     }
   });
@@ -206,11 +197,13 @@ describe('listBuckets', () => {
     ];
 
     const investmentHistoricalRows: GroupByRow[] = [
-      { bucket_id: 'invest-id', _sum: { amount: 5000 } },
+      { bucket_id: 'invest-id', type: 'EXPENSE', _sum: { amount: 5000 } },
+      { bucket_id: 'invest-id', type: 'INCOME', _sum: { amount: 600 } },
     ];
 
     const investmentPeriodRows: GroupByRow[] = [
-      { bucket_id: 'invest-id', _sum: { amount: 500 } },
+      { bucket_id: 'invest-id', type: 'EXPENSE', _sum: { amount: 500 } },
+      { bucket_id: 'invest-id', type: 'INCOME', _sum: { amount: 120 } },
     ];
 
     // workspace income no período: 2000 → period_target = 2000 * 0.10 = 200
@@ -232,6 +225,7 @@ describe('listBuckets', () => {
       investmentPeriodRows,
       investmentHistoricalRows,
       workspaceIncomeResult,
+      investmentPeriodRows,
     );
     const result = await listBuckets(db, {
       workspaceId: 'ws-id',
@@ -243,9 +237,10 @@ describe('listBuckets', () => {
     const bucket = result[0];
     expect(bucket.type).toBe('INVESTMENT');
     if (bucket.type === 'INVESTMENT') {
-      expect(bucket.current_invested).toBe(5000);
+      expect(bucket.current_amount).toBe(5600);
+      expect(bucket.current_invested).toBe(5600);
       expect(bucket.period_target).toBe(200);
-      expect(bucket.period_invested).toBe(500);
+      expect(bucket.period_invested).toBe(620);
     }
   });
 

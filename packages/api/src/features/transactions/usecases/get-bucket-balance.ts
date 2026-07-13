@@ -1,4 +1,4 @@
-import type { Prisma, PrismaClient } from '@prisma/client';
+import { TransactionType, type Prisma, type PrismaClient } from '@prisma/client';
 
 type DbClient = PrismaClient | Prisma.TransactionClient;
 
@@ -7,7 +7,8 @@ export async function getBucketBalance(
   bucketId: string,
   options?: { excludeTransactionId?: string },
 ): Promise<number> {
-  const transactions = await db.transaction.findMany({
+  const aggregations = await db.transaction.groupBy({
+    by: ['type'],
     where: {
       bucket_id: bucketId,
       is_paid: true,
@@ -16,18 +17,21 @@ export async function getBucketBalance(
         ? { id: { not: options.excludeTransactionId } }
         : {}),
     },
-    select: { type: true, amount: true },
+    _sum: { amount: true },
   });
 
-  let balance = 0;
-  for (const t of transactions) {
-    const value = Number(t.amount);
-    if (t.type === 'INCOME') {
-      balance += value;
-    } else if (t.type === 'EXPENSE') {
-      balance -= value;
+  let income = 0;
+  let expense = 0;
+
+  for (const aggregation of aggregations) {
+    const amount = Number(aggregation._sum.amount ?? 0);
+
+    if (aggregation.type === TransactionType.INCOME) {
+      income = amount;
+    } else if (aggregation.type === TransactionType.EXPENSE) {
+      expense = amount;
     }
   }
 
-  return balance;
+  return income - expense;
 }
